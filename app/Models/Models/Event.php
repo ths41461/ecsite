@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Models\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Event extends Model
+{
+    /** @use HasFactory<\Database\Factories\Models\EventFactory> */
+    use HasFactory;
+}
