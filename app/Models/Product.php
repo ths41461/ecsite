@@ -45,11 +45,26 @@ class Product extends Model
     }
 
     // --- Relations ---
-    public function brand()     { return $this->belongsTo(Brand::class); }
-    public function category()  { return $this->belongsTo(Category::class); }
-    public function images()    { return $this->hasMany(ProductImage::class); }
-    public function variants()  { return $this->hasMany(ProductVariant::class); }
-    public function categories() { return $this->belongsToMany(Category::class, 'category_product'); }
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class);
+    }
+    public function variants()
+    {
+        return $this->hasMany(ProductVariant::class);
+    }
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'category_product');
+    }
 
     // --- Scout (search) payload ---
     public function toSearchableArray(): array
@@ -62,5 +77,12 @@ class Product extends Model
             'category'  => $this->category?->name,
             'description' => trim(($this->short_desc ?? '') . ' ' . ($this->long_desc ?? '')),
         ];
+    }
+
+    public function heroImage()
+    {
+        return $this->hasOne(\App\Models\ProductImage::class)
+            ->where('is_hero', true)
+            ->orderBy('rank');
     }
 }

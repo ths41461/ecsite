@@ -4,9 +4,8 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Product;
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Models\ProductImage>
- */
+
+/** @extends Factory<\App\Models\ProductImage> */
 class ProductImageFactory extends Factory
 {
     public function definition(): array
@@ -16,6 +15,9 @@ class ProductImageFactory extends Factory
             'path'       => '/images/placeholder.jpg',
             'alt'        => $this->faker->words(3, true),
             'sort'       => 0,
+            'is_hero'    => false,
+            'rank'       => 0,
         ];
     }
 }
+
