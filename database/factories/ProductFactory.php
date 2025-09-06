@@ -1,10 +1,10 @@
 <?php
 
-namespace Database\Factories\Models;
+namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Models\Brand;
-use App\Models\Models\Category;
+use App\Models\Brand;
+use App\Models\Category;
 use Illuminate\Support\Str;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Models\Product>

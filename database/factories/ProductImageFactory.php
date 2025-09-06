@@ -1,9 +1,9 @@
 <?php
 
-namespace Database\Factories\Models;
+namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use App\Models\Models\Product;
+use App\Models\Product;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Models\ProductImage>
  */
