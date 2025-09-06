@@ -2,15 +2,29 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-// app/Models/ProductVariant.php
-class ProductVariant extends Model {
-  use HasFactory;
-  protected $casts = ['option_json'=>'array','is_active'=>'boolean'];
-  protected $fillable = ['product_id','sku','option_json','price_yen','sale_price_yen','is_active'];
-  public function product(){ return $this->belongsTo(Product::class); }
-  public function inventory(){ return $this->hasOne(Inventory::class, 'product_variant_id'); }
+class ProductVariant extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'product_id', 'sku', 'option_json', 'price_yen', 'sale_price_yen',
+        'is_active',
+    ];
+
+    protected $casts = [
+        'is_active'  => 'boolean',
+        'option_json' => 'array',
+    ];
+
+    public function product()   { return $this->belongsTo(Product::class); }
+    public function inventory() { return $this->hasOne(Inventory::class); }
+
+    /** Happy-path finder for PDP/cart flows */
+    public static function findBySku(string $sku): self
+    {
+        return static::where('sku', $sku)->firstOrFail();
+    }
 }
-

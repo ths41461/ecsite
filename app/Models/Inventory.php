@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-// app/Models/Inventory.php
-class Inventory extends Model {
-  use HasFactory;
-  public $timestamps = false; // we manage updated_at manually
-  protected $fillable = ['product_variant_id','stock','safety_stock','managed','updated_at'];
-  protected $casts = ['managed'=>'boolean','updated_at'=>'datetime'];
-  public function variant(){ return $this->belongsTo(ProductVariant::class, 'product_variant_id'); }
+class Inventory extends Model
+{
+    use HasFactory;
+
+    protected $fillable = ['product_variant_id', 'stock', 'reserved', 'threshold'];
+
+    public function variant() { return $this->belongsTo(ProductVariant::class, 'product_variant_id'); }
 }
-

@@ -3,24 +3,28 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Illuminate\Support\Str;
 use App\Models\Brand;
 use App\Models\Category;
-use Illuminate\Support\Str;
 
 class ProductFactory extends Factory
 {
     public function definition(): array
     {
-        $name = ucfirst($this->faker->unique()->words(3, true));
+        // No Faker: deterministic, collision-safe values
+        $suffix = strtoupper(Str::random(3)) . '-' . random_int(10, 99);
+        $name   = 'Aroma ' . $suffix;
+        $slug   = Str::slug($name) . '-' . strtolower(Str::random(6));
+
         return [
             'name'           => $name,
-            'slug'           => Str::slug($name) . '-' . Str::lower(Str::random(6)),
+            'slug'           => $slug,
             'brand_id'       => Brand::factory(),
             'category_id'    => Category::factory(),
-            'short_desc'     => $this->faker->sentence(),
-            'long_desc'      => $this->faker->paragraph(),
+            'short_desc'     => 'Clean, modern scent.',
+            'long_desc'      => 'Balanced composition with fresh top and warm base notes.',
             'is_active'      => true,
-            'featured'       => $this->faker->boolean(10),
+            'featured'       => (bool) random_int(0, 9) === 0, // ~10%
             'attributes_json'=> ['notes' => ['top'=>'citrus','middle'=>'floral','base'=>'musk']],
             'meta_json'      => ['seo_title' => $name],
             'published_at'   => now(),
