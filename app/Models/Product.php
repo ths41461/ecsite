@@ -49,6 +49,7 @@ class Product extends Model
     public function category()  { return $this->belongsTo(Category::class); }
     public function images()    { return $this->hasMany(ProductImage::class); }
     public function variants()  { return $this->hasMany(ProductVariant::class); }
+    public function categories() { return $this->belongsToMany(Category::class, 'category_product'); }
 
     // --- Scout (search) payload ---
     public function toSearchableArray(): array

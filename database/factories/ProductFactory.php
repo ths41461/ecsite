@@ -25,9 +25,20 @@ class ProductFactory extends Factory
             'long_desc'      => 'Balanced composition with fresh top and warm base notes.',
             'is_active'      => true,
             'featured'       => (bool) random_int(0, 9) === 0, // ~10%
-            'attributes_json'=> ['notes' => ['top'=>'citrus','middle'=>'floral','base'=>'musk']],
+            'attributes_json' => ['notes' => ['top' => 'citrus', 'middle' => 'floral', 'base' => 'musk']],
             'meta_json'      => ['seo_title' => $name],
             'published_at'   => now(),
         ];
+    }
+
+    public function configure()
+    {
+        return $this->afterCreating(function (\App\Models\Product $product) {
+            // In production/seeding we mirror products.category_id into the pivot.
+            // Skip during unit tests so tests can control duplicates explicitly.
+            if ($product->category_id && !app()->runningUnitTests()) {
+                $product->categories()->syncWithoutDetaching([$product->category_id]);
+            }
+        });
     }
 }
