@@ -44,6 +44,24 @@ class LookupSeeder extends Seeder
                 DB::table('payments')->whereNull('payment_status_id')->update(['payment_status_id' => $pendingPayId]);
             }
         }
+
+        // --- shipment_statuses (new in 3.7) ---
+        if (Schema()->hasTable('shipment_statuses')) {
+            $now = now();
+            $shipRows = [
+                ['code' => 'pending',   'name' => 'Pending',   'created_at' => $now, 'updated_at' => $now],
+                ['code' => 'packed',    'name' => 'Packed',    'created_at' => $now, 'updated_at' => $now],
+                ['code' => 'in_transit', 'name' => 'In Transit', 'created_at' => $now, 'updated_at' => $now],
+                ['code' => 'delivered', 'name' => 'Delivered', 'created_at' => $now, 'updated_at' => $now],
+                ['code' => 'returned',  'name' => 'Returned',  'created_at' => $now, 'updated_at' => $now],
+            ];
+            DB::table('shipment_statuses')->upsert($shipRows, ['code'], ['name', 'updated_at']);
+
+            $pendingShipId = (int) DB::table('shipment_statuses')->where('code', 'pending')->value('id');
+            if ($pendingShipId && Schema()->hasTable('shipments')) {
+                DB::table('shipments')->whereNull('shipment_status_id')->update(['shipment_status_id' => $pendingShipId]);
+            }
+        }
     }
 }
 
