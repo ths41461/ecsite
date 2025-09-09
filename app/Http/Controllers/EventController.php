@@ -11,7 +11,7 @@ class EventController extends Controller
     public function pdpView(Request $request)
     {
         $data = $request->validate([
-            'product_id' => ['required', 'integer'],
+            'product_id' => ['required', 'integer', 'min:1'],
             'sku' => ['nullable', 'string', 'max:64'],
         ]);
 
@@ -41,7 +41,8 @@ class EventController extends Controller
     public function addToCart(Request $request)
     {
         $data = $request->validate([
-            'product_id' => ['required', 'integer'],
+            'product_id' => ['required', 'integer', 'min:1'],
+            'variant_id' => ['nullable', 'integer', 'min:1'],
             'sku' => ['required', 'string', 'max:64'],
             'qty' => ['required', 'integer', 'min:1', 'max:20'],
         ]);

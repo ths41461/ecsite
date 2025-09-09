@@ -335,6 +335,7 @@ class ProductController extends Controller
 
         $variants = $product->variants->where('is_active', true)->map(function ($v) {
             return [
+                'id' => $v->id,
                 'sku' => $v->sku,
                 'price_cents' => $v->sale_price_yen !== null ? (int) $v->sale_price_yen * 100 : (int) $v->price_yen * 100,
                 'compare_at_cents' => $v->sale_price_yen !== null ? (int) $v->price_yen * 100 : null,
@@ -343,6 +344,12 @@ class ProductController extends Controller
                 'managed' => (bool) ($v->inventory?->managed ?? false),
             ];
         })->values();
+
+        $gallery = $product->images->map(fn($img) => [
+            'url'     => $img->url, // adapt to your accessor/column
+            'alt'     => $product->name,
+            'is_hero' => (bool)$img->is_hero,
+        ])->values();
 
         // Related products: same brand or category, exclude current, limit 8
         $relatedQuery = Product::query()

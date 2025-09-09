@@ -1,7 +1,8 @@
 import { Head } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type Variant = {
+    id?: number; // Prefer sending this from backend (needed for 4.3)
     sku: string;
     price_cents: number;
     compare_at_cents: number | null;
@@ -38,13 +39,20 @@ function yen(cents: number) {
 }
 
 export default function Show({ product, gallery, related }: Props) {
+    // --- NEW: Clickable gallery state (pick hero if present) ---
+    const initialIndex = useMemo(() => {
+        const i = gallery.findIndex((g) => g.is_hero);
+        return i >= 0 ? i : 0;
+    }, [gallery]);
+    const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
+
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(product.variants[0] || null);
     const [quantity, setQuantity] = useState(1);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [isWishlisting, setIsWishlisting] = useState(false);
 
     useEffect(() => {
-        // fire-and-forget PDP view event with CSRF header
+        // PDP view event (spec-defined)
         const getCookie = (name: string) => {
             const parts = document.cookie.split('; ').map((c) => c.split('='));
             const found = parts.find(([k]) => k === name);
@@ -63,7 +71,7 @@ export default function Show({ product, gallery, related }: Props) {
         }).catch(() => {});
     }, [product.id]);
 
-    const postEvent = (url: string, payload: Record<string, unknown>) => {
+    const postJson = (url: string, payload: Record<string, unknown>) => {
         const getCookie = (name: string) => {
             const parts = document.cookie.split('; ').map((c) => c.split('='));
             const found = parts.find(([k]) => k === name);
@@ -82,20 +90,22 @@ export default function Show({ product, gallery, related }: Props) {
         });
     };
 
-    const handleAddToCart = async () => {
+    const handleAddToCartEvent = async () => {
         if (!selectedVariant) return;
-
         setIsAddingToCart(true);
         try {
-            await postEvent('/e/add-to-cart', {
+            // Spec expects `variant_id`; we also include `sku` temporarily for compatibility.
+            // Server should ignore extra fields. Later (4.3) we will also call /cart for actual add.
+            await postJson('/e/add-to-cart', {
                 product_id: product.id,
-                sku: selectedVariant.sku,
+                variant_id: selectedVariant.id ?? null, // preferred
+                sku: selectedVariant.sku, // fallback (remove when backend mapping is live)
                 qty: quantity,
             });
-            // TODO: Show success toast/notification
+            // TODO: toast success
         } catch (error) {
-            console.error('Failed to add to cart:', error);
-            // TODO: Show error toast/notification
+            console.error('Failed to add to cart event:', error);
+            // TODO: toast error
         } finally {
             setIsAddingToCart(false);
         }
@@ -104,76 +114,95 @@ export default function Show({ product, gallery, related }: Props) {
     const handleWishlistAdd = async () => {
         setIsWishlisting(true);
         try {
-            await postEvent('/e/wishlist-add', {
-                product_id: product.id,
-                sku: selectedVariant?.sku || null,
-            });
-            // TODO: Show success toast/notification
+            // Use real wishlist route from your routes spec (not /e/wishlist-add)
+            await postJson('/wishlist', { product_id: product.id });
+            // TODO: toggle UI state (filled heart) if you want
         } catch (error) {
             console.error('Failed to add to wishlist:', error);
-            // TODO: Show error toast/notification
         } finally {
             setIsWishlisting(false);
         }
     };
+
+    const stockBadgeFor = (v: Variant) => {
+        const stock = v.stock ?? null;
+        const managed = v.managed ?? false;
+        if (!managed) return 'In stock';
+        if ((stock ?? 0) <= 0) return 'Out of stock';
+        if (stock! <= (v.safety_stock ?? 1)) return 'Low stock';
+        return 'In stock';
+    };
+
+    const MainImage = () => {
+        const hero = gallery[activeIndex];
+        const src = hero?.url ?? product.image ?? null;
+        if (!src) {
+            return <div className="grid h-full w-full place-items-center text-sm text-neutral-500">No image</div>;
+        }
+        return <img src={src} alt={hero?.alt ?? product.name} className="h-full w-full object-cover" />;
+    };
+
     return (
         <div className="mx-auto max-w-5xl px-4 py-6">
             <Head title={product.name} />
             <div className="grid gap-6 md:grid-cols-2">
+                {/* GALLERY */}
                 <div>
                     <div className="aspect-square overflow-hidden rounded-xl bg-neutral-100">
-                        {product.image ? (
-                            <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                        ) : (
-                            <div className="grid h-full w-full place-items-center text-sm text-neutral-500">No image</div>
-                        )}
+                        <MainImage />
                     </div>
+
                     {gallery.length > 1 && (
                         <div className="mt-3 grid grid-cols-4 gap-2">
-                            {gallery.map((g, i) => (
-                                <div key={i} className={`aspect-square overflow-hidden rounded border ${g.is_hero ? 'ring-2 ring-black' : ''}`}>
-                                    {g.url ? (
-                                        <img src={g.url} alt={g.alt ?? product.name} className="h-full w-full object-cover" />
-                                    ) : (
-                                        <div className="h-full w-full bg-neutral-100" />
-                                    )}
-                                </div>
-                            ))}
+                            {gallery.map((g, i) => {
+                                const selected = i === activeIndex;
+                                return (
+                                    <button
+                                        key={i}
+                                        type="button"
+                                        onClick={() => setActiveIndex(i)}
+                                        className={`aspect-square overflow-hidden rounded border transition ${
+                                            selected ? 'ring-2 ring-black' : 'hover:border-neutral-300'
+                                        }`}
+                                        aria-label={`Thumbnail ${i + 1}`}
+                                    >
+                                        {g.url ? (
+                                            <img src={g.url} alt={g.alt ?? product.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <div className="h-full w-full bg-neutral-100" />
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
+
+                {/* DETAILS */}
                 <div>
                     {product.brand?.name && <div className="text-sm text-neutral-500">{product.brand.name}</div>}
                     <h1 className="mb-2 text-2xl font-semibold">{product.name}</h1>
                     {product.short_desc && <p className="mb-4 text-neutral-700">{product.short_desc}</p>}
 
                     <div className="space-y-4">
-                        {/* Variant Selection */}
+                        {/* VARIANT PICKER (inline for now; will extract later) */}
                         {product.variants.length > 1 && (
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Select Variant</label>
                                 <div className="space-y-2">
                                     {product.variants.map((v) => {
-                                        const stock = v.stock ?? null;
-                                        const managed = v.managed ?? false;
-                                        let badge = 'In stock';
-                                        if (managed) {
-                                            if ((stock ?? 0) <= 0) badge = 'Out of stock';
-                                            else if (stock! <= (v.safety_stock ?? 1)) badge = 'Low stock';
-                                        }
-
+                                        const badge = stockBadgeFor(v);
                                         const isSelected = selectedVariant?.sku === v.sku;
-                                        const isOutOfStock = badge === 'Out of stock';
-
+                                        const isOut = badge === 'Out of stock';
                                         return (
                                             <button
                                                 key={v.sku}
                                                 onClick={() => setSelectedVariant(v)}
-                                                disabled={isOutOfStock}
+                                                disabled={isOut}
                                                 className={`w-full rounded-lg border p-3 text-left transition-colors ${
                                                     isSelected
                                                         ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
-                                                        : isOutOfStock
+                                                        : isOut
                                                           ? 'border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800'
                                                           : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
                                                 }`}
@@ -206,23 +235,17 @@ export default function Show({ product, gallery, related }: Props) {
                         )}
 
                         {/* Single variant display */}
-                        {product.variants.length === 1 && (
-                            <div className="flex items-baseline gap-2 text-lg">
-                                <span className="font-semibold text-rose-700 dark:text-rose-400">{yen(product.variants[0].price_cents)}</span>
-                                {product.variants[0].compare_at_cents != null && (
-                                    <span className="text-sm text-neutral-500 line-through">{yen(product.variants[0].compare_at_cents)}</span>
-                                )}
-                                <span className="ml-2 text-xs text-neutral-500">SKU: {product.variants[0].sku}</span>
-                                {(() => {
-                                    const v = product.variants[0];
-                                    const stock = v.stock ?? null;
-                                    const managed = v.managed ?? false;
-                                    let badge = 'In stock';
-                                    if (managed) {
-                                        if ((stock ?? 0) <= 0) badge = 'Out of stock';
-                                        else if (stock! <= (v.safety_stock ?? 1)) badge = 'Low stock';
-                                    }
-                                    return (
+                        {product.variants.length === 1 &&
+                            (() => {
+                                const v = product.variants[0];
+                                const badge = stockBadgeFor(v);
+                                return (
+                                    <div className="flex items-baseline gap-2 text-lg">
+                                        <span className="font-semibold text-rose-700 dark:text-rose-400">{yen(v.price_cents)}</span>
+                                        {v.compare_at_cents != null && (
+                                            <span className="text-sm text-neutral-500 line-through">{yen(v.compare_at_cents)}</span>
+                                        )}
+                                        <span className="ml-2 text-xs text-neutral-500">SKU: {v.sku}</span>
                                         <span
                                             className={`ml-2 rounded px-2 py-0.5 text-xs ${
                                                 badge === 'Out of stock'
@@ -234,12 +257,11 @@ export default function Show({ product, gallery, related }: Props) {
                                         >
                                             {badge}
                                         </span>
-                                    );
-                                })()}
-                            </div>
-                        )}
+                                    </div>
+                                );
+                            })()}
 
-                        {/* Quantity and Actions */}
+                        {/* Quantity + Actions */}
                         {selectedVariant && (
                             <div className="space-y-4">
                                 <div>
@@ -263,7 +285,7 @@ export default function Show({ product, gallery, related }: Props) {
 
                                 <div className="flex gap-3">
                                     <button
-                                        onClick={handleAddToCart}
+                                        onClick={handleAddToCartEvent}
                                         disabled={isAddingToCart || !selectedVariant}
                                         className="flex-1 rounded-lg bg-rose-600 px-6 py-3 font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-rose-500 dark:hover:bg-rose-600"
                                     >
@@ -273,6 +295,7 @@ export default function Show({ product, gallery, related }: Props) {
                                         onClick={handleWishlistAdd}
                                         disabled={isWishlisting}
                                         className="rounded-lg border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                                        aria-label="Add to wishlist"
                                     >
                                         {isWishlisting ? '...' : '♡'}
                                     </button>
