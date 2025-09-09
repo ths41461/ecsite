@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Models\{Brand, Category, Product, ProductVariant, Inventory};
+use App\Models\{Brand, Category, Product, ProductVariant, Inventory};
 use Illuminate\Support\Facades\Artisan;
 
 it('wires catalog, inventory, scout, and queue', function () {
@@ -18,11 +18,13 @@ it('wires catalog, inventory, scout, and queue', function () {
     ]);
     Inventory::factory()->create([
         'product_variant_id' => $variant->id,
-        'stock' => 5, 'safety_stock' => 1, 'managed' => true,
+        'stock' => 5,
+        'safety_stock' => 1,
+        'managed' => true,
     ]);
 
     // 2) Relations hang together
-    $product->load('brand','category','variants.inventory','images');
+    $product->load('brand', 'category', 'variants.inventory', 'images');
     expect($product->variants)->toHaveCount(1);
     expect($product->variants->first()->inventory->stock)->toBeGreaterThan(0);
 

@@ -2,22 +2,28 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // Lookups first (order/payment/shipment statuses, etc.)
+        $this->call([
+            LookupSeeder::class,
         ]);
+
+        // Core catalog
+        $this->call([
+            BrandSeeder::class,
+            CategorySeeder::class,
+            ProductSeeder::class,
+            ProductVariantSeeder::class,
+            ProductImageSeeder::class,
+            VariantInventorySeeder::class,
+        ]);
+
+        // If you have Stage-3 backfills (e.g., CategoryProductBackfillSeeder), call them here too.
+        $this->call([CategoryProductBackfillSeeder::class, ProductImageHeroBackfillSeeder::class]);
     }
 }

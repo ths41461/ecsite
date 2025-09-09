@@ -22,5 +22,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Product::observe(ProductObserver::class);
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                \App\Console\Commands\RecomputeProductMetrics::class,
+            ]);
+        }
     }
 }

@@ -13,8 +13,8 @@ class InventoryFactory extends Factory
         return [
             'product_variant_id' => \App\Models\ProductVariant::factory(),
             'stock'              => fake()->numberBetween(5, 50),
-            'reserved'           => 0,
-            'threshold'          => 2,
+            'safety_stock'       => 2,
+            'managed'            => true,
         ];
     }
 }
