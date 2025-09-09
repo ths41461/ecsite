@@ -105,7 +105,7 @@ export default function Show({ product, gallery, related }: Props) {
             // TODO: toast success
         } catch (error) {
             console.error('Failed to add to cart event:', error);
-            // TODO: toast error
+            alert('Failed to add to cart. Please try again.');
         } finally {
             setIsAddingToCart(false);
         }
@@ -119,6 +119,7 @@ export default function Show({ product, gallery, related }: Props) {
             // TODO: toggle UI state (filled heart) if you want
         } catch (error) {
             console.error('Failed to add to wishlist:', error);
+            alert('Failed to add to wishlist. Please try again.');
         } finally {
             setIsWishlisting(false);
         }
