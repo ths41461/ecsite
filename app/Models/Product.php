@@ -47,8 +47,9 @@ class Product extends Model
     // --- Relations ---
     public function brand()
     {
-        return $this->belongsTo(Brand::class);
+        return $this->belongsTo(\App\Models\Brand::class);
     }
+
     public function category()
     {
         return $this->belongsTo(Category::class);
@@ -81,8 +82,6 @@ class Product extends Model
 
     public function heroImage()
     {
-        return $this->hasOne(\App\Models\ProductImage::class)
-            ->where('is_hero', true)
-            ->orderBy('rank');
+        return $this->hasOne(\App\Models\ProductImage::class)->where('is_hero', true)->orderBy('rank');
     }
 }
