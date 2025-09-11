@@ -17,4 +17,14 @@ class UpdateCartRequest extends FormRequest
             'qty' => ['required', 'integer', 'min:0', 'max:' . (int)config('cart.max_qty', 20)],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'qty.required' => 'Please choose a quantity.',
+            'qty.integer'  => 'Quantity must be a number.',
+            'qty.min'      => 'Quantity cannot be negative.',
+            'qty.max'      => 'Quantity may not exceed ' . (int)config('cart.max_qty', 20) . '.',
+        ];
+    }
 }

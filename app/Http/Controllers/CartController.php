@@ -6,6 +6,7 @@ use App\Services\CartService;
 use App\Http\Requests\StoreCartRequest;
 use App\Http\Requests\UpdateCartRequest;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 
 class CartController extends Controller
 {
@@ -23,8 +24,15 @@ class CartController extends Controller
         $sessionId = $request->session()->getId();
         $cart = $this->cart->get($sessionId);
 
-        return response()->json($cart);
+        if ($request->wantsJson()) {
+            return response()->json($cart);
+        }
+
+        return Inertia::render('Cart/Index', [
+            'initialCart' => $cart,
+        ]);
     }
+
 
     /**
      * POST /cart
@@ -51,6 +59,7 @@ class CartController extends Controller
     public function update(UpdateCartRequest $request, string $line)
     {
         $sessionId = $request->session()->getId();
+
         $cart = $this->cart->update(
             $sessionId,
             $line,

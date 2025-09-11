@@ -32,11 +32,12 @@ Route::delete('/wishlist/{product}', [WishlistController::class, 'destroy']);
 Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 
 // Mutations are rate-limited (30 req/min by default). Adjust as needed.
-Route::middleware('throttle:30,1')->group(function () {
+Route::middleware('throttle:cart-mutations')->group(function () {
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{line}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{line}', [CartController::class, 'destroy'])->name('cart.destroy');
 });
+
 
 
 Route::middleware(['auth', 'verified'])->group(function () {

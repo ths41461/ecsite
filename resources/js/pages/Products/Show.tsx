@@ -50,6 +50,14 @@ export default function Show({ product, gallery, related }: Props) {
     const [quantity, setQuantity] = useState(1);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [isWishlisting, setIsWishlisting] = useState(false);
+    const [isWishlisted, setIsWishlisted] = useState(false);
+    const [toast, setToast] = useState<null | { message: string; kind: 'success' | 'warning' | 'error' }>(null);
+
+    function showToast(message: string, kind: 'success' | 'warning' | 'error' = 'success') {
+        setToast({ message, kind });
+        // Auto-hide after 3 seconds
+        window.setTimeout(() => setToast(null), 3000);
+    }
 
     useEffect(() => {
         // PDP view event (spec-defined)
@@ -94,18 +102,43 @@ export default function Show({ product, gallery, related }: Props) {
         if (!selectedVariant) return;
         setIsAddingToCart(true);
         try {
-            // Spec expects `variant_id`; we also include `sku` temporarily for compatibility.
-            // Server should ignore extra fields. Later (4.3) we will also call /cart for actual add.
-            await postJson('/e/add-to-cart', {
+            // 1) Analytics/event (non-blocking if it fails)
+            postJson('/e/add-to-cart', {
                 product_id: product.id,
-                variant_id: selectedVariant.id ?? null, // preferred
-                sku: selectedVariant.sku, // fallback (remove when backend mapping is live)
+                variant_id: selectedVariant.id ?? null,
+                sku: selectedVariant.sku,
+                qty: quantity,
+            }).catch(() => {});
+
+            // 2) Actual cart mutation
+            if (selectedVariant.id == null) {
+                throw new Error('Variant id missing');
+            }
+            const res = await postJson('/cart', {
+                variant_id: selectedVariant.id,
                 qty: quantity,
             });
-            // TODO: toast success
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || 'Failed to add to cart');
+            }
+            // Inspect response to detect clamp notice for a better message
+            type CartLine = { variant_id: number; qty: number; notice?: { code: string; requested: number; available: number } };
+            type Cart = { lines: CartLine[] };
+            let cart: Cart | null = null;
+            try {
+                cart = (await res.json()) as Cart;
+            } catch {}
+
+            const line = cart?.lines?.find((l) => l.variant_id === selectedVariant.id);
+            if (line && line.notice && line.notice.code === 'qty_clamped_to_available') {
+                showToast(`Only ${line.notice.available} available. Quantity adjusted.`, 'warning');
+            } else {
+                showToast('Added to cart.', 'success');
+            }
         } catch (error) {
             console.error('Failed to add to cart event:', error);
-            alert('Failed to add to cart. Please try again.');
+            showToast('Failed to add to cart. Please try again.', 'error');
         } finally {
             setIsAddingToCart(false);
         }
@@ -114,12 +147,17 @@ export default function Show({ product, gallery, related }: Props) {
     const handleWishlistAdd = async () => {
         setIsWishlisting(true);
         try {
-            // Use real wishlist route from your routes spec (not /e/wishlist-add)
-            await postJson('/wishlist', { product_id: product.id });
-            // TODO: toggle UI state (filled heart) if you want
-        } catch (error) {
-            console.error('Failed to add to wishlist:', error);
-            alert('Failed to add to wishlist. Please try again.');
+            const res = await postJson('/wishlist', { product_id: product.id });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || `Wishlist failed (${res.status})`);
+            }
+            showToast('Added to wishlist.', 'success');
+            // Toggle UI to indicate wishlisted (filled heart)
+            setIsWishlisted(true);
+        } catch (err) {
+            console.error(err);
+            showToast('Failed to add to wishlist. Please try again.', 'error');
         } finally {
             setIsWishlisting(false);
         }
@@ -294,11 +332,11 @@ export default function Show({ product, gallery, related }: Props) {
                                     </button>
                                     <button
                                         onClick={handleWishlistAdd}
-                                        disabled={isWishlisting}
+                                        disabled={isWishlisting || isWishlisted}
                                         className="rounded-lg border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-                                        aria-label="Add to wishlist"
+                                        aria-label={isWishlisted ? 'Wishlisted' : 'Add to wishlist'}
                                     >
-                                        {isWishlisting ? '...' : '♡'}
+                                        {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
                                     </button>
                                 </div>
                             </div>
@@ -324,6 +362,22 @@ export default function Show({ product, gallery, related }: Props) {
                             </div>
                         ))}
                     </div>
+                </div>
+            )}
+            {/* Lightweight toast */}
+            {toast && (
+                <div
+                    role="status"
+                    aria-live="polite"
+                    className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-4 py-2 text-sm shadow-lg transition ${
+                        {
+                            success: 'bg-emerald-600 text-white',
+                            warning: 'bg-amber-600 text-white',
+                            error: 'bg-rose-600 text-white',
+                        }[toast.kind]
+                    }`}
+                >
+                    {toast.message}
                 </div>
             )}
         </div>
