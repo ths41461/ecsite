@@ -3,14 +3,28 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Str;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class CartService
 {
+    /** @var int TTL for Redis key in seconds (from config/cart.php) */
+    private int $ttl;
+
+    /** @var int Max quantity per line (from config/cart.php) */
+    private int $maxQty;
+
+    /** @var string Currency code (from config/cart.php) */
+    private string $currency;
+
+    public function __construct()
+    {
+        // NEW: configurable TTL, max qty, currency
+        $this->ttl      = (int) config('cart.ttl_seconds', 14 * 24 * 60 * 60);
+        $this->maxQty   = (int) config('cart.max_qty', 20);
+        $this->currency = (string) config('cart.currency', 'JPY');
+    }
+
     /**
      * Cart key format: cart:{sessionId}
      */
@@ -20,11 +34,6 @@ class CartService
     }
 
     /**
-     * TTL for the cart in seconds (14 days).
-     */
-    private int $ttl = 14 * 24 * 60 * 60;
-
-    /**
      * Add a variant (or increase qty if line exists).
      *
      * @return array Computed cart
@@ -32,22 +41,52 @@ class CartService
      */
     public function add(string $sessionId, int $variantId, int $qty): array
     {
-        if ($qty < 1 || $qty > 20) {
-            throw ValidationException::withMessages(['qty' => 'Quantity must be between 1 and 20.']);
+        // Only enforce minimum of 1 on add; upper bound is clamped, not rejected
+        if ($qty < 1) {
+            throw ValidationException::withMessages(['qty' => 'Quantity must be at least 1.']);
+        }
+
+        // NEW: pre-validate that the variant exists (avoid ghost writes)
+        $exists = DB::table('product_variants')->where('id', $variantId)->exists();
+        if (!$exists) {
+            throw ValidationException::withMessages(['variant_id' => 'Selected variant does not exist.']);
         }
 
         $raw = $this->loadRaw($sessionId);
 
         $lineId = $this->lineId($variantId);
+        $prevQty = (int)($raw[$lineId]['qty'] ?? 0);
+        $requestedTotal = $prevQty + $qty;
+
         $raw[$lineId] = [
             'variant_id' => $variantId,
-            'qty'        => ($raw[$lineId]['qty'] ?? 0) + $qty,
+            'qty'        => min($this->maxQty, $requestedTotal),
         ];
 
         $this->saveRaw($sessionId, $raw);
 
         // Recompute with server pricing/stock rules
-        return $this->get($sessionId);
+        $cart = $this->get($sessionId);
+
+        // If the requested total exceeded what was finally applied (due to stock or maxQty),
+        // attach a notice to the relevant line so the UI can toast it.
+        foreach ($cart['lines'] as $i => $line) {
+            if ((int)$line['variant_id'] === $variantId) {
+                $finalQty = (int)($line['qty'] ?? 0);
+                $managed = (bool)($line['managed'] ?? false);
+                $availableQty = $line['available_qty'] ?? null;
+                if ($managed && $availableQty !== null && $requestedTotal > $finalQty) {
+                    $cart['lines'][$i]['notice'] = [
+                        'code'      => 'qty_clamped_to_available',
+                        'requested' => $requestedTotal,
+                        'available' => $availableQty,
+                    ];
+                }
+                break;
+            }
+        }
+
+        return $cart;
     }
 
     /**
@@ -58,14 +97,29 @@ class CartService
      */
     public function update(string $sessionId, string $lineId, int $qty): array
     {
-        if ($qty < 0 || $qty > 20) {
-            throw ValidationException::withMessages(['qty' => 'Quantity must be between 0 and 20.']);
+        if ($qty < 0 || $qty > $this->maxQty) {
+            throw ValidationException::withMessages(['qty' => "Quantity must be between 0 and {$this->maxQty}."]);
         }
 
         $raw = $this->loadRaw($sessionId);
 
         if (!isset($raw[$lineId])) {
-            // idempotent: ignore unknown line
+            // Treat update as upsert when qty > 0 and line is missing (e.g., new session)
+            if ($qty === 0) {
+                return $this->get($sessionId);
+            }
+
+            $variantId = (int)$lineId;
+            if ($variantId <= 0 || !DB::table('product_variants')->where('id', $variantId)->exists()) {
+                // Unknown line and invalid variant; return current cart
+                return $this->get($sessionId);
+            }
+
+            $raw[$lineId] = [
+                'variant_id' => $variantId,
+                'qty'        => $qty,
+            ];
+            $this->saveRaw($sessionId, $raw);
             return $this->get($sessionId);
         }
 
@@ -111,7 +165,8 @@ class CartService
      *     available_qty: int|null,
      *     line_total_cents: int,
      *     savings_cents: int,
-     *     stock_badge: string
+     *     stock_badge: string,
+     *     notice?: array{code:string,requested:int,available:int}
      *   }>,
      *   subtotal_cents: int,
      *   savings_cents: int,
@@ -128,7 +183,7 @@ class CartService
                 'subtotal_cents' => 0,
                 'savings_cents' => 0,
                 'total_cents' => 0,
-                'currency' => 'JPY',
+                'currency' => $this->currency,
             ];
         }
 
@@ -143,11 +198,11 @@ class CartService
                 'subtotal_cents' => 0,
                 'savings_cents' => 0,
                 'total_cents' => 0,
-                'currency' => 'JPY',
+                'currency' => $this->currency,
             ];
         }
 
-        // Pull fresh pricing + stock from DB. (No model assumptions needed.)
+        // Pull fresh pricing + stock from DB
         $rows = DB::table('product_variants as pv')
             ->join('products as p', 'p.id', '=', 'pv.product_id')
             ->leftJoin('inventories as inv', 'inv.product_variant_id', '=', 'pv.id')
@@ -155,8 +210,9 @@ class CartService
                 'pv.id as variant_id',
                 'pv.sku',
                 'pv.product_id',
-                'pv.price_yen',
-                'pv.sale_price_yen',
+                // Compute cents server-side from yen columns
+                DB::raw('CASE WHEN pv.sale_price_yen IS NULL THEN pv.price_yen * 100 ELSE pv.sale_price_yen * 100 END as price_cents'),
+                DB::raw('CASE WHEN pv.sale_price_yen IS NULL THEN NULL ELSE pv.price_yen * 100 END as compare_at_cents'),
                 'p.name as product_name',
                 'p.slug as product_slug',
                 DB::raw('COALESCE(inv.managed, 0) as managed'),
@@ -189,54 +245,61 @@ class CartService
             $safety = is_null($row->safety_stock) ? 0 : (int)$row->safety_stock;
             $available = null;
 
+            $qtyFinal = $qtyWanted;
+            $notice = null; // NEW: will hold clamp info for UI toast
+
             if ($managed) {
                 $available = max(0, (int)$stock - (int)$safety);
-                if ($available === 0) {
-                    // nothing available; clamp to 0 (line will still show as out-of-stock)
-                    $qty = 0;
-                } else {
-                    $qty = min($qtyWanted, $available);
+                if ($available <= 0) {
+                    $qtyFinal = 0;
+                } elseif ($qtyWanted > $available) {
+                    // NEW: clamp notice
+                    $notice = [
+                        'code'      => 'qty_clamped_to_available',
+                        'requested' => $qtyWanted,
+                        'available' => $available,
+                    ];
+                    $qtyFinal = $available;
                 }
-            } else {
-                $qty = $qtyWanted;
             }
 
-            // Compute prices from server-side values (DB stores yen, convert to cents)
-            $priceYen = !is_null($row->sale_price_yen)
-                ? (int)$row->sale_price_yen
-                : (int)$row->price_yen;
-            $compareYen = !is_null($row->sale_price_yen)
-                ? (int)$row->price_yen
-                : null;
-            $price = $priceYen * 100;
-            $compare = is_null($compareYen) ? null : $compareYen * 100;
-            $lineTotal = $qty * $price;
-            $lineSavings = ($compare && $compare > $price) ? ($compare - $price) * $qty : 0;
+            // Compute prices from server-side values
+            $price = (int)$row->price_cents;
+            $compare = is_null($row->compare_at_cents) ? null : (int)$row->compare_at_cents;
+            $lineTotal = $qtyFinal * $price;
+            $lineSavings = ($compare && $compare > $price) ? ($compare - $price) * $qtyFinal : 0;
 
-            $lines[] = [
-                'line_id'          => (string)$lineId,
-                'variant_id'       => $variantId,
-                'sku'              => (string)$row->sku,
-                'product'          => [
-                    'id'   => (int)$row->product_id,
-                    'name' => (string)$row->product_name,
-                    'slug' => (string)$row->product_slug,
-                ],
-                'price_cents'      => $price,
-                'compare_at_cents' => $compare,
-                'qty'              => $qty,
-                'managed'          => $managed,
-                'available_qty'    => $available,
-                'line_total_cents' => $lineTotal,
-                'savings_cents'    => $lineSavings,
-                'stock_badge'      => $this->stockBadge($managed, $stock, $safety),
-            ];
+            if ($qtyFinal > 0) {
+                $line = [
+                    'line_id'          => (string)$lineId,
+                    'variant_id'       => $variantId,
+                    'sku'              => (string)$row->sku,
+                    'product'          => [
+                        'id'   => (int)$row->product_id,
+                        'name' => (string)$row->product_name,
+                        'slug' => (string)$row->product_slug,
+                    ],
+                    'price_cents'      => $price,
+                    'compare_at_cents' => $compare,
+                    'qty'              => $qtyFinal,
+                    'managed'          => $managed,
+                    'available_qty'    => $available,
+                    'line_total_cents' => $lineTotal,
+                    'savings_cents'    => $lineSavings,
+                    'stock_badge'      => $this->stockBadge($managed, $stock, $safety),
+                ];
+                // NEW: attach clamp notice if present
+                if ($notice) {
+                    $line['notice'] = $notice;
+                }
 
-            $subtotal += $lineTotal;
-            $savings  += $lineSavings;
+                $lines[] = $line;
+                $subtotal += $lineTotal;
+                $savings  += $lineSavings;
+            }
         }
 
-        // Filter out clamped-to-0 lines when managed stock says none
+        // (same behavior) Filter out clamped-to-0 lines
         $lines = array_values(array_filter($lines, fn($l) => $l['qty'] > 0));
 
         return [
@@ -244,12 +307,12 @@ class CartService
             'subtotal_cents' => $subtotal,
             'savings_cents'  => $savings,
             'total_cents'    => $subtotal, // No tax/shipping yet
-            'currency'       => 'JPY',
+            'currency'       => $this->currency,
         ];
     }
 
     /**
-     * Clear cart (not part of 4.3.0 public API, but useful internally/tests).
+     * Clear cart (helper).
      */
     public function clear(string $sessionId): void
     {
@@ -257,7 +320,40 @@ class CartService
     }
 
     /**
-     * ===== Internals =====
+     * NEW: Merge carts (guest -> current session).
+     * Useful when login arrives (or to merge multiple device sessions).
+     */
+    public function mergeSessions(string $fromSessionId, string $toSessionId): void
+    {
+        if ($fromSessionId === $toSessionId) {
+            return;
+        }
+
+        $from = $this->loadRaw($fromSessionId);
+        if (empty($from)) {
+            return;
+        }
+
+        $to = $this->loadRaw($toSessionId);
+
+        foreach ($from as $lineId => $line) {
+            $vid = (int)($line['variant_id'] ?? 0);
+            $qty = (int)($line['qty'] ?? 0);
+            if ($vid <= 0 || $qty <= 0) continue;
+
+            $toLineId = $this->lineId($vid);
+            $to[$toLineId] = [
+                'variant_id' => $vid,
+                'qty'        => min($this->maxQty, ($to[$toLineId]['qty'] ?? 0) + $qty),
+            ];
+        }
+
+        $this->saveRaw($toSessionId, $to);
+        Redis::del($this->key($fromSessionId));
+    }
+
+    /**
+     * ===== Internals (unchanged behavior) =====
      */
 
     private function loadRaw(string $sessionId): array
@@ -270,7 +366,7 @@ class CartService
 
     private function saveRaw(string $sessionId, array $raw): void
     {
-        // Normalize: strip invalid entries, clamp qty to [1, 20]
+        // Normalize: strip invalid entries, clamp qty to [1, maxQty]
         $normalized = [];
         foreach ($raw as $lineId => $line) {
             $vid = (int)($line['variant_id'] ?? 0);
@@ -278,7 +374,7 @@ class CartService
             if ($vid > 0 && $qty > 0) {
                 $normalized[(string)$lineId] = [
                     'variant_id' => $vid,
-                    'qty'        => min(20, max(1, $qty)),
+                    'qty'        => min($this->maxQty, max(1, $qty)),
                 ];
             }
         }
