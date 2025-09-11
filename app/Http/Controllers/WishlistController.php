@@ -2,44 +2,49 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Product;
+use App\Services\WishlistService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 class WishlistController extends Controller
 {
-    private const KEY = 'wishlist_product_ids';
+    public function __construct(private WishlistService $wishlist) {}
 
     public function index(Request $request)
     {
-        /** @var array<int,bool> */
-        $ids = $request->session()->get(self::KEY, []);
-        // Optional: load product cards by $ids for a full wishlist page.
-        return Inertia::render('Wishlist/Index', [
-            'product_ids' => array_keys($ids),
-        ]);
+        $sessionId = $request->session()->getId();
+        $data = $this->wishlist->items($sessionId);
+
+        if ($request->wantsJson()) {
+            return response()->json($data);
+        }
+
+        return Inertia::render('Wishlist/Index', $data);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'product_id' => ['required', 'integer', 'min:1'],
+            'product_id' => ['required', 'integer', Rule::exists('products', 'id')],
         ]);
 
-        /** @var array<int,bool> */
-        $ids = $request->session()->get(self::KEY, []);
-        $ids[$validated['product_id']] = true;
-        $request->session()->put(self::KEY, $ids);
+        $sessionId = $request->session()->getId();
+        $this->wishlist->add($sessionId, (int)$validated['product_id']);
 
-        return response()->noContent();
+        // Frontend only checks res.ok; No body required.
+        return response()->noContent(Response::HTTP_NO_CONTENT);
     }
 
-    public function destroy(Request $request, int $product)
+    // Accept raw product id from URL instead of slug-bound Product model
+    public function destroy(Request $request, $product)
     {
-        /** @var array<int,bool> */
-        $ids = $request->session()->get(self::KEY, []);
-        unset($ids[$product]);
-        $request->session()->put(self::KEY, $ids);
+        $sessionId = $request->session()->getId();
+        $productId = (int) $product;
+        $this->wishlist->remove($sessionId, $productId);
 
-        return response()->noContent();
+        return response()->noContent(Response::HTTP_NO_CONTENT);
     }
 }
