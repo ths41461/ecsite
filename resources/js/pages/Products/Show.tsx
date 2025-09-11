@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
 
 type Variant = {
     id?: number; // Prefer sending this from backend (needed for 4.3)
@@ -52,6 +53,10 @@ export default function Show({ product, gallery, related }: Props) {
     const [isWishlisting, setIsWishlisting] = useState(false);
     const [isWishlisted, setIsWishlisted] = useState(false);
     const [toast, setToast] = useState<null | { message: string; kind: 'success' | 'warning' | 'error' }>(null);
+    // Drawer state
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const [drawerCart, setDrawerCart] = useState<DrawerCart | null>(null);
+    const [busyLineId, setBusyLineId] = useState<string | null>(null);
 
     function showToast(message: string, kind: 'success' | 'warning' | 'error' = 'success') {
         setToast({ message, kind });
@@ -98,6 +103,18 @@ export default function Show({ product, gallery, related }: Props) {
         });
     };
 
+    // Same headers used by Cart page for PATCH/DELETE
+    function xsrfHeaders(): HeadersInit {
+        const parts = document.cookie.split('; ').map((c) => c.split('='));
+        const found = parts.find(([k]) => k === 'XSRF-TOKEN');
+        const xsrf = found ? decodeURIComponent(found[1] ?? '') : null;
+        return {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+        };
+    }
+
     const handleAddToCartEvent = async () => {
         if (!selectedVariant) return;
         setIsAddingToCart(true);
@@ -122,12 +139,10 @@ export default function Show({ product, gallery, related }: Props) {
                 const text = await res.text();
                 throw new Error(text || 'Failed to add to cart');
             }
-            // Inspect response to detect clamp notice for a better message
-            type CartLine = { variant_id: number; qty: number; notice?: { code: string; requested: number; available: number } };
-            type Cart = { lines: CartLine[] };
-            let cart: Cart | null = null;
+            // Inspect response to detect clamp notice for a better message and open drawer with server cart
+            let cart: DrawerCart | null = null;
             try {
-                cart = (await res.json()) as Cart;
+                cart = (await res.json()) as DrawerCart;
             } catch {}
 
             const line = cart?.lines?.find((l) => l.variant_id === selectedVariant.id);
@@ -136,6 +151,21 @@ export default function Show({ product, gallery, related }: Props) {
             } else {
                 showToast('Added to cart.', 'success');
             }
+
+            // Prefer using the POST response; fallback to GET /cart if parsing fails
+            if (cart) {
+                setDrawerCart(cart);
+                setDrawerOpen(true);
+            } else {
+                try {
+                    const fres = await fetch('/cart', { headers: { Accept: 'application/json' } });
+                    const fdata = (await fres.json()) as DrawerCart;
+                    setDrawerCart(fdata);
+                    setDrawerOpen(true);
+                } catch {
+                    // swallow; drawer just won't open if something went wrong
+                }
+            }
         } catch (error) {
             console.error('Failed to add to cart event:', error);
             showToast('Failed to add to cart. Please try again.', 'error');
@@ -143,6 +173,8 @@ export default function Show({ product, gallery, related }: Props) {
             setIsAddingToCart(false);
         }
     };
+
+    // (removed unused drawerRefresh/drawer* functions)
 
     const handleWishlistAdd = async () => {
         setIsWishlisting(true);
@@ -171,6 +203,38 @@ export default function Show({ product, gallery, related }: Props) {
         if (stock! <= (v.safety_stock ?? 1)) return 'Low stock';
         return 'In stock';
     };
+
+    // Drawer actions reuse same endpoints as Cart page
+    async function updateDrawerQty(line: DrawerLine, qty: number) {
+        setBusyLineId(line.line_id);
+        try {
+            const res = await fetch(`/cart/${encodeURIComponent(line.line_id)}`, {
+                method: 'PATCH',
+                headers: xsrfHeaders(),
+                body: JSON.stringify({ qty }),
+                credentials: 'same-origin',
+            });
+            const data = (await res.json()) as DrawerCart;
+            setDrawerCart(data);
+        } finally {
+            setBusyLineId(null);
+        }
+    }
+
+    async function removeDrawerLine(line: DrawerLine) {
+        setBusyLineId(line.line_id);
+        try {
+            const res = await fetch(`/cart/${encodeURIComponent(line.line_id)}`, {
+                method: 'DELETE',
+                headers: xsrfHeaders(),
+                credentials: 'same-origin',
+            });
+            const data = (await res.json()) as DrawerCart;
+            setDrawerCart(data);
+        } finally {
+            setBusyLineId(null);
+        }
+    }
 
     const MainImage = () => {
         const hero = gallery[activeIndex];
@@ -380,6 +444,17 @@ export default function Show({ product, gallery, related }: Props) {
                     {toast.message}
                 </div>
             )}
+
+            <CartDrawer
+                open={drawerOpen}
+                cart={drawerCart}
+                onClose={() => setDrawerOpen(false)}
+                onUpdateQty={updateDrawerQty}
+                onRemoveLine={removeDrawerLine}
+                busyLineId={busyLineId}
+            />
         </div>
     );
 }
+
+// Render CartDrawer at the end of the component output
