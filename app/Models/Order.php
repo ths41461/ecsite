@@ -19,6 +19,7 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+        return $this->hasOne(\App\Models\Payment::class)->latestOfMany();
     }
     public function shipments()
     {
@@ -61,4 +62,3 @@ class Order extends Model
         });
     }
 }
-
