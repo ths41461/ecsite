@@ -29,6 +29,8 @@ class OrdersController extends Controller
 
         return response()->json([
             'order_number' => $order->order_number,
+            'status' => $order->status,
+            'cancel_reason' => $order->cancel_reason,
             'status_id' => $order->order_status_id,
             'subtotal_yen' => $order->subtotal_yen,
             'discount_yen' => $order->discount_yen,

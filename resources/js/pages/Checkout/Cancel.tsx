@@ -5,16 +5,18 @@ type PageProps = {
   status?: string | null
   email?: string | null
   cancellation_emailed_at?: string | null
+  cancel_reason?: 'expired' | 'psp_canceled' | 'failed' | string | null
 }
 
-export default function CheckoutCancel({ order_number, status, email, cancellation_emailed_at }: PageProps) {
-  const isCanceled = status === 'canceled'
+export default function CheckoutCancel({ order_number, status, email, cancellation_emailed_at, cancel_reason }: PageProps) {
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
       <Head title="Payment Cancelled" />
       <div className="mb-2 flex items-center gap-3">
         <h1 className="text-2xl font-semibold">Payment cancelled</h1>
-        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">Canceled</span>
+        <span className="rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-800">
+          {cancel_reason === 'expired' ? 'Expired' : cancel_reason === 'psp_canceled' ? 'Canceled' : cancel_reason === 'failed' ? 'Payment failed' : 'Canceled'}
+        </span>
       </div>
       <p className="text-sm text-neutral-600">Order #{order_number}</p>
       {cancellation_emailed_at && email && (

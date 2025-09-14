@@ -42,10 +42,15 @@ export default function CheckoutSuccess({ order: initialOrder, session_id }: Pag
       try {
         const res = await fetch(`/orders/${encodeURIComponent(order.order_number)}`, { headers: { Accept: 'application/json' } })
         if (res.ok) {
-          const data: OrderDTO = await res.json()
-          setOrder(data)
+          const data: any = await res.json()
+          if (data?.status === 'canceled') {
+            window.location.href = `/checkout/cancel/${encodeURIComponent(order.order_number)}`
+            return
+          }
+          const dataTyped: OrderDTO = data
+          setOrder(dataTyped)
           // stop if processed
-          if (data.payments?.some((p) => p.processed_at)) return
+          if (dataTyped.payments?.some((p) => p.processed_at)) return
         }
       } catch {}
       if (attempts < 10) timer = setTimeout(poll, 1500)

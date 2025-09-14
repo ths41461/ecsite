@@ -15,7 +15,7 @@ function xsrfHeaders(): HeadersInit {
   }
 }
 
-type PageProps = { previousCancelledReason?: 'timeout' | 'changed' | null; pendingOrderNumber?: string | null }
+type PageProps = { previousCancelledReason?: 'timeout' | 'changed' | 'expired' | 'psp_canceled' | 'failed' | null; pendingOrderNumber?: string | null }
 
 export default function CheckoutStart({ previousCancelledReason, pendingOrderNumber }: PageProps) {
   const [loading, setLoading] = useState(false)
@@ -70,8 +70,18 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
       <h1 className="mb-2 text-2xl font-semibold">Checkout</h1>
       <p className="mb-6 text-sm text-neutral-600">You will be redirected to Stripe to complete payment.</p>
       {previousCancelledReason && (
-        <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${previousCancelledReason === 'timeout' ? 'bg-amber-50 text-amber-700' : 'bg-sky-50 text-sky-700'}`}>
-          Your previous attempt was cancelled {previousCancelledReason === 'timeout' ? 'due to timeout' : 'because your cart changed'}.
+        <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${
+          previousCancelledReason === 'timeout'
+            ? 'bg-amber-50 text-amber-700'
+            : previousCancelledReason === 'changed'
+            ? 'bg-sky-50 text-sky-700'
+            : 'bg-rose-50 text-rose-700'
+        }`}>
+          {previousCancelledReason === 'timeout' && 'Your previous attempt was cancelled due to timeout.'}
+          {previousCancelledReason === 'changed' && 'Your previous attempt was cancelled because your cart changed.'}
+          {previousCancelledReason === 'expired' && 'Your last payment attempt expired. No charge was made.'}
+          {previousCancelledReason === 'psp_canceled' && 'Your last payment attempt was canceled. No charge was made.'}
+          {previousCancelledReason === 'failed' && 'Your last payment attempt failed. No charge was made.'}
         </div>
       )}
       {error && <div className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}

@@ -42,8 +42,10 @@ class StripeWebhookController extends Controller
         try {
             match ($type) {
                 'checkout.session.completed' => $this->onCheckoutCompleted($data),
+                'checkout.session.expired'   => $this->onCheckoutExpired($data),
                 'payment_intent.succeeded'   => $this->onPaymentIntentSucceeded($data),
                 'payment_intent.payment_failed' => $this->onPaymentIntentFailed($data),
+                'payment_intent.canceled'    => $this->onPaymentIntentCanceled($data),
                 default => null,
             };
         } catch (\Throwable $e) {
@@ -94,15 +96,19 @@ class StripeWebhookController extends Controller
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();
         if ($payment) {
-            $payment->recordTransaction([
-                'provider' => 'stripe',
-                'ext_id' => $pi->id,
-                'amount_yen' => $order->total_yen,
-                'currency' => strtoupper($pi->currency ?? 'jpy'),
-                'status' => 'captured',
-                'payload' => $pi,
-                'occurred_at' => now(),
-            ]);
+            try {
+                $payment->recordTransaction([
+                    'provider' => 'stripe',
+                    'ext_id' => $pi->id,
+                    'amount_yen' => $order->total_yen,
+                    'currency' => strtoupper($pi->currency ?? 'jpy'),
+                    'status' => 'captured',
+                    'payload' => $pi,
+                    'occurred_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                // duplicate, ignore
+            }
             $payment->forceFill(['processed_at' => now()])->save();
         }
 
@@ -147,16 +153,42 @@ class StripeWebhookController extends Controller
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();
         if ($payment) {
-            $payment->recordTransaction([
-                'provider' => 'stripe',
-                'ext_id' => $pi->id,
-                'amount_yen' => $order->total_yen,
-                'currency' => strtoupper($pi->currency ?? 'jpy'),
-                'status' => 'failed',
-                'payload' => $pi,
-                'occurred_at' => now(),
-            ]);
+            try {
+                $payment->recordTransaction([
+                    'provider' => 'stripe',
+                    'ext_id' => $pi->id,
+                    'amount_yen' => $order->total_yen,
+                    'currency' => strtoupper($pi->currency ?? 'jpy'),
+                    'status' => 'failed',
+                    'payload' => $pi,
+                    'occurred_at' => now(),
+                ]);
+            } catch (\Throwable $e) {
+                // duplicate, ignore
+            }
             $payment->forceFill(['processed_at' => now()])->save();
         }
+    }
+
+    private function onCheckoutExpired(object $session): void
+    {
+        $orderNumber = $session->metadata->order_number ?? null;
+        if (!$orderNumber) return;
+        /** @var Order|null $order */
+        $order = Order::where('order_number', $orderNumber)->with(['items','payments'])->first();
+        if (!$order) return;
+        $sid = $session->metadata->cart_session_id ?? null;
+        app(\App\Services\OrderService::class)->cancelIfNotPaid($order, 'expired', $sid);
+    }
+
+    private function onPaymentIntentCanceled(object $pi): void
+    {
+        $orderNumber = $pi->metadata->order_number ?? null;
+        if (!$orderNumber) return;
+        /** @var Order|null $order */
+        $order = Order::where('order_number', $orderNumber)->with(['items','payments'])->first();
+        if (!$order) return;
+        $sid = $pi->metadata->cart_session_id ?? null;
+        app(\App\Services\OrderService::class)->cancelIfNotPaid($order, 'psp_canceled', $sid);
     }
 }

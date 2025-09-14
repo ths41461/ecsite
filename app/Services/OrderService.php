@@ -272,4 +272,43 @@ class OrderService
 
         return $order->fresh(['items','payments']);
     }
+
+    /**
+     * Cancel an order if not already paid/canceled, optionally restoring the cart for a given session id.
+     * Idempotent via order state and emailed_at flags.
+     */
+    public function cancelIfNotPaid(Order $order, string $reason, ?string $cartSessionId = null): Order
+    {
+        // Paid orders are final; do nothing
+        $paidId = (int) DB::table('order_statuses')->where('code', 'paid')->value('id');
+        if (($paidId && (int)$order->order_status_id === $paidId) || $order->status === 'processing') {
+            return $order;
+        }
+
+        // Already canceled? no-op
+        if ($order->status === 'canceled') {
+            return $order;
+        }
+
+        // Restore cart to the original snapshot for the provided (or stored) session id
+        $sid = $cartSessionId ?: (string)($order->cart_session_id ?? '');
+        if ($sid !== '') {
+            $this->cart->clear($sid);
+            foreach ($order->items as $item) {
+                $this->cart->add($sid, (int)$item->product_variant_id, (int)$item->qty);
+            }
+        }
+
+        DB::transaction(function () use ($order, $reason) {
+            try { $order->transitionTo('cancelled'); } catch (\Throwable $e) {}
+            $order->forceFill([
+                'status' => 'canceled',
+                'canceled_at' => now(),
+                'pending_expires_at' => now(),
+                'cancel_reason' => $reason,
+            ])->save();
+        });
+
+        return $order->fresh(['items','payments']);
+    }
 }

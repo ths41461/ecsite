@@ -28,10 +28,29 @@ class CheckoutController extends Controller
         $sessionId = $request->session()->getId();
         $reason = $this->orders->checkAndCancelPendingForSessionIfStale($sessionId);
         $reusable = $this->orders->getReusablePendingForSession($sessionId);
+        if (!$reason) {
+            $reason = $this->deriveLastAttemptReason($sessionId);
+        }
         return Inertia::render('Checkout/Start', [
-            'previousCancelledReason' => $reason, // 'timeout' | 'changed' | null
+            'previousCancelledReason' => $reason, // 'timeout' | 'changed' | 'expired' | 'psp_canceled' | 'failed' | null
             'pendingOrderNumber' => $reusable?->order_number,
         ]);
+    }
+
+    private function deriveLastAttemptReason(string $sessionId): ?string
+    {
+        $order = \App\Models\Order::where('cart_session_id', $sessionId)
+            ->orderByDesc('id')->first();
+        if (!$order) return null;
+        if ($order->status === 'canceled') {
+            return $order->cancel_reason ?: 'canceled';
+        }
+        $paymentId = \DB::table('payments')->where('order_id', $order->id)->orderByDesc('id')->value('id');
+        if ($paymentId) {
+            $status = \DB::table('payment_transactions')->where('payment_id', $paymentId)->orderByDesc('id')->value('status');
+            if ($status === 'failed') return 'failed';
+        }
+        return null;
     }
 
     /**
@@ -182,7 +201,7 @@ class CheckoutController extends Controller
      */
     public function cancel(Request $request, string $orderNumber)
     {
-        $order = Order::where('order_number', $orderNumber)->with(['items','payments'])->first();
+        $order = Order::where('order_number', $orderNumber)->with(['items', 'payments'])->first();
         if ($order) {
             $sessionId = $request->session()->getId();
             // Restore the cart to exactly what the order had (avoid doubling)
@@ -194,7 +213,10 @@ class CheckoutController extends Controller
             // Also mark order as cancelled (if not processed)
             $latestPay = $order->payments()->latest()->first();
             if (!$latestPay || !$latestPay->processed_at) {
-                try { $order->transitionTo('cancelled'); } catch (\Throwable $e) {}
+                try {
+                    $order->transitionTo('cancelled');
+                } catch (\Throwable $e) {
+                }
                 $order->forceFill([
                     'status' => 'canceled',
                     'canceled_at' => now(),
@@ -203,7 +225,10 @@ class CheckoutController extends Controller
 
                 // Send canceled email once per order (DB flag)
                 if (empty($order->cancellation_emailed_at)) {
-                    try { Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items']))); } catch (\Throwable $e) {}
+                    try {
+                        Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items'])));
+                    } catch (\Throwable $e) {
+                    }
                     $order->forceFill(['cancellation_emailed_at' => now()])->save();
                 }
             }
@@ -214,6 +239,7 @@ class CheckoutController extends Controller
             'status' => $order?->status,
             'email' => $order?->email,
             'cancellation_emailed_at' => optional($order?->cancellation_emailed_at)->toIso8601String(),
+            'cancel_reason' => $order?->cancel_reason,
         ]);
     }
 
@@ -226,7 +252,10 @@ class CheckoutController extends Controller
         $sessionId = $request->session()->getId();
         $order = $this->orders->cancelPendingAndRestoreCart($sessionId);
         if ($order && empty($order->cancellation_emailed_at)) {
-            try { Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items']))); } catch (\Throwable $e) {}
+            try {
+                Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items'])));
+            } catch (\Throwable $e) {
+            }
             $order->forceFill(['cancellation_emailed_at' => now()])->save();
         }
         if ($request->wantsJson()) {
