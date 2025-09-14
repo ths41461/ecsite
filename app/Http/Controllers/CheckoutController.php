@@ -1,0 +1,245 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Order;
+use App\Services\OrderService;
+use App\Services\StripePaymentService;
+use App\Services\CartService;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\OrderCanceledMail;
+
+class CheckoutController extends Controller
+{
+    public function __construct(
+        private OrderService $orders,
+        private StripePaymentService $stripe,
+        private CartService $cart,
+    ) {}
+
+    /**
+     * GET /checkout
+     * Simple start page with a button to proceed to payment.
+     */
+    public function index(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $reason = $this->orders->checkAndCancelPendingForSessionIfStale($sessionId);
+        $reusable = $this->orders->getReusablePendingForSession($sessionId);
+        return Inertia::render('Checkout/Start', [
+            'previousCancelledReason' => $reason, // 'timeout' | 'changed' | null
+            'pendingOrderNumber' => $reusable?->order_number,
+        ]);
+    }
+
+    /**
+     * POST /checkout
+     * Creates an Order from cart (if needed), then creates a Stripe Checkout Session and returns JSON { url, id, order_number }.
+     */
+    public function store(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+
+        // Minimal customer snapshot for now; extend with real form data later
+        $customer = [
+            'email' => $request->string('email')->toString() ?: 'guest@example.com',
+            'name'  => $request->string('name')->toString() ?: 'Guest',
+            'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
+        ];
+
+        // If an order already exists for this cart in session, reuse; otherwise create
+        $order = $this->orders->createFromCart($sessionId, $customer);
+
+        // Create checkout session with Stripe
+        $session = $this->stripe->createCheckoutSession($order, $sessionId);
+
+        return response()->json([
+            'id' => $session->id,
+            'url' => $session->url,
+            'order_number' => $order->order_number,
+        ]);
+    }
+
+    /**
+     * GET /checkout/thanks/{orderNumber}
+     * Displays final order summary. If a session_id is present, it will be used client-side for verification.
+     */
+    public function thanks(Request $request, string $orderNumber)
+    {
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['items', 'payments'])
+            ->firstOrFail();
+        $timeline = \DB::table('order_status_history as h')
+            ->join('order_statuses as s', 's.id', '=', 'h.to_status_id')
+            ->where('h.order_id', $order->id)
+            ->orderBy('h.changed_at')
+            ->get(['s.code as status', 'h.changed_at'])
+            ->map(fn($r) => [
+                'status' => $r->status,
+                'changed_at' => (string) $r->changed_at,
+            ]);
+
+        return Inertia::render('Checkout/Success', [
+            'order' => [
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'status_id' => $order->order_status_id,
+                'subtotal_yen' => $order->subtotal_yen,
+                'discount_yen' => $order->discount_yen,
+                'shipping_yen' => $order->shipping_yen,
+                'tax_yen' => $order->tax_yen,
+                'total_yen' => $order->total_yen,
+                'email' => $order->email,
+                'confirmation_emailed_at' => optional($order->confirmation_emailed_at)->toIso8601String(),
+                'cancellation_emailed_at' => optional($order->cancellation_emailed_at)->toIso8601String(),
+                'payments' => $order->payments->map(fn($p) => [
+                    'id' => $p->id,
+                    'status_id' => $p->payment_status_id,
+                    'processed_at' => optional($p->processed_at)->toIso8601String(),
+                ]),
+                'items' => $order->items->map(fn($i) => [
+                    'name' => $i->name_snapshot,
+                    'sku' => $i->sku_snapshot,
+                    'qty' => $i->qty,
+                    'unit_price_yen' => $i->unit_price_yen,
+                    'line_total_yen' => $i->line_total_yen,
+                ]),
+                'timeline' => $timeline,
+            ],
+            'session_id' => $request->query('session_id'),
+        ]);
+    }
+
+    /**
+     * GET /checkout/success?session_id=...
+     * Fetches the Stripe Checkout Session, resolves order_number via metadata, and shows the same success page.
+     */
+    public function success(Request $request)
+    {
+        $sessionId = (string) $request->query('session_id', '');
+        if (!$sessionId) {
+            abort(400, 'session_id is required');
+        }
+
+        $stripe = new \Stripe\StripeClient(config('stripe.secret'));
+        $session = $stripe->checkout->sessions->retrieve($sessionId);
+        $orderNumber = $session->metadata->order_number ?? null;
+        if (!$orderNumber) {
+            abort(404, 'Order not found');
+        }
+
+        // Reuse the thanks() rendering by loading the order and building identical props
+        $order = Order::where('order_number', $orderNumber)
+            ->with(['items', 'payments'])
+            ->firstOrFail();
+
+        $timeline = \DB::table('order_status_history as h')
+            ->join('order_statuses as s', 's.id', '=', 'h.to_status_id')
+            ->where('h.order_id', $order->id)
+            ->orderBy('h.changed_at')
+            ->get(['s.code as status', 'h.changed_at'])
+            ->map(fn($r) => [
+                'status' => $r->status,
+                'changed_at' => (string) $r->changed_at,
+            ]);
+
+        return Inertia::render('Checkout/Success', [
+            'order' => [
+                'order_number' => $order->order_number,
+                'status' => $order->status,
+                'status_id' => $order->order_status_id,
+                'subtotal_yen' => $order->subtotal_yen,
+                'discount_yen' => $order->discount_yen,
+                'shipping_yen' => $order->shipping_yen,
+                'tax_yen' => $order->tax_yen,
+                'total_yen' => $order->total_yen,
+                'email' => $order->email,
+                'confirmation_emailed_at' => optional($order->confirmation_emailed_at)->toIso8601String(),
+                'cancellation_emailed_at' => optional($order->cancellation_emailed_at)->toIso8601String(),
+                'payments' => $order->payments->map(fn($p) => [
+                    'id' => $p->id,
+                    'status_id' => $p->payment_status_id,
+                    'processed_at' => optional($p->processed_at)->toIso8601String(),
+                ]),
+                'items' => $order->items->map(fn($i) => [
+                    'name' => $i->name_snapshot,
+                    'sku' => $i->sku_snapshot,
+                    'qty' => $i->qty,
+                    'unit_price_yen' => $i->unit_price_yen,
+                    'line_total_yen' => $i->line_total_yen,
+                ]),
+                'timeline' => $timeline,
+            ],
+            'session_id' => $sessionId,
+        ]);
+    }
+
+    /**
+     * GET /checkout/cancel/{orderNumber}
+     * Restores the order items back into the current cart and shows cancel page.
+     */
+    public function cancel(Request $request, string $orderNumber)
+    {
+        $order = Order::where('order_number', $orderNumber)->with(['items','payments'])->first();
+        if ($order) {
+            $sessionId = $request->session()->getId();
+            // Restore the cart to exactly what the order had (avoid doubling)
+            $this->cart->clear($sessionId);
+            foreach ($order->items as $item) {
+                $this->cart->add($sessionId, (int)$item->product_variant_id, (int)$item->qty);
+            }
+
+            // Also mark order as cancelled (if not processed)
+            $latestPay = $order->payments()->latest()->first();
+            if (!$latestPay || !$latestPay->processed_at) {
+                try { $order->transitionTo('cancelled'); } catch (\Throwable $e) {}
+                $order->forceFill([
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                    'pending_expires_at' => now(),
+                ])->save();
+
+                // Send canceled email once per order (DB flag)
+                if (empty($order->cancellation_emailed_at)) {
+                    try { Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items']))); } catch (\Throwable $e) {}
+                    $order->forceFill(['cancellation_emailed_at' => now()])->save();
+                }
+            }
+        }
+
+        return Inertia::render('Checkout/Cancel', [
+            'order_number' => $orderNumber,
+            'status' => $order?->status,
+            'email' => $order?->email,
+            'cancellation_emailed_at' => optional($order?->cancellation_emailed_at)->toIso8601String(),
+        ]);
+    }
+
+    /**
+     * POST /checkout/cancel-pending
+     * Cancels any reusable pending order for current session and restores items to cart.
+     */
+    public function cancelPending(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $order = $this->orders->cancelPendingAndRestoreCart($sessionId);
+        if ($order && empty($order->cancellation_emailed_at)) {
+            try { Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items']))); } catch (\Throwable $e) {}
+            $order->forceFill(['cancellation_emailed_at' => now()])->save();
+        }
+        if ($request->wantsJson()) {
+            return response()->json([
+                'ok' => (bool) $order,
+                'order_number' => $order?->order_number,
+                'redirect' => $order ? route('checkout.cancel', ['orderNumber' => $order->order_number]) : url('/cart'),
+            ]);
+        }
+        // If we canceled a pending order, send the user to the cancel summary page for badges/notes
+        if ($order) {
+            return redirect()->route('checkout.cancel', ['orderNumber' => $order->order_number]);
+        }
+        return redirect()->to('/cart');
+    }
+}

@@ -10,7 +10,15 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     use HasFactory;
-    protected $casts = ['ordered_at' => 'datetime', 'shipped_at' => 'datetime', 'delivered_at' => 'datetime', 'canceled_at' => 'datetime'];
+    protected $casts = [
+        'ordered_at' => 'datetime',
+        'shipped_at' => 'datetime',
+        'delivered_at' => 'datetime',
+        'canceled_at' => 'datetime',
+        'inventory_decremented_at' => 'datetime',
+        'confirmation_emailed_at' => 'datetime',
+        'cancellation_emailed_at' => 'datetime',
+    ];
     protected $fillable = ['order_number', 'user_id', 'email', 'name', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'zip', 'subtotal_yen', 'tax_yen', 'shipping_yen', 'discount_yen', 'total_yen', 'payment_mode', 'status', 'ordered_at', 'shipped_at', 'delivered_at', 'canceled_at'];
     public function items()
     {
@@ -19,7 +27,12 @@ class Order extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
-        return $this->hasOne(\App\Models\Payment::class)->latestOfMany();
+    }
+
+    // Convenience relation if you ever need the latest payment directly
+    public function latestPayment()
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
     public function shipments()
     {

@@ -5,6 +5,9 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\OrdersController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -48,3 +51,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+// CHECKOUT
+Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+// Spec parity aliases
+Route::post('/checkout/create', [CheckoutController::class, 'store'])->name('checkout.create');
+Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+Route::get('/checkout/thanks/{orderNumber}', [CheckoutController::class, 'thanks'])->name('checkout.thanks');
+Route::get('/checkout/cancel/{orderNumber}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+Route::post('/checkout/cancel-pending', [CheckoutController::class, 'cancelPending'])->name('checkout.cancel_pending');
+
+// Orders API (for Success page polling)
+Route::get('/orders/{orderNumber}', [OrdersController::class, 'show'])->name('orders.show');
+Route::get('/orders/{orderNumber}/view', [OrdersController::class, 'view'])->name('orders.view');
+
+// Stripe webhook (no CSRF)
+Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])
+    ->name('webhooks.stripe');
