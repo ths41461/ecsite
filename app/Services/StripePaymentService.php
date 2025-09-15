@@ -47,6 +47,14 @@ class StripePaymentService
             'line_items' => $lineItems,
             'success_url' => $successUrl,
             'cancel_url'  => $cancelUrl,
+            // Allow customers to enter promotion codes on Stripe-hosted page
+            'allow_promotion_codes' => true,
+            // Prefill email when available
+            ...(filter_var($order->email, FILTER_VALIDATE_EMAIL) ? ['customer_email' => $order->email] : []),
+            // Optional UX improvements
+            'billing_address_collection' => 'auto',
+            'phone_number_collection' => ['enabled' => false],
+            'locale' => 'auto',
             'metadata' => [
                 'order_number' => (string) $order->order_number,
                 'order_id'     => (string) $order->id,

@@ -71,13 +71,41 @@ class StripeWebhookController extends Controller
             $payment->recordTransaction([
                 'provider' => 'stripe',
                 'ext_id' => $session->payment_intent ?? null,
-                'amount_yen' => $order->total_yen,
+                // Prefer the actual amount from Stripe session when present
+                'amount_yen' => (int) ($session->amount_total ?? $order->total_yen),
                 'currency' => 'JPY',
                 'status' => 'authorized', // Checkout completed; capture status may come via PI event
                 'payload' => $session,
                 'occurred_at' => now(),
             ]);
             $payment->forceFill(['processed_at' => now()])->save();
+
+            // Persist discount/totals from Checkout Session to keep our Order in sync
+            try {
+                $amountTotal = isset($session->amount_total) ? (int)$session->amount_total : null;
+                $amountDiscount = null;
+                if (isset($session->total_details) && is_object($session->total_details)) {
+                    $amountDiscount = isset($session->total_details->amount_discount)
+                        ? (int)$session->total_details->amount_discount
+                        : null;
+                }
+
+                $updates = [];
+                if (!is_null($amountDiscount) && $amountDiscount > 0) {
+                    $updates['discount_yen'] = (int)$order->discount_yen + (int)$amountDiscount;
+                }
+                if (!is_null($amountTotal) && $amountTotal > 0) {
+                    $updates['total_yen'] = (int)$amountTotal;
+                }
+                if ($updates) {
+                    $order->forceFill($updates)->save();
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Failed to reconcile discount from Checkout Session', [
+                    'order_id' => $order->id,
+                    'message' => $e->getMessage(),
+                ]);
+            }
         }
 
         // Move order to paid state
@@ -100,7 +128,8 @@ class StripeWebhookController extends Controller
                 $payment->recordTransaction([
                     'provider' => 'stripe',
                     'ext_id' => $pi->id,
-                    'amount_yen' => $order->total_yen,
+                    // Use captured amount from PI if available
+                    'amount_yen' => (int) ($pi->amount_received ?? $pi->amount ?? $order->total_yen),
                     'currency' => strtoupper($pi->currency ?? 'jpy'),
                     'status' => 'captured',
                     'payload' => $pi,
