@@ -10,8 +10,7 @@ use Stripe\StripeClient;
 class StripePaymentService
 {
     private StripeClient $stripe;
-
-    public function __construct()
+    public function __construct(private \App\Services\CartService $cart)
     {
         $this->stripe = new StripeClient(config('stripe.secret'));
     }
@@ -22,8 +21,12 @@ class StripePaymentService
      */
     public function createCheckoutSession(Order $order, string $cartSessionId): object
     {
+        if (!config('stripe.secret')) {
+            throw new \RuntimeException('Stripe secret key is missing. Set STRIPE_SECRET in .env');
+        }
         $successUrl = url('/checkout/thanks/' . $order->order_number) . '?session_id={CHECKOUT_SESSION_ID}';
         $cancelUrl  = url('/checkout/cancel/' . $order->order_number) . '?session_id={CHECKOUT_SESSION_ID}';
+        $returnUrl  = $successUrl; // Embedded Checkout uses return_url after completion
 
         $lineItems = [];
         foreach ($order->items as $item) {
@@ -41,14 +44,20 @@ class StripePaymentService
         }
 
         // We currently do not add separate shipping/tax lines; totals should still match order->total_yen.
+        // Determine applied in-app coupon (if any)
+        $cart = $this->cart->get($cartSessionId);
+        $appliedCouponCode = $cart['coupon_code'] ?? null;
+        $appliedCouponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+
         $params = [
             'mode' => 'payment',
+            'ui_mode' => 'embedded',
             'payment_method_types' => ['card'],
             'line_items' => $lineItems,
-            'success_url' => $successUrl,
-            'cancel_url'  => $cancelUrl,
-            // Allow customers to enter promotion codes on Stripe-hosted page
-            'allow_promotion_codes' => true,
+            // Embedded Checkout only accepts return_url; do not send success/cancel
+            'return_url'  => $returnUrl,
+            // Allow Stripe promo codes only when no in-app coupon applied (avoid stacking)
+            'allow_promotion_codes' => $appliedCouponDiscountYen <= 0,
             // Prefill email when available
             ...(filter_var($order->email, FILTER_VALIDATE_EMAIL) ? ['customer_email' => $order->email] : []),
             // Optional UX improvements
@@ -69,12 +78,38 @@ class StripePaymentService
             ],
         ];
 
+        // If in-app coupon applied, create a one-time Stripe coupon and attach to session discounts
+        if ($appliedCouponDiscountYen > 0) {
+            $coupon = $this->stripe->coupons->create([
+                'amount_off' => $appliedCouponDiscountYen,
+                'currency'   => 'jpy',
+                'duration'   => 'once',
+                'name'       => 'Order ' . $order->order_number . ' discount',
+                'metadata'   => [
+                    'order_number' => (string)$order->order_number,
+                    'local_coupon_code' => (string)$appliedCouponCode,
+                ],
+            ], [
+                'idempotency_key' => 'coupon:' . $order->order_number . ':' . $appliedCouponDiscountYen,
+            ]);
+            $params['discounts'] = [['coupon' => $coupon->id]];
+        }
+
         // Add idempotency key to guard against network retries on this attempt
         $idempotency = [
             'idempotency_key' => 'checkout:' . $order->order_number . ':' . bin2hex(random_bytes(8)),
         ];
 
-        $session = $this->stripe->checkout->sessions->create($params, $idempotency);
+        try {
+            $session = $this->stripe->checkout->sessions->create($params, $idempotency);
+        } catch (\Throwable $e) {
+            \Log::error('Stripe Checkout Session create failed', [
+                'order_id' => $order->id,
+                'order_number' => $order->order_number,
+                'error' => $e->getMessage(),
+            ]);
+            throw $e;
+        }
 
         // Attach session id to payment payload for correlation
         /** @var Payment|null $payment */
@@ -82,6 +117,10 @@ class StripePaymentService
         if ($payment) {
             $payload = $payment->payload_json ?? [];
             $payload['checkout_session_id'] = $session->id;
+            if (!empty($appliedCouponCode)) {
+                $payload['applied_coupon_code'] = $appliedCouponCode;
+                $payload['applied_coupon_discount_yen'] = $appliedCouponDiscountYen;
+            }
             $payment->forceFill(['payload_json' => $payload])->save();
         }
 

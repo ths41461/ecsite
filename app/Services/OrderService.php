@@ -53,13 +53,16 @@ class OrderService
 
             // Cart totals are in cents; convert to yen integers
             $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
-            $discountYen = (int) round(($cart['savings_cents'] ?? 0) / 100);
+            // Combine sale savings and coupon discount
+            $discountYen = (int) round((($cart['savings_cents'] ?? 0) + ($cart['coupon_discount_cents'] ?? 0)) / 100);
             $shippingYen = 0; // out of scope for now
             $taxYen = 0;      // out of scope for now
             $totalYen = (int) round(($cart['total_cents'] ?? 0) / 100);
 
             $order->subtotal_yen = $subtotalYen;
             $order->discount_yen = $discountYen;
+            $order->coupon_code = $cart['coupon_code'] ?? null;
+            $order->coupon_discount_yen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
             $order->shipping_yen = $shippingYen;
             $order->tax_yen = $taxYen;
             $order->total_yen = $totalYen;
@@ -101,6 +104,7 @@ class OrderService
                 'currency' => 'JPY',
                 'cart_session_id' => $sessionId,
                 'cart_digest' => $digest,
+                'applied_coupon_code' => $cart['coupon_code'] ?? null,
             ];
             $payment->save();
 
@@ -267,6 +271,8 @@ class OrderService
                 'status' => 'canceled',
                 'canceled_at' => now(),
                 'pending_expires_at' => now(),
+                // ensure reason set for analytics and UX
+                'cancel_reason' => $order->cancel_reason ?: 'customer_canceled',
             ])->save();
         });
 

@@ -24,6 +24,9 @@ type Cart = {
     savings_cents: number;
     total_cents: number;
     currency: string; // 'JPY'
+    coupon_code?: string | null;
+    coupon_discount_cents?: number;
+    coupon_summary?: string;
 };
 
 type PageProps = { initialCart: Cart };
@@ -51,6 +54,10 @@ export default function CartIndex({ initialCart }: PageProps) {
     const [cart, setCart] = useState<Cart>(initialCart);
     const [busyLine, setBusyLine] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [couponInput, setCouponInput] = useState('');
+    const [couponBusy, setCouponBusy] = useState(false);
+    const [couponError, setCouponError] = useState<string | null>(null);
+    const [couponNotice, setCouponNotice] = useState<string | null>(null);
 
     // Fetch fresh cart from server (JSON mode) — used after mutations or manual refresh
     async function refreshCart() {
@@ -90,6 +97,48 @@ export default function CartIndex({ initialCart }: PageProps) {
             setCart(data);
         } finally {
             setBusyLine(null);
+        }
+    }
+
+    async function applyCoupon() {
+        setCouponError(null);
+        setCouponNotice(null);
+        setCouponBusy(true);
+        try {
+            const res = await fetch('/cart/coupon', {
+                method: 'POST',
+                headers: xsrfHeaders(),
+                body: JSON.stringify({ code: couponInput }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                const msg = data?.errors?.code?.[0] || data?.message || 'Failed to apply coupon';
+                setCouponError(msg);
+                return;
+            }
+            setCart(data as Cart);
+            setCouponNotice('Coupon applied');
+            setCouponInput('');
+        } catch (e: any) {
+            setCouponError(e?.message || 'Failed to apply coupon');
+        } finally {
+            setCouponBusy(false);
+        }
+    }
+
+    async function removeCoupon() {
+        setCouponError(null);
+        setCouponNotice(null);
+        setCouponBusy(true);
+        try {
+            const res = await fetch('/cart/coupon', { method: 'DELETE', headers: xsrfHeaders() });
+            const data: Cart = await res.json();
+            setCart(data);
+            setCouponNotice('Coupon removed');
+        } catch (e: any) {
+            setCouponError(e?.message || 'Failed to remove coupon');
+        } finally {
+            setCouponBusy(false);
         }
     }
 
@@ -207,6 +256,31 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 <span>-{yen(cart.savings_cents)}</span>
                             </div>
                         )}
+                        {cart.coupon_code && (
+                            <div className="mb-1 text-sm">
+                                <div className="mb-1 flex items-center justify-between">
+                                    <span>
+                                        Coupon
+                                        <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+                                            {cart.coupon_code}
+                                        </span>
+                                    </span>
+                                    <span className="text-rose-700">
+                                        -{yen(cart.coupon_discount_cents || 0)}
+                                    </span>
+                                </div>
+                                {cart.coupon_summary && (
+                                    <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
+                                )}
+                                <button
+                                    onClick={removeCoupon}
+                                    disabled={couponBusy}
+                                    className="mt-2 text-xs text-neutral-600 underline hover:text-neutral-800 disabled:cursor-not-allowed"
+                                >
+                                    Remove coupon
+                                </button>
+                            </div>
+                        )}
                         <div className="mt-2 border-t pt-2">
                             <div className="flex items-center justify-between text-base font-semibold">
                                 <span>Total</span>
@@ -214,6 +288,34 @@ export default function CartIndex({ initialCart }: PageProps) {
                             </div>
                             <p className="mt-1 text-xs text-neutral-500">Tax & shipping calculated at checkout.</p>
                         </div>
+
+                        {/* Coupon entry */}
+                        {!cart.coupon_code && (
+                            <div className="mt-4 rounded-lg border border-neutral-200 p-3">
+                                <div className="mb-2 text-sm font-medium">Have a coupon?</div>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        value={couponInput}
+                                        onChange={(e) => setCouponInput(e.target.value)}
+                                        placeholder="Enter code"
+                                        className="flex-1 rounded-md border px-3 py-2 text-sm"
+                                    />
+                                    <button
+                                        onClick={applyCoupon}
+                                        disabled={couponBusy || !couponInput.trim()}
+                                        className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Apply
+                                    </button>
+                                </div>
+                                {couponError && (
+                                    <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
+                                )}
+                                {couponNotice && !couponError && (
+                                    <div className="mt-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
+                                )}
+                            </div>
+                        )}
 
                         <div className="mt-4">
                             <a

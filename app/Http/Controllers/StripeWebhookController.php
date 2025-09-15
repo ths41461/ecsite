@@ -91,11 +91,14 @@ class StripeWebhookController extends Controller
                 }
 
                 $updates = [];
-                if (!is_null($amountDiscount) && $amountDiscount > 0) {
-                    $updates['discount_yen'] = (int)$order->discount_yen + (int)$amountDiscount;
-                }
                 if (!is_null($amountTotal) && $amountTotal > 0) {
                     $updates['total_yen'] = (int)$amountTotal;
+                }
+                if (!is_null($amountDiscount)) {
+                    // Preserve the sale-savings portion; update coupon portion from Stripe
+                    $saleSavings = (int)$order->discount_yen - (int)($order->coupon_discount_yen ?? 0);
+                    $updates['coupon_discount_yen'] = (int) $amountDiscount;
+                    $updates['discount_yen'] = max(0, $saleSavings) + (int)$amountDiscount;
                 }
                 if ($updates) {
                     $order->forceFill($updates)->save();
@@ -139,6 +142,21 @@ class StripeWebhookController extends Controller
                 // duplicate, ignore
             }
             $payment->forceFill(['processed_at' => now()])->save();
+
+            // If an in-app coupon was applied, record redemption once per order
+            try {
+                $payload = $payment->payload_json ?? [];
+                $code = isset($payload['applied_coupon_code']) ? (string)$payload['applied_coupon_code'] : null;
+                if ($code) {
+                    /** @var \App\Models\Coupon|null $coupon */
+                    $coupon = \App\Models\Coupon::whereRaw('UPPER(code) = ?', [strtoupper($code)])->first();
+                    if ($coupon) {
+                        $coupon->redeem($order->user_id ? (int)$order->user_id : null, (int)$order->id);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Coupon redemption failed', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
         }
 
         try { $order->transitionTo('paid'); } catch (\Throwable $e) {}

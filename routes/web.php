@@ -39,6 +39,9 @@ Route::middleware('throttle:cart-mutations')->group(function () {
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{line}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{line}', [CartController::class, 'destroy'])->name('cart.destroy');
+    // Coupons
+    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 });
 
 
@@ -60,7 +63,7 @@ Route::post('/checkout/create', [CheckoutController::class, 'store'])->name('che
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
 Route::get('/checkout/thanks/{orderNumber}', [CheckoutController::class, 'thanks'])->name('checkout.thanks');
 Route::get('/checkout/cancel/{orderNumber}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-Route::post('/checkout/cancel-pending', [CheckoutController::class, 'cancelPending'])->name('checkout.cancel_pending');
+Route::get('/checkout/pay/{orderNumber}', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
 // Orders API (for Success page polling)
 Route::get('/orders/{orderNumber}', [OrdersController::class, 'show'])->name('orders.show');

@@ -71,13 +71,16 @@ class CheckoutController extends Controller
         // If an order already exists for this cart in session, reuse; otherwise create
         $order = $this->orders->createFromCart($sessionId, $customer);
 
-        // Create checkout session with Stripe
+        // Create checkout session with Stripe (Embedded)
         $session = $this->stripe->createCheckoutSession($order, $sessionId);
 
+        // Redirect client to our embedded pay page with client_secret
+        $cs = $session->client_secret ?? null;
         return response()->json([
             'id' => $session->id,
-            'url' => $session->url,
+            'client_secret' => $cs,
             'order_number' => $order->order_number,
+            'redirect' => $cs ? route('checkout.pay', ['orderNumber' => $order->order_number, 'cs' => $cs]) : null,
         ]);
     }
 
@@ -203,6 +206,25 @@ class CheckoutController extends Controller
     {
         $order = Order::where('order_number', $orderNumber)->with(['items', 'payments'])->first();
         if ($order) {
+            // Guard against race: if Stripe session is already complete/paid, do not cancel
+            $sessionIdQ = (string) $request->query('session_id', '');
+            $sessionId = $sessionIdQ !== ''
+                ? $sessionIdQ
+                : (string) optional($order->payments()->latest()->first())->payload_json['checkout_session_id'] ?? '';
+            if ($sessionId !== '') {
+                try {
+                    $stripe = new \Stripe\StripeClient(config('stripe.secret'));
+                    $cs = $stripe->checkout->sessions->retrieve($sessionId);
+                    $status = (string) ($cs->status ?? '');
+                    $pstatus = (string) ($cs->payment_status ?? '');
+                    if ($status === 'complete' || $pstatus === 'paid') {
+                        // Payment finished; send to thanks instead of cancel
+                        return redirect()->route('checkout.thanks', ['orderNumber' => $order->order_number, 'session_id' => $sessionId]);
+                    }
+                } catch (\Throwable $e) {
+                    // Ignore lookup errors; fall back to local checks
+                }
+            }
             $sessionId = $request->session()->getId();
             // Restore the cart to exactly what the order had (avoid doubling)
             $this->cart->clear($sessionId);
@@ -221,6 +243,8 @@ class CheckoutController extends Controller
                     'status' => 'canceled',
                     'canceled_at' => now(),
                     'pending_expires_at' => now(),
+                    // If webhook didn't set a reason, treat as customer-driven cancel
+                    'cancel_reason' => $order->cancel_reason ?: 'customer_canceled',
                 ])->save();
 
                 // Send canceled email once per order (DB flag)
@@ -243,32 +267,27 @@ class CheckoutController extends Controller
         ]);
     }
 
+
     /**
-     * POST /checkout/cancel-pending
-     * Cancels any reusable pending order for current session and restores items to cart.
+     * GET /checkout/pay/{orderNumber}?cs=...
+     * Renders the Embedded Checkout container with client_secret and publishable key.
      */
-    public function cancelPending(Request $request)
+    public function pay(Request $request, string $orderNumber)
     {
-        $sessionId = $request->session()->getId();
-        $order = $this->orders->cancelPendingAndRestoreCart($sessionId);
-        if ($order && empty($order->cancellation_emailed_at)) {
-            try {
-                Mail::to($order->email)->queue(new OrderCanceledMail($order->fresh(['items'])));
-            } catch (\Throwable $e) {
-            }
-            $order->forceFill(['cancellation_emailed_at' => now()])->save();
-        }
-        if ($request->wantsJson()) {
-            return response()->json([
-                'ok' => (bool) $order,
-                'order_number' => $order?->order_number,
-                'redirect' => $order ? route('checkout.cancel', ['orderNumber' => $order->order_number]) : url('/cart'),
-            ]);
-        }
-        // If we canceled a pending order, send the user to the cancel summary page for badges/notes
-        if ($order) {
-            return redirect()->route('checkout.cancel', ['orderNumber' => $order->order_number]);
-        }
-        return redirect()->to('/cart');
+        $clientSecret = (string) $request->query('cs', '');
+        if (!$clientSecret) abort(400, 'client_secret is required');
+        $sid = (string) $request->query('sid', '');
+
+        return Inertia::render('Checkout/Pay', [
+            'order_number' => $orderNumber,
+            'client_secret' => $clientSecret,
+            'stripe_pk' => config('stripe.publishable_key'),
+            'fallback_url' => (string) $request->query('hu', ''),
+            'start_url' => route('checkout.index'),
+            // Always provide a cancel URL; controller guards against post-payment
+            'cancel_url' => $sid !== ''
+                ? route('checkout.cancel', ['orderNumber' => $orderNumber, 'session_id' => $sid])
+                : route('checkout.cancel', ['orderNumber' => $orderNumber]),
+        ]);
     }
 }

@@ -31,11 +31,21 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
         body: JSON.stringify({}),
       })
       if (!res.ok) {
-        throw new Error('Failed to create checkout session')
+        const err = await res.json().catch(() => null)
+        throw new Error(err?.message || 'Failed to create checkout session')
       }
       const data = await res.json()
-      if (!data?.url) throw new Error('No checkout URL returned')
-      window.location.href = data.url
+      // For Embedded Checkout, use redirect to our pay page
+      if (data?.redirect) {
+        window.location.href = data.redirect
+        return
+      }
+      // Fallback to hosted URL if present (legacy)
+      if (data?.url) {
+        window.location.href = data.url
+        return
+      }
+      throw new Error('No checkout redirection returned')
     } catch (e: any) {
       setError(e?.message || 'Something went wrong')
     } finally {
@@ -43,26 +53,7 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
     }
   }
 
-  async function cancelPending() {
-    setError(null)
-    try {
-      const res = await fetch('/checkout/cancel-pending', {
-        method: 'POST',
-        headers: { ...xsrfHeaders(), Accept: 'application/json' },
-      })
-      if (!res.ok) throw new Error('Failed to cancel pending order')
-      const data = await res.json().catch(() => null)
-      if (data?.order_number) {
-        window.location.href = `/checkout/cancel/${encodeURIComponent(data.order_number)}`
-      } else if (data?.redirect) {
-        window.location.href = data.redirect
-      } else {
-        window.location.href = '/cart'
-      }
-    } catch (e: any) {
-      setError(e?.message || 'Something went wrong')
-    }
-  }
+  // We do not expose a manual "cancel attempt" in UI anymore.
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
@@ -95,12 +86,6 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
               className="rounded-md bg-rose-600 px-3 py-2 text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? 'Preparing…' : 'Resume Payment'}
-            </button>
-            <button
-              onClick={cancelPending}
-              className="rounded-md border border-neutral-300 px-3 py-2 text-neutral-700 hover:bg-white"
-            >
-              Cancel this attempt
             </button>
           </div>
         </div>

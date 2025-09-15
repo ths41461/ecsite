@@ -80,4 +80,32 @@ class CartController extends Controller
 
         return response()->json($cart);
     }
+
+    /**
+     * POST /cart/coupon
+     * Body: { code: string }
+     * Applies a coupon to the current cart.
+     */
+    public function applyCoupon(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $code = (string) $request->string('code')->toString();
+        try {
+            $cart = $this->cart->applyCoupon($sessionId, $code, optional($request->user())->id);
+            return response()->json($cart);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            return response()->json(['message' => $ve->getMessage(), 'errors' => $ve->errors()], 422);
+        }
+    }
+
+    /**
+     * DELETE /cart/coupon
+     * Removes any applied coupon from the current cart.
+     */
+    public function removeCoupon(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $cart = $this->cart->removeCoupon($sessionId);
+        return response()->json($cart);
+    }
 }
