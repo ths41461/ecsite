@@ -42,10 +42,11 @@ class CartController extends Controller
     public function store(StoreCartRequest $request)
     {
         $sessionId = $request->session()->getId();
+        $data = $request->validated();
         $cart = $this->cart->add(
             $sessionId,
-            $request->integer('variant_id'),
-            $request->integer('qty')
+            (int) $data['variant_id'],
+            (int) $data['qty']
         );
 
         return response()->json($cart);

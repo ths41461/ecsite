@@ -2,6 +2,7 @@ import { Head } from '@inertiajs/react'
 import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe-js'
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { useEffect, useMemo, useState } from 'react'
+import CheckoutTimeline, { TimelineStep } from '@/components/CheckoutTimeline'
 
 type PageProps = {
   order_number: string
@@ -13,9 +14,10 @@ type PageProps = {
   allow_cancel?: boolean
   session_status?: 'open' | 'expired' | 'unknown'
   restart_url?: string
+  timeline: TimelineStep[]
 }
 
-export default function CheckoutPay({ order_number, client_secret, stripe_pk, fallback_url, start_url, cancel_url, allow_cancel, session_status, restart_url }: PageProps) {
+export default function CheckoutPay({ order_number, client_secret, stripe_pk, fallback_url, start_url, cancel_url, allow_cancel, session_status, restart_url, timeline }: PageProps) {
   const stripePromise = useMemo(() => loadStripe(stripe_pk) as Promise<Stripe | null>, [stripe_pk])
   const [stripeReady, setStripeReady] = useState(false)
   useEffect(() => {
@@ -35,6 +37,8 @@ export default function CheckoutPay({ order_number, client_secret, stripe_pk, fa
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <Head title="Secure Payment" />
+      <CheckoutTimeline steps={timeline} />
+
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div>

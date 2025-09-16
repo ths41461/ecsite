@@ -68,30 +68,30 @@ class StripeWebhookController extends Controller
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();
         if ($payment) {
-            try {
-                $piId = $session->payment_intent ?? null;
-                $already = $piId
-                    ? DB::table('payment_transactions')->where([
-                        'provider' => 'stripe',
-                        'ext_id' => (string)$piId,
-                    ])->exists()
-                    : false;
-                if (!$already) {
-                    $payment->recordTransaction([
-                        'provider' => 'stripe',
-                        'ext_id' => $piId,
-                        // Prefer the actual amount from Stripe session when present
-                        'amount_yen' => (int) ($session->amount_total ?? $order->total_yen),
-                        'currency' => 'JPY',
-                        'status' => 'authorized', // Checkout completed; capture status may come via PI event
-                        'payload' => $session,
-                        'occurred_at' => now(),
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                // ignore duplicates or any insert race
+            $piId = $session->payment_intent ?? null;
+            $already = $piId
+                ? DB::table('payment_transactions')->where([
+                    'provider' => 'stripe',
+                    'ext_id' => (string)$piId,
+                ])->exists()
+                : false;
+            if (!$already) {
+                $payment->recordTransaction([
+                    'provider' => 'stripe',
+                    'ext_id' => $piId,
+                    'amount_yen' => (int) ($session->amount_total ?? $order->total_yen),
+                    'currency' => 'JPY',
+                    'status' => 'authorized',
+                    'payload' => $session,
+                    'occurred_at' => now(),
+                ]);
             }
-            $payment->forceFill(['processed_at' => now()])->save();
+            $legacy = Payment::legacyStatusFor('authorized');
+            $updates = ['processed_at' => now()];
+            if ($legacy) {
+                $updates['status'] = $legacy;
+            }
+            $payment->forceFill($updates)->save();
 
             // Persist discount/totals from Checkout Session to keep our Order in sync
             try {
@@ -124,9 +124,10 @@ class StripeWebhookController extends Controller
             }
         }
 
-        // Do not mark paid on session.completed; wait for PI.succeeded
-        // Set legacy status to processing-like while awaiting capture
-        $order->forceFill(['status' => 'processing'])->save();
+        // Only mark processing while waiting for payment; keep terminal states intact
+        if (!in_array($order->status, ['paid', 'shipped', 'delivered', 'refunded'])) {
+            $order->forceFill(['status' => 'processing'])->save();
+        }
     }
 
     private function onPaymentIntentSucceeded(object $pi): void
@@ -139,21 +140,22 @@ class StripeWebhookController extends Controller
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();
         if ($payment) {
-            try {
-                $payment->recordTransaction([
-                    'provider' => 'stripe',
-                    'ext_id' => $pi->id,
-                    // Use captured amount from PI if available
-                    'amount_yen' => (int) ($pi->amount_received ?? $pi->amount ?? $order->total_yen),
-                    'currency' => strtoupper($pi->currency ?? 'jpy'),
-                    'status' => 'captured',
-                    'payload' => $pi,
-                    'occurred_at' => now(),
-                ]);
-            } catch (\Throwable $e) {
-                // duplicate, ignore
+            $payment->recordTransaction([
+                'provider' => 'stripe',
+                'ext_id' => $pi->id,
+                // Use captured amount from PI if available
+                'amount_yen' => (int) ($pi->amount_received ?? $pi->amount ?? $order->total_yen),
+                'currency' => strtoupper($pi->currency ?? 'jpy'),
+                'status' => 'captured',
+                'payload' => $pi,
+                'occurred_at' => now(),
+            ]);
+            $legacy = Payment::legacyStatusFor('captured');
+            $updates = ['processed_at' => now()];
+            if ($legacy) {
+                $updates['status'] = $legacy;
             }
-            $payment->forceFill(['processed_at' => now()])->save();
+            $payment->forceFill($updates)->save();
 
             // If an in-app coupon was applied, record redemption once per order
             try {
@@ -178,8 +180,8 @@ class StripeWebhookController extends Controller
                 $order->transitionTo('paid');
             }
         } catch (\Throwable $e) {}
-        // Mirror legacy enum-ish status to an appropriate state (processing is the closest to paid)
-        $order->forceFill(['status' => 'processing'])->save();
+        // Mirror legacy enum field to paid as well
+        $order->forceFill(['status' => 'paid'])->save();
 
         // Decrement inventory once per order (idempotent by timestamp)
         if (empty($order->inventory_decremented_at)) {
@@ -231,7 +233,12 @@ class StripeWebhookController extends Controller
             } catch (\Throwable $e) {
                 // duplicate, ignore
             }
-            $payment->forceFill(['processed_at' => now()])->save();
+            $legacy = Payment::legacyStatusFor('failed');
+            $updates = ['processed_at' => now()];
+            if ($legacy) {
+                $updates['status'] = $legacy;
+            }
+            $payment->forceFill($updates)->save();
         }
     }
 

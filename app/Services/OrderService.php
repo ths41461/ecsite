@@ -71,6 +71,8 @@ class OrderService
             $order->ordered_at = now();
             $order->pending_expires_at = now()->addMinutes((int) config('cart.order_pending_ttl_minutes', 60));
             $order->cart_digest = $digest;
+            $order->details_completed_at = null;
+            $order->payment_started_at = null;
             // initialize modern status to pending
             $pendingId = (int) DB::table('order_statuses')->where('code', 'pending')->value('id');
             if ($pendingId) {
@@ -112,6 +114,23 @@ class OrderService
         });
 
         return $order;
+    }
+
+    public function updateCustomerDetails(Order $order, array $details): Order
+    {
+        $order->forceFill([
+            'email' => $details['email'] ?? $order->email,
+            'name' => $details['name'] ?? $order->name,
+            'phone' => $details['phone'] ?? $order->phone,
+            'address_line1' => $details['address_line1'] ?? $order->address_line1,
+            'address_line2' => $details['address_line2'] ?? $order->address_line2,
+            'city' => $details['city'] ?? $order->city,
+            'state' => $details['state'] ?? $order->state,
+            'zip' => $details['zip'] ?? $order->zip,
+            'details_completed_at' => now(),
+        ])->save();
+
+        return $order->fresh(['items', 'payments']);
     }
 
     private function generateOrderNumber(): string
@@ -285,9 +304,16 @@ class OrderService
      */
     public function cancelIfNotPaid(Order $order, string $reason, ?string $cartSessionId = null): Order
     {
-        // Paid orders are final; do nothing
+        // Paid orders are final; do nothing once a paid status or captured transaction exists
         $paidId = (int) DB::table('order_statuses')->where('code', 'paid')->value('id');
-        if (($paidId && (int)$order->order_status_id === $paidId) || $order->status === 'processing') {
+        $payments = $order->relationLoaded('payments') ? $order->payments : $order->payments()->get();
+        $paymentIds = $payments->pluck('id');
+        $hasCapturedTransaction = $paymentIds->isNotEmpty() && DB::table('payment_transactions')
+            ->whereIn('payment_id', $paymentIds)
+            ->whereIn('status', ['captured', 'refunded'])
+            ->exists();
+
+        if (($paidId && (int)$order->order_status_id === $paidId) || $hasCapturedTransaction) {
             return $order;
         }
 

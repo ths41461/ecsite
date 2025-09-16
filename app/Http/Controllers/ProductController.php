@@ -88,23 +88,23 @@ class ProductController extends Controller
                 if (config('scout.driver')) {
                     $ids = Product::search($q)->keys()->all();
 
-                    $query = (clone $base)->when(!empty($ids), function ($q2) use ($ids) {
-                        $q2->whereIn('products.id', $ids);
-                    });
-                    $applyFilters($query);
-                    // Apply sort: keep relevance only when sort is empty
-                    $this->applyOrder($query, $sort, !empty($ids) ? $ids : null);
+                    if (!empty($ids)) {
+                        $query = (clone $base)->whereIn('products.id', $ids);
+                        $applyFilters($query);
+                        // Apply sort: keep relevance only when sort is empty
+                        $this->applyOrder($query, $sort, $ids);
 
-                    $products = Cache::remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
-                        return $query->paginate($perPage)->through($mapProduct)->toArray();
-                    });
-                    $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
+                        $products = Cache::remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
+                            return $query->paginate($perPage)->through($mapProduct)->toArray();
+                        });
+                        $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
 
-                    return Inertia::render('Products/Index', [
-                        'products' => $products,
-                        'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max']),
-                        'facets'   => $facets,
-                    ]);
+                        return Inertia::render('Products/Index', [
+                            'products' => $products,
+                            'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max']),
+                            'facets'   => $facets,
+                        ]);
+                    }
                 }
             } catch (\Throwable $e) {
                 // fall through to DB fallback

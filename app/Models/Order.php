@@ -18,8 +18,10 @@ class Order extends Model
         'inventory_decremented_at' => 'datetime',
         'confirmation_emailed_at' => 'datetime',
         'cancellation_emailed_at' => 'datetime',
+        'details_completed_at' => 'datetime',
+        'payment_started_at' => 'datetime',
     ];
-    protected $fillable = ['order_number', 'user_id', 'email', 'name', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'zip', 'subtotal_yen', 'tax_yen', 'shipping_yen', 'discount_yen', 'total_yen', 'payment_mode', 'status', 'ordered_at', 'shipped_at', 'delivered_at', 'canceled_at'];
+    protected $fillable = ['order_number', 'user_id', 'email', 'name', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'zip', 'subtotal_yen', 'tax_yen', 'shipping_yen', 'discount_yen', 'total_yen', 'payment_mode', 'status', 'ordered_at', 'shipped_at', 'delivered_at', 'canceled_at', 'details_completed_at', 'payment_started_at'];
     public function items()
     {
         return $this->hasMany(OrderItem::class);

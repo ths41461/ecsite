@@ -35,6 +35,16 @@ it('adds a line on POST /cart and returns computed cart', function () {
     expect($res['subtotal_cents'])->toBeGreaterThan(0);
 });
 
+it('rejects invalid variants on POST /cart', function () {
+    $invalidVariant = (int) DB::table('product_variants')->max('id') + 999;
+
+    $this->postJson('/cart', [
+        'variant_id' => $invalidVariant,
+        'qty' => 1,
+    ])->assertStatus(422)
+      ->assertJsonValidationErrors(['variant_id']);
+});
+
 it('updates a line on PATCH /cart/{line}', function () {
     $vid = DB::table('product_variants')->value('id');
     $this->postJson('/cart', ['variant_id' => $vid, 'qty' => 1])->assertOk();

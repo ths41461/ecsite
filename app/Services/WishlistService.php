@@ -70,6 +70,9 @@ class WishlistService
         } else {
             $key = $this->key($sessionId);
             $ids = array_map('intval', Redis::smembers($key) ?? []);
+            if (!empty($ids)) {
+                Redis::expire($key, $this->ttlSeconds);
+            }
         }
 
         $ids = array_values(array_unique(array_filter($ids)));
@@ -102,6 +105,13 @@ class WishlistService
         $items = [];
         foreach ($ids as $id) {
             if (isset($byId[$id])) $items[] = $byId[$id];
+        }
+
+        if (!$userId && isset($key)) {
+            $missingIds = array_diff($ids, array_keys($byId));
+            if (!empty($missingIds)) {
+                Redis::srem($key, ...array_map('strval', $missingIds));
+            }
         }
 
         return ['items' => $items, 'count' => count($items)];

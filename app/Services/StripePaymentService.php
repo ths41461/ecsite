@@ -111,6 +111,8 @@ class StripePaymentService
             throw $e;
         }
 
+        $order->forceFill(['payment_started_at' => now()])->save();
+
         // Attach session id to payment payload for correlation
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();

@@ -58,6 +58,9 @@ require __DIR__ . '/auth.php';
 // CHECKOUT
 Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
 Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+Route::post('/checkout/order', [CheckoutController::class, 'createOrder'])->name('checkout.order');
+Route::get('/checkout/{orderNumber}/details', [CheckoutController::class, 'details'])->name('checkout.details');
+Route::post('/checkout/{orderNumber}/details', [CheckoutController::class, 'updateDetails'])->name('checkout.details.update');
 // Spec parity aliases
 Route::post('/checkout/create', [CheckoutController::class, 'store'])->name('checkout.create');
 Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');

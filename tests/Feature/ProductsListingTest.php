@@ -26,6 +26,17 @@ it('searches by q with DB fallback', function () {
         ->assertSee($p->name, false);
 });
 
+it('falls back to database results when scout search fails', function () {
+    $product = Product::first();
+    config()->set('scout.driver', 'unknown-driver');
+
+    get(route('products.index', ['q' => $product->name]))
+        ->assertOk()
+        ->assertSee($product->name, false);
+
+    config()->set('scout.driver', null);
+});
+
 it('filters by brand/category and returns facets', function () {
     $brand = Brand::inRandomOrder()->first();
     $cat   = Category::inRandomOrder()->first();

@@ -31,9 +31,79 @@ class CheckoutController extends Controller
         if (!$reason) {
             $reason = $this->deriveLastAttemptReason($sessionId);
         }
-        return Inertia::render('Checkout/Start', [
-            'previousCancelledReason' => $reason, // 'timeout' | 'changed' | 'expired' | 'psp_canceled' | 'failed' | null
-            'pendingOrderNumber' => $reusable?->order_number,
+
+        $cart = $this->cart->get($sessionId);
+        $order = $reusable ? $reusable->loadMissing('items') : null;
+
+        return Inertia::render('Checkout/Wizard', [
+            'step' => 'review',
+            'previousCancelledReason' => $reason,
+            'cart' => $cart,
+            'order' => $order ? $this->presentOrder($order) : null,
+            'timeline' => $this->buildTimeline($order),
+        ]);
+    }
+
+    public function createOrder(Request $request)
+    {
+        $sessionId = $request->session()->getId();
+        $customer = [
+            'email' => $request->string('email')->toString() ?: 'guest@example.com',
+            'name' => $request->string('name')->toString() ?: 'Guest',
+            'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
+        ];
+
+        try {
+            $order = $this->orders->createFromCart($sessionId, $customer)->loadMissing('items');
+        } catch (\RuntimeException $e) {
+            if ($e->getMessage() === 'Cart is empty') {
+                return response()->json([
+                    'message' => 'Cart is empty. Add items before proceeding to checkout.'
+                ], 422);
+            }
+            throw $e;
+        }
+
+        return response()->json([
+            'order' => $this->presentOrder($order),
+            'timeline' => $this->buildTimeline($order),
+            'redirect' => route('checkout.details', $order->order_number),
+        ]);
+    }
+
+    public function details(Request $request, string $orderNumber)
+    {
+        $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items');
+
+        return Inertia::render('Checkout/Wizard', [
+            'step' => 'details',
+            'previousCancelledReason' => null,
+            'cart' => null,
+            'order' => $this->presentOrder($order, true),
+            'timeline' => $this->buildTimeline($order),
+        ]);
+    }
+
+    public function updateDetails(Request $request, string $orderNumber)
+    {
+        $validated = $request->validate([
+            'email' => ['required', 'email'],
+            'name' => ['required', 'string', 'max:120'],
+            'phone' => ['nullable', 'string', 'max:30'],
+            'address_line1' => ['required', 'string', 'max:160'],
+            'address_line2' => ['nullable', 'string', 'max:160'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'state' => ['nullable', 'string', 'max:100'],
+            'zip' => ['nullable', 'string', 'max:20'],
+        ]);
+
+        $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items');
+        $order = $this->orders->updateCustomerDetails($order, $validated);
+
+        return response()->json([
+            'order' => $this->presentOrder($order, true),
+            'timeline' => $this->buildTimeline($order),
+            'redirect' => route('checkout.pay', ['orderNumber' => $order->order_number]),
         ]);
     }
 
@@ -60,16 +130,28 @@ class CheckoutController extends Controller
     public function store(Request $request)
     {
         $sessionId = $request->session()->getId();
+        $orderNumber = (string) $request->input('order_number', '');
 
-        // Minimal customer snapshot for now; extend with real form data later
-        $customer = [
-            'email' => $request->string('email')->toString() ?: 'guest@example.com',
-            'name'  => $request->string('name')->toString() ?: 'Guest',
-            'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
-        ];
+        if ($orderNumber !== '') {
+            $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items');
+        } else {
+            $customer = [
+                'email' => $request->string('email')->toString() ?: 'guest@example.com',
+                'name'  => $request->string('name')->toString() ?: 'Guest',
+                'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
+            ];
 
-        // If an order already exists for this cart in session, reuse; otherwise create
-        $order = $this->orders->createFromCart($sessionId, $customer);
+            try {
+                $order = $this->orders->createFromCart($sessionId, $customer)->loadMissing('items');
+            } catch (\RuntimeException $e) {
+                if ($e->getMessage() === 'Cart is empty') {
+                    return response()->json([
+                        'message' => 'Cart is empty. Add items before proceeding to checkout.'
+                    ], 422);
+                }
+                throw $e;
+            }
+        }
 
         // Create checkout session with Stripe (Embedded)
         $session = $this->stripe->createCheckoutSession($order, $sessionId);
@@ -279,6 +361,7 @@ class CheckoutController extends Controller
      */
     public function pay(Request $request, string $orderNumber)
     {
+        $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items', 'payments');
         $clientSecret = (string) $request->query('cs', '');
         if (!$clientSecret) abort(400, 'client_secret is required');
         $sid = (string) $request->query('sid', '');
@@ -322,11 +405,110 @@ class CheckoutController extends Controller
             'allow_cancel' => $allowCancel,
             'session_status' => $sessionStatus,
             'restart_url' => route('checkout.index'),
+            'timeline' => $this->buildTimeline($order),
         ]);
         // Avoid BFCache/stale Pay page after completion; force revalidation
         $httpResponse = $response->toResponse($request);
         $httpResponse->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');
         $httpResponse->headers->set('Pragma', 'no-cache');
         return $httpResponse;
+    }
+
+    private function presentOrder(Order $order, bool $withItems = false): array
+    {
+        $payload = [
+            'order_number' => $order->order_number,
+            'status' => $order->status,
+            'subtotal_yen' => $order->subtotal_yen,
+            'discount_yen' => $order->discount_yen,
+            'shipping_yen' => $order->shipping_yen,
+            'tax_yen' => $order->tax_yen,
+            'total_yen' => $order->total_yen,
+            'email' => $order->email,
+            'name' => $order->name,
+            'phone' => $order->phone,
+            'address_line1' => $order->address_line1,
+            'address_line2' => $order->address_line2,
+            'city' => $order->city,
+            'state' => $order->state,
+            'zip' => $order->zip,
+            'details_completed_at' => optional($order?->details_completed_at)->toIso8601String(),
+            'payment_started_at' => optional($order?->payment_started_at)->toIso8601String(),
+        ];
+
+        if ($withItems) {
+            $payload['items'] = $order->items->map(function ($item) {
+                return [
+                    'name' => $item->name_snapshot,
+                    'sku' => $item->sku_snapshot,
+                    'qty' => $item->qty,
+                    'unit_price_yen' => $item->unit_price_yen,
+                    'line_total_yen' => $item->line_total_yen,
+                ];
+            })->values();
+        }
+
+        return $payload;
+    }
+
+    private function buildTimeline(?Order $order): array
+    {
+        $orderStatus = $order?->status;
+        $detailsCompleted = (bool) ($order?->details_completed_at);
+        $paymentComplete = $order && in_array($orderStatus, ['processing', 'shipped', 'delivered', 'refunded']);
+        $paymentCanceled = $orderStatus === 'canceled';
+
+        $steps = [];
+
+        $steps[] = [
+            'key' => 'review',
+            'label' => 'Review',
+            'status' => $order ? 'complete' : 'current',
+        ];
+
+        $steps[] = [
+            'key' => 'details',
+            'label' => 'Details',
+            'status' => !$order
+                ? 'pending'
+                : ($detailsCompleted ? 'complete' : 'current'),
+            'completed_at' => $detailsCompleted ? optional($order?->details_completed_at)->toIso8601String() : null,
+        ];
+
+        $paymentStatus = 'pending';
+        if ($paymentCanceled) {
+            $paymentStatus = 'canceled';
+        } elseif ($paymentComplete) {
+            $paymentStatus = 'complete';
+        } elseif ($detailsCompleted) {
+            $paymentStatus = 'current';
+        }
+
+        $steps[] = [
+            'key' => 'payment',
+            'label' => 'Payment',
+            'status' => $paymentStatus,
+            'started_at' => optional($order?->payment_started_at)->toIso8601String(),
+            'completed_at' => $paymentComplete ? optional($order?->updated_at)->toIso8601String() : null,
+        ];
+
+        return $steps;
+    }
+
+    private function findOrderForSession(string $orderNumber, Request $request): Order
+    {
+        $order = Order::where('order_number', $orderNumber)->firstOrFail();
+        $sessionId = $request->session()->getId();
+
+        if ($order->cart_session_id && $order->cart_session_id !== $sessionId) {
+            \Log::warning('Checkout session mismatch', [
+                'order_number' => $orderNumber,
+                'stored_session' => $order->cart_session_id,
+                'current_session' => $sessionId,
+            ]);
+            abort(403, 'Checkout session mismatch for this order.');
+        }
+
+        return $order;
     }
 }
