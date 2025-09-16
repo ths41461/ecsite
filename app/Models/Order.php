@@ -48,7 +48,7 @@ class Order extends Model
         /** @var \Illuminate\Database\Connection $conn */
         $conn = DB::connection();
         $conn->transaction(function () use ($status, $changedBy) {
-            $fromId = $this->order_status_id;
+            $fromId = (int) $this->order_status_id;
 
             // Resolve target status id (by code or direct id)
             $toId = is_numeric($status)
@@ -57,6 +57,11 @@ class Order extends Model
 
             if (!$toId) {
                 throw new \InvalidArgumentException('Unknown order status: ' . (string)$status);
+            }
+
+            // No-op when transitioning to the same status (defensive against duplicate events)
+            if ($toId === $fromId) {
+                return;
             }
 
             // Write history first

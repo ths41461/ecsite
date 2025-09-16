@@ -68,16 +68,29 @@ class StripeWebhookController extends Controller
         /** @var Payment|null $payment */
         $payment = $order->payments()->latest()->first();
         if ($payment) {
-            $payment->recordTransaction([
-                'provider' => 'stripe',
-                'ext_id' => $session->payment_intent ?? null,
-                // Prefer the actual amount from Stripe session when present
-                'amount_yen' => (int) ($session->amount_total ?? $order->total_yen),
-                'currency' => 'JPY',
-                'status' => 'authorized', // Checkout completed; capture status may come via PI event
-                'payload' => $session,
-                'occurred_at' => now(),
-            ]);
+            try {
+                $piId = $session->payment_intent ?? null;
+                $already = $piId
+                    ? DB::table('payment_transactions')->where([
+                        'provider' => 'stripe',
+                        'ext_id' => (string)$piId,
+                    ])->exists()
+                    : false;
+                if (!$already) {
+                    $payment->recordTransaction([
+                        'provider' => 'stripe',
+                        'ext_id' => $piId,
+                        // Prefer the actual amount from Stripe session when present
+                        'amount_yen' => (int) ($session->amount_total ?? $order->total_yen),
+                        'currency' => 'JPY',
+                        'status' => 'authorized', // Checkout completed; capture status may come via PI event
+                        'payload' => $session,
+                        'occurred_at' => now(),
+                    ]);
+                }
+            } catch (\Throwable $e) {
+                // ignore duplicates or any insert race
+            }
             $payment->forceFill(['processed_at' => now()])->save();
 
             // Persist discount/totals from Checkout Session to keep our Order in sync
@@ -111,9 +124,8 @@ class StripeWebhookController extends Controller
             }
         }
 
-        // Move order to paid state
-        // Move order to a processing-like state while we await PI succeeded; if missing lookups, ignore
-        try { $order->transitionTo('paid'); } catch (\Throwable $e) {}
+        // Do not mark paid on session.completed; wait for PI.succeeded
+        // Set legacy status to processing-like while awaiting capture
         $order->forceFill(['status' => 'processing'])->save();
     }
 
@@ -159,7 +171,13 @@ class StripeWebhookController extends Controller
             }
         }
 
-        try { $order->transitionTo('paid'); } catch (\Throwable $e) {}
+        // Transition to paid only if not already in paid state
+        try {
+            $paidId = (int) DB::table('order_statuses')->where('code', 'paid')->value('id');
+            if ($paidId && (int) $order->order_status_id !== $paidId) {
+                $order->transitionTo('paid');
+            }
+        } catch (\Throwable $e) {}
         // Mirror legacy enum-ish status to an appropriate state (processing is the closest to paid)
         $order->forceFill(['status' => 'processing'])->save();
 

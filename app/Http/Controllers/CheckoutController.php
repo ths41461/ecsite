@@ -235,10 +235,15 @@ class CheckoutController extends Controller
             // Also mark order as cancelled (if not processed)
             $latestPay = $order->payments()->latest()->first();
             if (!$latestPay || !$latestPay->processed_at) {
-                try {
-                    $order->transitionTo('cancelled');
-                } catch (\Throwable $e) {
+                // Proactively expire the Stripe Checkout Session to prevent re-use of a dead session
+                if (!empty($sessionIdQ)) {
+                    try {
+                        $stripe = new \Stripe\StripeClient(config('stripe.secret'));
+                        $stripe->checkout->sessions->expire($sessionIdQ);
+                    } catch (\Throwable $e) {
+                    }
                 }
+                try { $order->transitionTo('cancelled'); } catch (\Throwable $e) {}
                 $order->forceFill([
                     'status' => 'canceled',
                     'canceled_at' => now(),
@@ -278,7 +283,33 @@ class CheckoutController extends Controller
         if (!$clientSecret) abort(400, 'client_secret is required');
         $sid = (string) $request->query('sid', '');
 
-        return Inertia::render('Checkout/Pay', [
+        // If we have a session id, pre-check its status to avoid rendering a dead/finished checkout
+        $allowCancel = true;
+        $sessionStatus = 'unknown'; // open | expired | unknown
+        if ($sid !== '') {
+            try {
+                $stripe = new \Stripe\StripeClient(config('stripe.secret'));
+                $cs = $stripe->checkout->sessions->retrieve($sid);
+                $status = (string) ($cs->status ?? '');
+                $pstatus = (string) ($cs->payment_status ?? '');
+                if ($status === 'complete' || $pstatus === 'paid') {
+                    return redirect()->route('checkout.thanks', ['orderNumber' => $orderNumber, 'session_id' => $sid]);
+                }
+                if ($status === 'expired' || $status === 'canceled') {
+                    // Render Pay with an expired status message and no embedded checkout
+                    $allowCancel = false;
+                    $sessionStatus = 'expired';
+                } else {
+                    $sessionStatus = 'open';
+                }
+                // Only allow cancel when session is still open and not paid
+                $allowCancel = ($status === 'open') && ($pstatus !== 'paid');
+            } catch (\Throwable $e) {
+                // ignore lookup errors; render embedded and let it handle
+            }
+        }
+
+        $response = Inertia::render('Checkout/Pay', [
             'order_number' => $orderNumber,
             'client_secret' => $clientSecret,
             'stripe_pk' => config('stripe.publishable_key'),
@@ -288,6 +319,14 @@ class CheckoutController extends Controller
             'cancel_url' => $sid !== ''
                 ? route('checkout.cancel', ['orderNumber' => $orderNumber, 'session_id' => $sid])
                 : route('checkout.cancel', ['orderNumber' => $orderNumber]),
+            'allow_cancel' => $allowCancel,
+            'session_status' => $sessionStatus,
+            'restart_url' => route('checkout.index'),
         ]);
+        // Avoid BFCache/stale Pay page after completion; force revalidation
+        $httpResponse = $response->toResponse($request);
+        $httpResponse->headers->set('Cache-Control', 'no-store, no-cache, must-revalidate');
+        $httpResponse->headers->set('Pragma', 'no-cache');
+        return $httpResponse;
     }
 }
