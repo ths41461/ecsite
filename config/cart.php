@@ -10,6 +10,9 @@ return [
     // Max quantity per line
     'max_qty' => env('CART_MAX_QTY', 20),
 
+    // Percent tax rate applied to the discounted subtotal (e.g. 10 for 10%)
+    'tax_rate_percent' => env('CART_TAX_RATE_PERCENT', 10),
+
     // Optionally clear the cart once payment succeeds (via Stripe webhook)
     'clear_on_payment_success' => env('CART_CLEAR_ON_PAYMENT_SUCCESS', true),
 

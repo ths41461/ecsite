@@ -22,6 +22,7 @@ type Cart = {
     lines: Line[];
     subtotal_cents: number;
     savings_cents: number;
+    tax_cents?: number;
     total_cents: number;
     currency: string; // 'JPY'
     coupon_code?: string | null;
@@ -256,6 +257,12 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 <span>-{yen(cart.savings_cents)}</span>
                             </div>
                         )}
+                        {(cart.tax_cents ?? 0) > 0 && (
+                            <div className="mb-1 flex items-center justify-between text-sm">
+                                <span>Tax</span>
+                                <span>{yen(cart.tax_cents ?? 0)}</span>
+                            </div>
+                        )}
                         {cart.coupon_code && (
                             <div className="mb-1 text-sm">
                                 <div className="mb-1 flex items-center justify-between">
@@ -286,7 +293,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 <span>Total</span>
                                 <span>{yen(cart.total_cents)}</span>
                             </div>
-                            <p className="mt-1 text-xs text-neutral-500">Tax & shipping calculated at checkout.</p>
+                            <p className="mt-1 text-xs text-neutral-500">Tax included. Shipping calculated at checkout.</p>
                         </div>
 
                         {/* Coupon entry */}

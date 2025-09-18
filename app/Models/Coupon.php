@@ -5,13 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Models\Product;
 
 class Coupon extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'id',
         'code',
         'description',
         'type',
@@ -19,7 +19,10 @@ class Coupon extends Model
         'starts_at',
         'ends_at',
         'max_uses',
-        'used_count',
+        'max_uses_per_user',
+        'min_subtotal_yen',
+        'max_discount_yen',
+        'exclude_sale_items',
         'is_active',
     ];
 
@@ -30,7 +33,16 @@ class Coupon extends Model
         'value'     => 'integer',
         'max_uses'  => 'integer',
         'used_count'=> 'integer',
+        'max_uses_per_user' => 'integer',
+        'min_subtotal_yen'  => 'integer',
+        'max_discount_yen'  => 'integer',
+        'exclude_sale_items'=> 'boolean',
     ];
+
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'coupon_products');
+    }
 
     public function isCurrentlyValid(): bool
     {

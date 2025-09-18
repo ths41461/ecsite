@@ -5,6 +5,8 @@ export type OrderDTO = {
   status_id: number | null
   subtotal_yen: number
   discount_yen: number
+  coupon_code?: string | null
+  coupon_discount_yen?: number | null
   shipping_yen: number
   tax_yen: number
   total_yen: number
@@ -27,6 +29,12 @@ export default function OrderSummary({ order }: { order: OrderDTO }) {
           <div className="mb-2 flex items-center justify-between text-emerald-700">
             <span className="text-sm">Discount</span>
             <span>-{yen(order.discount_yen)}</span>
+          </div>
+        )}
+        {order.coupon_code && (order.coupon_discount_yen ?? 0) > 0 && (
+          <div className="mb-2 flex items-center justify-between text-sm text-rose-600">
+            <span>Coupon ({order.coupon_code})</span>
+            <span>-{yen(order.coupon_discount_yen ?? 0)}</span>
           </div>
         )}
         {order.shipping_yen > 0 && (
@@ -69,4 +77,3 @@ export default function OrderSummary({ order }: { order: OrderDTO }) {
     </div>
   )
 }
-

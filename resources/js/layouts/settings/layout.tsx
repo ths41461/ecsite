@@ -3,11 +3,16 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { appearance } from '@/routes';
+import { index as couponsIndex } from '@/routes/coupons';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
+
+interface SettingsLayoutProps extends PropsWithChildren {
+    fullWidth?: boolean;
+}
 
 const sidebarNavItems: NavItem[] = [
     {
@@ -25,9 +30,14 @@ const sidebarNavItems: NavItem[] = [
         href: appearance(),
         icon: null,
     },
+    {
+        title: 'Coupons',
+        href: couponsIndex(),
+        icon: null,
+    },
 ];
 
-export default function SettingsLayout({ children }: PropsWithChildren) {
+export default function SettingsLayout({ children, fullWidth = false }: SettingsLayoutProps) {
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
@@ -64,7 +74,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <Separator className="my-6 lg:hidden" />
 
                 <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">{children}</section>
+                    <section className={cn(fullWidth ? 'space-y-12' : 'max-w-xl space-y-12')}>{children}</section>
                 </div>
             </div>
         </div>

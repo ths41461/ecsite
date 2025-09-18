@@ -10,6 +10,8 @@ type OrderDTO = {
   status_id: number | null
   subtotal_yen: number
   discount_yen: number
+  coupon_code?: string | null
+  coupon_discount_yen?: number | null
   shipping_yen: number
   tax_yen: number
   total_yen: number
@@ -62,6 +64,46 @@ export default function CheckoutSuccess({ order: initialOrder, session_id }: Pag
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
       <Head title="Order Success" />
+      <div
+        className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
+          order.status === 'canceled'
+            ? 'border-rose-200 bg-rose-50 text-rose-700'
+            : paid
+            ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+            : 'border-amber-200 bg-amber-50 text-amber-800'
+        }`}
+      >
+        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="font-semibold">
+              {order.status === 'canceled'
+                ? 'This order was canceled.'
+                : paid
+                ? 'Payment received. Thank you for your purchase!'
+                : 'We are waiting for payment confirmation.'}
+            </p>
+            <p className="text-xs opacity-80">Order #{order.order_number}</p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <a
+              className="rounded-md border border-current px-3 py-1 text-xs font-medium hover:bg-white/20"
+              href={`/orders/${encodeURIComponent(order.order_number)}/view`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View order
+            </a>
+            <a
+              className="rounded-md border border-current px-3 py-1 text-xs font-medium hover:bg-white/20"
+              href={`/orders/${encodeURIComponent(order.order_number)}/view?download=1`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Download receipt
+            </a>
+          </div>
+        </div>
+      </div>
       <div className="mb-2 flex items-center gap-3">
         <h1 className="text-2xl font-semibold">Order details</h1>
         {(() => {

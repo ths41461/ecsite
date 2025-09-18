@@ -35,12 +35,21 @@ class CheckoutController extends Controller
         $cart = $this->cart->get($sessionId);
         $order = $reusable ? $reusable->loadMissing('items') : null;
 
+        $savedContact = null;
+        if ($user = $request->user()) {
+            $savedContact = [
+                'email' => $user->email,
+                'name' => $user->name,
+            ];
+        }
+
         return Inertia::render('Checkout/Wizard', [
             'step' => 'review',
             'previousCancelledReason' => $reason,
             'cart' => $cart,
             'order' => $order ? $this->presentOrder($order) : null,
             'timeline' => $this->buildTimeline($order),
+            'savedContact' => $savedContact,
         ]);
     }
 
@@ -75,12 +84,21 @@ class CheckoutController extends Controller
     {
         $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items');
 
+        $savedContact = null;
+        if ($user = $request->user()) {
+            $savedContact = [
+                'email' => $user->email,
+                'name' => $user->name,
+            ];
+        }
+
         return Inertia::render('Checkout/Wizard', [
             'step' => 'details',
             'previousCancelledReason' => null,
             'cart' => null,
             'order' => $this->presentOrder($order, true),
             'timeline' => $this->buildTimeline($order),
+            'savedContact' => $savedContact,
         ]);
     }
 
@@ -192,6 +210,8 @@ class CheckoutController extends Controller
                 'status_id' => $order->order_status_id,
                 'subtotal_yen' => $order->subtotal_yen,
                 'discount_yen' => $order->discount_yen,
+                'coupon_code' => $order->coupon_code,
+                'coupon_discount_yen' => $order->coupon_discount_yen,
                 'shipping_yen' => $order->shipping_yen,
                 'tax_yen' => $order->tax_yen,
                 'total_yen' => $order->total_yen,
@@ -256,6 +276,8 @@ class CheckoutController extends Controller
                 'status_id' => $order->order_status_id,
                 'subtotal_yen' => $order->subtotal_yen,
                 'discount_yen' => $order->discount_yen,
+                'coupon_code' => $order->coupon_code,
+                'coupon_discount_yen' => $order->coupon_discount_yen,
                 'shipping_yen' => $order->shipping_yen,
                 'tax_yen' => $order->tax_yen,
                 'total_yen' => $order->total_yen,
@@ -421,6 +443,8 @@ class CheckoutController extends Controller
             'status' => $order->status,
             'subtotal_yen' => $order->subtotal_yen,
             'discount_yen' => $order->discount_yen,
+            'coupon_code' => $order->coupon_code,
+            'coupon_discount_yen' => $order->coupon_discount_yen,
             'shipping_yen' => $order->shipping_yen,
             'tax_yen' => $order->tax_yen,
             'total_yen' => $order->total_yen,

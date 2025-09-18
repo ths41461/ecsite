@@ -17,6 +17,9 @@ class CartService
     /** @var string Currency code (from config/cart.php) */
     private string $currency;
 
+    /** @var float Tax rate percent (from config/cart.php) */
+    private float $taxRate;
+
     // Separate Redis key for cart metadata (e.g., coupon)
     private function metaKey(string $sessionId): string
     {
@@ -29,6 +32,7 @@ class CartService
         $this->ttl      = (int) config('cart.ttl_seconds', 14 * 24 * 60 * 60);
         $this->maxQty   = (int) config('cart.max_qty', 20);
         $this->currency = (string) config('cart.currency', 'JPY');
+        $this->taxRate  = (float) config('cart.tax_rate_percent', 0);
     }
 
     /**
@@ -188,6 +192,7 @@ class CartService
                 'lines' => [],
                 'subtotal_cents' => 0,
                 'savings_cents' => 0,
+                'tax_cents' => 0,
                 'total_cents' => 0,
                 'currency' => $this->currency,
             ];
@@ -203,6 +208,7 @@ class CartService
                 'lines' => [],
                 'subtotal_cents' => 0,
                 'savings_cents' => 0,
+                'tax_cents' => 0,
                 'total_cents' => 0,
                 'currency' => $this->currency,
             ];
@@ -392,7 +398,9 @@ class CartService
             }
         }
 
-        $total = max(0, $subtotal - $couponDiscount); // No tax/shipping yet
+        $taxableBase = max(0, $subtotal - $couponDiscount);
+        $taxCents = (int) round($taxableBase * max($this->taxRate, 0) / 100);
+        $total = max(0, $taxableBase + $taxCents);
 
         return [
             'lines'                   => $lines,
@@ -401,6 +409,7 @@ class CartService
             'coupon_code'             => $couponCode,
             'coupon_discount_cents'   => $couponDiscount,
             ...(isset($couponSummary) ? ['coupon_summary' => $couponSummary] : []),
+            'tax_cents'               => $taxCents,
             'total_cents'             => $total,
             'currency'                => $this->currency,
         ];

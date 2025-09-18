@@ -22,6 +22,10 @@ export type Cart = {
     subtotal_cens: never; // guard against typo; see below
     subtotal_cents: number;
     savings_cents: number;
+    coupon_code?: string | null;
+    coupon_discount_cents?: number;
+    coupon_summary?: string;
+    tax_cents?: number;
     total_cents: number;
     currency: string;
 };
@@ -237,12 +241,29 @@ export default function CartDrawer({ open, cart, onClose, onUpdateQty, onRemoveL
                                 <span>-{yen(cart.savings_cents)}</span>
                             </div>
                         )}
+                        {cart?.coupon_code && (cart.coupon_discount_cents ?? 0) > 0 && (
+                            <div className="mb-1">
+                                <div className="flex items-center justify-between text-sm text-rose-600">
+                                    <span>Coupon ({cart.coupon_code})</span>
+                                    <span>-{yen(cart.coupon_discount_cents ?? 0)}</span>
+                                </div>
+                                {cart.coupon_summary && (
+                                    <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
+                                )}
+                            </div>
+                        )}
+                        {cart && (cart.tax_cents ?? 0) > 0 && (
+                            <div className="mb-1 flex items-center justify-between text-sm">
+                                <span>Tax</span>
+                                <span>{yen(cart.tax_cents ?? 0)}</span>
+                            </div>
+                        )}
                         <div className="mt-2 border-t pt-2">
                             <div className="flex items-center justify-between text-base font-semibold">
                                 <span>Total</span>
                                 <span>{yen(cart?.total_cents ?? 0)}</span>
                             </div>
-                            <p className="mt-1 text-xs text-neutral-500">Tax & shipping calculated at checkout.</p>
+                            <p className="mt-1 text-xs text-neutral-500">Tax included. Shipping calculated at checkout.</p>
                         </div>
 
                         <div className="mt-4 flex gap-2">

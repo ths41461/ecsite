@@ -1,7 +1,6 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use App\Models\Order;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 
@@ -14,12 +13,13 @@ beforeEach(function () {
 
 it('creates a pending order from the wizard entry point', function () {
     $variantId = DB::table('product_variants')->value('id');
+
     $session = $this->app['session'];
     $session->start();
     $sessionId = $session->getId();
-    $token = bin2hex(random_bytes(16));
-    $session->put('_token', $token);
-    $cartResponse = $this
+    $token = $session->token();
+
+    $this
         ->withSession($session->all())
         ->withCookie(config('session.cookie', 'laravel_session'), $sessionId)
         ->withHeader('X-CSRF-TOKEN', $token)
@@ -28,12 +28,12 @@ it('creates a pending order from the wizard entry point', function () {
 
     $sessionId = app('session')->getId();
 
-    $response = $this
+    $payload = $this
         ->withCookie(config('session.cookie', 'laravel_session'), $sessionId)
         ->withHeader('X-CSRF-TOKEN', $token)
         ->postJson(route('checkout.order'))
-        ->assertOk();
-    $payload = $response->json();
+        ->assertOk()
+        ->json();
 
     expect($payload['order']['order_number'] ?? null)->not->toBeNull();
     expect($payload['redirect'])->toBe(route('checkout.details', ['orderNumber' => $payload['order']['order_number']]));
@@ -44,12 +44,13 @@ it('creates a pending order from the wizard entry point', function () {
 
 it('updates customer details and returns redirect to payment step', function () {
     $variantId = DB::table('product_variants')->value('id');
+
     $session = $this->app['session'];
     $session->start();
     $sessionId = $session->getId();
-    $token = bin2hex(random_bytes(16));
-    $session->put('_token', $token);
-    $cartResponse = $this
+    $token = $session->token();
+
+    $this
         ->withSession($session->all())
         ->withCookie(config('session.cookie', 'laravel_session'), $sessionId)
         ->withHeader('X-CSRF-TOKEN', $token)

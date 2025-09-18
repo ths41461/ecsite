@@ -36,24 +36,29 @@ class StripeWebhookController extends Controller
             return response('Invalid signature', Response::HTTP_BAD_REQUEST);
         }
 
-        $type = $event->type ?? '';
-        $data = $event->data['object'] ?? null;
-
         try {
-            match ($type) {
-                'checkout.session.completed' => $this->onCheckoutCompleted($data),
-                'checkout.session.expired'   => $this->onCheckoutExpired($data),
-                'payment_intent.succeeded'   => $this->onPaymentIntentSucceeded($data),
-                'payment_intent.payment_failed' => $this->onPaymentIntentFailed($data),
-                'payment_intent.canceled'    => $this->onPaymentIntentCanceled($data),
-                default => null,
-            };
+            $this->processStripeEvent($event);
         } catch (\Throwable $e) {
             Log::error('Stripe webhook error: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             return response('Webhook processing error', 500);
         }
 
         return response('ok');
+    }
+
+    public function processStripeEvent(object $event): void
+    {
+        $type = $event->type ?? '';
+        $data = $event->data['object'] ?? null;
+
+        match ($type) {
+            'checkout.session.completed' => $this->onCheckoutCompleted($data),
+            'checkout.session.expired'   => $this->onCheckoutExpired($data),
+            'payment_intent.succeeded'   => $this->onPaymentIntentSucceeded($data),
+            'payment_intent.payment_failed' => $this->onPaymentIntentFailed($data),
+            'payment_intent.canceled'    => $this->onPaymentIntentCanceled($data),
+            default => null,
+        };
     }
 
     private function onCheckoutCompleted(object $session): void
@@ -126,7 +131,12 @@ class StripeWebhookController extends Controller
 
         // Only mark processing while waiting for payment; keep terminal states intact
         if (!in_array($order->status, ['paid', 'shipped', 'delivered', 'refunded'])) {
-            $order->forceFill(['status' => 'processing'])->save();
+            $order->forceFill([
+                'status' => 'processing',
+                'stripe_checkout_session_id' => $session->id ?? $order->stripe_checkout_session_id,
+            ])->save();
+        } elseif (!empty($session->id) && !$order->stripe_checkout_session_id) {
+            $order->forceFill(['stripe_checkout_session_id' => $session->id])->save();
         }
     }
 
@@ -181,7 +191,10 @@ class StripeWebhookController extends Controller
             }
         } catch (\Throwable $e) {}
         // Mirror legacy enum field to paid as well
-        $order->forceFill(['status' => 'paid'])->save();
+        $order->forceFill([
+            'status' => 'paid',
+            'stripe_payment_intent_id' => $pi->id,
+        ])->save();
 
         // Decrement inventory once per order (idempotent by timestamp)
         if (empty($order->inventory_decremented_at)) {

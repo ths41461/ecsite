@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Settings\PasswordController;
 use App\Http\Controllers\Settings\ProfileController;
+use App\Http\Controllers\Settings\CouponController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -21,4 +22,9 @@ Route::middleware('auth')->group(function () {
     Route::get('settings/appearance', function () {
         return Inertia::render('settings/appearance');
     })->name('appearance');
+
+    Route::get('settings/coupons', [CouponController::class, 'index'])->name('coupons.index');
+    Route::post('settings/coupons', [CouponController::class, 'store'])->name('coupons.store');
+    Route::put('settings/coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
+    Route::delete('settings/coupons/{coupon}', [CouponController::class, 'destroy'])->name('coupons.destroy');
 });

@@ -53,16 +53,16 @@ class OrderService
 
             // Cart totals are in cents; convert to yen integers
             $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
-            // Combine sale savings and coupon discount
-            $discountYen = (int) round((($cart['savings_cents'] ?? 0) + ($cart['coupon_discount_cents'] ?? 0)) / 100);
+            $saleSavingsYen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
+            $couponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
             $shippingYen = 0; // out of scope for now
-            $taxYen = 0;      // out of scope for now
+            $taxYen = (int) round((int)($cart['tax_cents'] ?? 0) / 100);
             $totalYen = (int) round(($cart['total_cents'] ?? 0) / 100);
 
             $order->subtotal_yen = $subtotalYen;
-            $order->discount_yen = $discountYen;
+            $order->discount_yen = $saleSavingsYen;
             $order->coupon_code = $cart['coupon_code'] ?? null;
-            $order->coupon_discount_yen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+            $order->coupon_discount_yen = $couponDiscountYen;
             $order->shipping_yen = $shippingYen;
             $order->tax_yen = $taxYen;
             $order->total_yen = $totalYen;
@@ -73,6 +73,8 @@ class OrderService
             $order->cart_digest = $digest;
             $order->details_completed_at = null;
             $order->payment_started_at = null;
+            $order->stripe_checkout_session_id = null;
+            $order->stripe_payment_intent_id = null;
             // initialize modern status to pending
             $pendingId = (int) DB::table('order_statuses')->where('code', 'pending')->value('id');
             if ($pendingId) {

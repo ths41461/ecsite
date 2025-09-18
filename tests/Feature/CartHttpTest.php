@@ -16,6 +16,7 @@ it('returns an empty cart on GET /cart initially', function () {
 
     expect($res['lines'])->toBeArray()->toBeEmpty();
     expect($res['subtotal_cents'])->toBe(0);
+    expect($res['tax_cents'])->toBe(0);
     expect($res['total_cents'])->toBe(0);
     expect($res['currency'])->toBe('JPY');
 });
@@ -33,6 +34,7 @@ it('adds a line on POST /cart and returns computed cart', function () {
     expect($res['lines'][0]['variant_id'])->toBe($vid);
     expect($res['lines'][0]['qty'])->toBeGreaterThanOrEqual(1);
     expect($res['subtotal_cents'])->toBeGreaterThan(0);
+    expect($res['tax_cents'])->toBeGreaterThanOrEqual(0);
 });
 
 it('rejects invalid variants on POST /cart', function () {
@@ -61,5 +63,6 @@ it('removes a line on DELETE /cart/{line}', function () {
     $res = $this->deleteJson("/cart/{$vid}")->assertOk()->json();
 
     expect($res['lines'])->toBeArray()->toBeEmpty();
+    expect($res['tax_cents'])->toBe(0);
     expect($res['total_cents'])->toBe(0);
 });

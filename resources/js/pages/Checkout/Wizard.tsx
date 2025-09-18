@@ -19,6 +19,9 @@ type CartPayload = {
     lines: CartLine[];
     subtotal_cents: number;
     savings_cents: number;
+    coupon_code?: string | null;
+    coupon_summary?: string | null;
+    tax_cents?: number;
     coupon_discount_cents?: number;
     total_cents: number;
     currency: string;
@@ -40,6 +43,8 @@ type OrderPayload = {
     shipping_yen: number;
     tax_yen: number;
     total_yen: number;
+    coupon_code?: string | null;
+    coupon_discount_yen?: number | null;
     email: string;
     name: string;
     phone?: string | null;
@@ -51,12 +56,18 @@ type OrderPayload = {
     items?: OrderItem[];
 };
 
+type SavedContact = {
+    email?: string | null;
+    name?: string | null;
+};
+
 type Props = {
     step: 'review' | 'details';
     previousCancelledReason?: string | null;
     cart?: CartPayload | null;
     order?: OrderPayload | null;
     timeline: TimelineStep[];
+    savedContact?: SavedContact | null;
 };
 
 function formatYen(value: number) {
@@ -73,12 +84,12 @@ function xsrfHeaders(): HeadersInit {
     };
 }
 
-export default function CheckoutWizard({ step, previousCancelledReason, cart, order, timeline }: Props) {
+export default function CheckoutWizard({ step, previousCancelledReason, cart, order, timeline, savedContact }: Props) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [form, setForm] = useState({
-        email: order?.email ?? '',
-        name: order?.name ?? '',
+        email: order?.email ?? savedContact?.email ?? '',
+        name: order?.name ?? savedContact?.name ?? '',
         phone: order?.phone ?? '',
         address_line1: order?.address_line1 ?? '',
         address_line2: order?.address_line2 ?? '',
@@ -206,15 +217,26 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                         </tbody>
                     </table>
                 </div>
-                <div className="rounded-lg border border-neutral-200 bg-transparent px-4 py-3 text-sm">
+                <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
                         <span>{formatYen((cart.subtotal_cents ?? 0) / 100)}</span>
                     </div>
                     {(cart.coupon_discount_cents ?? 0) > 0 && (
                         <div className="flex justify-between text-rose-600">
-                            <span>Coupon discount</span>
+                            <span>
+                                Coupon{cart.coupon_code ? ` (${cart.coupon_code})` : ''}
+                            </span>
                             <span>-{formatYen((cart.coupon_discount_cents ?? 0) / 100)}</span>
+                        </div>
+                    )}
+                    {cart.coupon_summary && (
+                        <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
+                    )}
+                    {(cart.tax_cents ?? 0) > 0 && (
+                        <div className="flex justify-between">
+                            <span>Tax</span>
+                            <span>{formatYen((cart.tax_cents ?? 0) / 100)}</span>
                         </div>
                     )}
                     <div className="mt-1 flex justify-between font-semibold">
@@ -310,6 +332,12 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                                 <span>-{formatYen(order?.discount_yen ?? 0)}</span>
                             </div>
                         )}
+                        {order?.coupon_code && (order?.coupon_discount_yen ?? 0) > 0 && (
+                            <div className="flex justify-between text-rose-600 text-xs">
+                                <span>Coupon ({order.coupon_code})</span>
+                                <span>-{formatYen(order.coupon_discount_yen ?? 0)}</span>
+                            </div>
+                        )}
                         <div className="flex justify-between">
                             <span>Shipping</span>
                             <span>{formatYen(order?.shipping_yen ?? 0)}</span>
@@ -324,96 +352,114 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                         </div>
                     </div>
 
-                    <form onSubmit={submitDetails} className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">Email</label>
-                                <input
-                                    type="email"
-                                    value={form.email}
-                                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                    required
-                                />
-                                {validationErrors.email && <p className="mt-1 text-xs text-rose-600">{validationErrors.email[0]}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">Name</label>
-                                <input
-                                    type="text"
-                                    value={form.name}
-                                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                    required
-                                />
-                                {validationErrors.name && <p className="mt-1 text-xs text-rose-600">{validationErrors.name[0]}</p>}
-                            </div>
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">Phone</label>
-                                <input
-                                    type="tel"
-                                    value={form.phone ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                />
-                                {validationErrors.phone && <p className="mt-1 text-xs text-rose-600">{validationErrors.phone[0]}</p>}
-                            </div>
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-neutral-500 uppercase">Address line 1</label>
-                            <input
-                                type="text"
-                                value={form.address_line1}
-                                onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-                                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                required
-                            />
-                            {validationErrors.address_line1 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line1[0]}</p>}
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-neutral-500 uppercase">Address line 2</label>
-                            <input
-                                type="text"
-                                value={form.address_line2 ?? ''}
-                                onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-                                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                            />
-                            {validationErrors.address_line2 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line2[0]}</p>}
-                        </div>
-                        <div className="grid gap-4 md:grid-cols-3">
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">City</label>
-                                <input
-                                    type="text"
-                                    value={form.city ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                />
-                                {validationErrors.city && <p className="mt-1 text-xs text-rose-600">{validationErrors.city[0]}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">State</label>
-                                <input
-                                    type="text"
-                                    value={form.state ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                />
-                                {validationErrors.state && <p className="mt-1 text-xs text-rose-600">{validationErrors.state[0]}</p>}
-                            </div>
-                            <div>
-                                <label className="text-xs font-semibold text-neutral-500 uppercase">Postal code</label>
-                                <input
-                                    type="text"
-                                    value={form.zip ?? ''}
-                                    onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
-                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                                />
-                                {validationErrors.zip && <p className="mt-1 text-xs text-rose-600">{validationErrors.zip[0]}</p>}
-                            </div>
-                        </div>
+          <p className="text-sm text-neutral-600">We use this information to confirm your order and deliver updates.</p>
+          <form onSubmit={submitDetails} className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                  Email <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  required
+                  autoComplete="email"
+                  aria-required="true"
+                />
+                {validationErrors.email && <p className="mt-1 text-xs text-rose-600">{validationErrors.email[0]}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                  Name <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  required
+                  autoComplete="name"
+                  aria-required="true"
+                />
+                {validationErrors.name && <p className="mt-1 text-xs text-rose-600">{validationErrors.name[0]}</p>}
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">Phone <span className="text-neutral-400">(optional)</span></label>
+                <input
+                  type="tel"
+                  value={form.phone ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  autoComplete="tel"
+                />
+                {validationErrors.phone && <p className="mt-1 text-xs text-rose-600">{validationErrors.phone[0]}</p>}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-neutral-500 uppercase">
+                Address line 1 <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={form.address_line1}
+                onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                required
+                autoComplete="address-line1"
+                aria-required="true"
+              />
+              {validationErrors.address_line1 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line1[0]}</p>}
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-neutral-500 uppercase">Address line 2 <span className="text-neutral-400">(optional)</span></label>
+              <input
+                type="text"
+                value={form.address_line2 ?? ''}
+                onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
+                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                autoComplete="address-line2"
+              />
+              {validationErrors.address_line2 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line2[0]}</p>}
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">City <span className="text-neutral-400">(optional)</span></label>
+                <input
+                  type="text"
+                  value={form.city ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  autoComplete="address-level2"
+                />
+                {validationErrors.city && <p className="mt-1 text-xs text-rose-600">{validationErrors.city[0]}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">State <span className="text-neutral-400">(optional)</span></label>
+                <input
+                  type="text"
+                  value={form.state ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  autoComplete="address-level1"
+                />
+                {validationErrors.state && <p className="mt-1 text-xs text-rose-600">{validationErrors.state[0]}</p>}
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">Postal code <span className="text-neutral-400">(optional)</span></label>
+                <input
+                  type="text"
+                  value={form.zip ?? ''}
+                  onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
+                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                  autoComplete="postal-code"
+                />
+                {validationErrors.zip && <p className="mt-1 text-xs text-rose-600">{validationErrors.zip[0]}</p>}
+              </div>
+            </div>
 
                         <div className="flex items-center justify-between">
                             <a href="/checkout" className="text-sm text-neutral-600 hover:underline">

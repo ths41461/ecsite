@@ -43,6 +43,19 @@ class StripePaymentService
             ];
         }
 
+        if ($order->tax_yen > 0) {
+            $lineItems[] = [
+                'price_data' => [
+                    'currency' => 'jpy',
+                    'product_data' => [
+                        'name' => 'Tax',
+                    ],
+                    'unit_amount' => (int) $order->tax_yen,
+                ],
+                'quantity' => 1,
+            ];
+        }
+
         // We currently do not add separate shipping/tax lines; totals should still match order->total_yen.
         // Determine applied in-app coupon (if any)
         $cart = $this->cart->get($cartSessionId);
@@ -111,7 +124,10 @@ class StripePaymentService
             throw $e;
         }
 
-        $order->forceFill(['payment_started_at' => now()])->save();
+        $order->forceFill([
+            'payment_started_at' => now(),
+            'stripe_checkout_session_id' => $session->id,
+        ])->save();
 
         // Attach session id to payment payload for correlation
         /** @var Payment|null $payment */
