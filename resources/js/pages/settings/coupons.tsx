@@ -3,7 +3,7 @@ import SettingsLayout from '@/layouts/settings/layout';
 import { destroy as destroyCouponRoute, index as couponsIndexRoute, store as storeCouponRoute, update as updateCouponRoute } from '@/routes/coupons';
 import { type BreadcrumbItem } from '@/types';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 type Coupon = {
     id: number;
@@ -75,6 +75,14 @@ const breadcrumbs: BreadcrumbItem[] = [
 export default function CouponsSettings({ coupons }: Props) {
     const [editing, setEditing] = useState<Coupon | null>(null);
     const { data, setData, transform, post, put, delete: destroy, processing, reset, errors } = useForm<FormShape>(defaultForm);
+    const [nowLabel, setNowLabel] = useState(() => new Date().toLocaleString());
+
+    useEffect(() => {
+        const id = window.setInterval(() => {
+            setNowLabel(new Date().toLocaleString());
+        }, 60000);
+        return () => window.clearInterval(id);
+    }, []);
 
     function resetForm() {
         reset();
@@ -140,6 +148,22 @@ export default function CouponsSettings({ coupons }: Props) {
     }
 
     const heading = useMemo(() => (editing ? `Edit coupon ${editing.code}` : 'Create coupon'), [editing]);
+
+    function renderStatusSummary(coupon: Coupon) {
+        if (!coupon.is_active) {
+            return 'inactive';
+        }
+        const now = Date.now();
+        const startsAt = coupon.starts_at ? new Date(coupon.starts_at).getTime() : null;
+        const endsAt = coupon.ends_at ? new Date(coupon.ends_at).getTime() : null;
+        if (startsAt && startsAt > now) {
+            return `scheduled (starts ${new Date(startsAt).toLocaleString()})`;
+        }
+        if (endsAt && endsAt < now) {
+            return `expired on ${new Date(endsAt).toLocaleString()}`;
+        }
+        return 'active now';
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -221,6 +245,9 @@ export default function CouponsSettings({ coupons }: Props) {
                                             className="mt-1 w-full rounded-md border px-3 py-2 text-sm"
                                         />
                                         {errors.starts_at && <p className="mt-1 text-xs text-rose-600">{errors.starts_at}</p>}
+                                        <p className="mt-1 text-xs text-neutral-500">
+                                            Leave blank to start immediately. Current time: {nowLabel}
+                                        </p>
                                     </div>
                                     <div>
                                         <label className="text-xs font-semibold text-neutral-500 uppercase">Ends at</label>
@@ -376,6 +403,9 @@ export default function CouponsSettings({ coupons }: Props) {
                                         <div>
                                             <span className="font-semibold">Period:</span> {coupon.starts_at ? coupon.starts_at : '—'} →{' '}
                                             {coupon.ends_at ? coupon.ends_at : '—'}
+                                        </div>
+                                        <div>
+                                            <span className="font-semibold">Status right now:</span> {renderStatusSummary(coupon)}
                                         </div>
                                         <div>
                                             <span className="font-semibold">Usage:</span> {coupon.used_count}/{coupon.max_uses ?? '∞'}

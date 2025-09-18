@@ -113,7 +113,10 @@ export default function CartIndex({ initialCart }: PageProps) {
             });
             const data = await res.json();
             if (!res.ok) {
-                const msg = data?.errors?.code?.[0] || data?.message || 'Failed to apply coupon';
+                let msg = data?.errors?.code?.[0] || data?.message || 'Failed to apply coupon';
+                if (msg === 'Coupon not currently valid.') {
+                    msg = `${msg} Double-check that the coupon has already started and has not yet expired.`;
+                }
                 setCouponError(msg);
                 return;
             }
@@ -121,7 +124,11 @@ export default function CartIndex({ initialCart }: PageProps) {
             setCouponNotice('Coupon applied');
             setCouponInput('');
         } catch (e: any) {
-            setCouponError(e?.message || 'Failed to apply coupon');
+            const fallback = e?.message || 'Failed to apply coupon';
+            const msg = fallback === 'Coupon not currently valid.'
+                ? `${fallback} Double-check that the coupon has already started and has not yet expired.`
+                : fallback;
+            setCouponError(msg);
         } finally {
             setCouponBusy(false);
         }
