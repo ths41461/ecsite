@@ -69,8 +69,6 @@ class StripePaymentService
             'line_items' => $lineItems,
             // Embedded Checkout only accepts return_url; do not send success/cancel
             'return_url'  => $returnUrl,
-            // Allow Stripe promo codes only when no in-app coupon applied (avoid stacking)
-            'allow_promotion_codes' => $appliedCouponDiscountYen <= 0,
             // Prefill email when available
             ...(filter_var($order->email, FILTER_VALIDATE_EMAIL) ? ['customer_email' => $order->email] : []),
             // Optional UX improvements
@@ -90,6 +88,11 @@ class StripePaymentService
                 ],
             ],
         ];
+
+        // Allow Stripe promo codes only when no in-app coupon applied (avoid stacking)
+        if ($appliedCouponDiscountYen <= 0) {
+            $params['allow_promotion_codes'] = true;
+        }
 
         // If in-app coupon applied, create a one-time Stripe coupon and attach to session discounts
         if ($appliedCouponDiscountYen > 0) {

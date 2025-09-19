@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
 use App\Models\Coupon;
+use App\Models\Product;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -34,20 +36,28 @@ class CouponController extends Controller
                     'min_subtotal_yen' => $coupon->min_subtotal_yen,
                     'max_discount_yen' => $coupon->max_discount_yen,
                     'exclude_sale_items' => (bool) $coupon->exclude_sale_items,
-                    'product_ids' => $coupon->products->pluck('id'),
-                    'product_names' => $coupon->products->pluck('name'),
+                    'product_ids' => $coupon->products->pluck('id')->values(),
+                    'product_names' => $coupon->products->pluck('name')->values(),
                 ];
             });
 
         return Inertia::render('settings/coupons', [
             'coupons' => $coupons,
+            'productOptions' => Product::query()
+                ->orderBy('name')
+                ->get(['id', 'name', 'slug'])
+                ->map(fn ($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                ]),
         ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validated($request);
-        $productIds = $this->parseProductIds($data['product_ids'] ?? null);
+        $productIds = $data['product_ids'] ?? [];
         unset($data['product_ids']);
         $coupon = Coupon::create($data + ['used_count' => 0]);
         $coupon->products()->sync($productIds);
@@ -58,7 +68,7 @@ class CouponController extends Controller
     public function update(Request $request, Coupon $coupon): RedirectResponse
     {
         $data = $this->validated($request, $coupon->id);
-        $productIds = $this->parseProductIds($data['product_ids'] ?? null);
+        $productIds = $data['product_ids'] ?? [];
         unset($data['product_ids']);
         $coupon->update($data);
         $coupon->products()->sync($productIds);
@@ -68,8 +78,13 @@ class CouponController extends Controller
 
     public function destroy(Coupon $coupon): RedirectResponse
     {
-        $coupon->products()->detach();
-        $coupon->delete();
+        DB::transaction(function () use ($coupon) {
+            DB::table('coupon_redemptions')->where('coupon_id', $coupon->id)->delete();
+            DB::table('coupon_products')->where('coupon_id', $coupon->id)->delete();
+            DB::table('coupon_categories')->where('coupon_id', $coupon->id)->delete();
+            $coupon->products()->detach();
+            $coupon->delete();
+        });
 
         return back()->with('success', 'Coupon removed.');
     }
@@ -89,21 +104,8 @@ class CouponController extends Controller
             'max_discount_yen' => ['nullable', 'integer', 'min:0'],
             'exclude_sale_items' => ['boolean'],
             'is_active' => ['boolean'],
-            'product_ids' => ['nullable', 'string'],
+            'product_ids' => ['nullable', 'array'],
+            'product_ids.*' => ['integer', 'exists:products,id'],
         ]);
-    }
-
-    private function parseProductIds(?string $raw): array
-    {
-        if (!$raw) {
-            return [];
-        }
-
-        return collect(explode(',', $raw))
-            ->map(fn ($id) => (int) trim($id))
-            ->filter(fn ($id) => $id > 0)
-            ->unique()
-            ->values()
-            ->all();
     }
 }

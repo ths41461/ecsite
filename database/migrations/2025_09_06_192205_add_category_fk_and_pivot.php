@@ -7,6 +7,19 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
+    private function dropForeignIfExists(string $table, string $constraint): void
+    {
+        $database = DB::getDatabaseName();
+        $exists = DB::selectOne(
+            'SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND CONSTRAINT_NAME = ?',
+            [$database, $table, $constraint]
+        );
+
+        if ($exists) {
+            DB::statement("ALTER TABLE `{$table}` DROP FOREIGN KEY `{$constraint}`");
+        }
+    }
+
     public function up(): void
     {
         // --- categories: add light tree fields if missing ---
@@ -65,27 +78,20 @@ return new class extends Migration
     {
         if (Schema::hasTable('category_product')) {
             Schema::table('category_product', function (Blueprint $table) {
-                try {
-                    $table->dropForeign(['category_id']);
-                } catch (\Throwable $e) {
-                }
-                try {
-                    $table->dropForeign(['product_id']);
-                } catch (\Throwable $e) {
-                }
+                // handled outside using explicit drops
             });
+            $this->dropForeignIfExists('category_product', 'category_product_category_id_foreign');
+            $this->dropForeignIfExists('category_product', 'category_product_product_id_foreign');
             Schema::dropIfExists('category_product');
         }
 
         Schema::table('products', function (Blueprint $table) {
-            try {
-                $table->dropForeign(['category_id']);
-            } catch (\Throwable $e) {
-            }
             // keep the column; removing could break app queries. If you want to drop:
             // $table->dropColumn('category_id');
         });
+        $this->dropForeignIfExists('products', 'products_category_id_foreign');
 
+        $this->dropForeignIfExists('categories', 'categories_parent_id_foreign');
         Schema::table('categories', function (Blueprint $table) {
             if (Schema::hasColumn('categories', 'depth')) {
                 $table->dropIndex(['depth']);

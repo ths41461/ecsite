@@ -3,14 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
+return new class extends Migration {
     public function up(): void
     {
-        // Allow webhook handlers to persist the paid state without truncation warnings.
         DB::statement(<<<SQL
             ALTER TABLE `orders`
             MODIFY COLUMN `status`
@@ -19,11 +14,9 @@ return new class extends Migration
         SQL);
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
+        // We keep the same definition to avoid truncating existing "paid" rows during rollback.
         DB::statement(<<<SQL
             ALTER TABLE `orders`
             MODIFY COLUMN `status`

@@ -36,12 +36,13 @@ Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
 
 // Mutations are rate-limited (30 req/min by default). Adjust as needed.
 Route::middleware('throttle:cart-mutations')->group(function () {
+    // Coupons (register specific routes before parameterized /cart/{line})
+    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
+    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
+
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::patch('/cart/{line}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{line}', [CartController::class, 'destroy'])->name('cart.destroy');
-    // Coupons
-    Route::post('/cart/coupon', [CartController::class, 'applyCoupon'])->name('cart.coupon.apply');
-    Route::delete('/cart/coupon', [CartController::class, 'removeCoupon'])->name('cart.coupon.remove');
 });
 
 

@@ -45,6 +45,7 @@ function getCookie(name: string) {
 function xsrfHeaders(): HeadersInit {
     const xsrf = getCookie('XSRF-TOKEN');
     return {
+        Accept: 'application/json',
         'Content-Type': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
@@ -64,7 +65,11 @@ export default function CartIndex({ initialCart }: PageProps) {
     async function refreshCart() {
         setLoading(true);
         try {
-            const res = await fetch('/cart', { headers: { Accept: 'application/json' } });
+            const res = await fetch('/cart', {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+                cache: 'no-store',
+            });
             const data: Cart = await res.json();
             setCart(data);
         } finally {
@@ -78,6 +83,7 @@ export default function CartIndex({ initialCart }: PageProps) {
             const res = await fetch(`/cart/${encodeURIComponent(line.line_id)}`, {
                 method: 'PATCH',
                 headers: xsrfHeaders(),
+                credentials: 'same-origin',
                 body: JSON.stringify({ qty }),
             });
             const data: Cart = await res.json();
@@ -93,6 +99,7 @@ export default function CartIndex({ initialCart }: PageProps) {
             const res = await fetch(`/cart/${encodeURIComponent(line.line_id)}`, {
                 method: 'DELETE',
                 headers: xsrfHeaders(),
+                credentials: 'same-origin',
             });
             const data: Cart = await res.json();
             setCart(data);
@@ -109,6 +116,7 @@ export default function CartIndex({ initialCart }: PageProps) {
             const res = await fetch('/cart/coupon', {
                 method: 'POST',
                 headers: xsrfHeaders(),
+                credentials: 'same-origin',
                 body: JSON.stringify({ code: couponInput }),
             });
             const data = await res.json();
@@ -134,12 +142,20 @@ export default function CartIndex({ initialCart }: PageProps) {
         }
     }
 
-    async function removeCoupon() {
+    async function removeCouponFromCart() {
         setCouponError(null);
         setCouponNotice(null);
         setCouponBusy(true);
         try {
-            const res = await fetch('/cart/coupon', { method: 'DELETE', headers: xsrfHeaders() });
+            const res = await fetch('/cart/coupon', {
+                method: 'DELETE',
+                headers: xsrfHeaders(),
+                credentials: 'same-origin',
+            });
+            if (!res.ok) {
+                setCouponError('Failed to remove coupon');
+                return;
+            }
             const data: Cart = await res.json();
             setCart(data);
             setCouponNotice('Coupon removed');
@@ -252,9 +268,9 @@ export default function CartIndex({ initialCart }: PageProps) {
                     </div>
 
                     {/* Summary */}
-                    <aside className="h-fit rounded-xl border p-4">
-                        <h2 className="mb-3 text-lg font-semibold">Summary</h2>
-                        <div className="mb-1 flex items-center justify-between text-sm">
+        <aside className="h-fit rounded-xl border p-4">
+            <h2 className="mb-3 text-lg font-semibold">Summary</h2>
+            <div className="mb-1 flex items-center justify-between text-sm">
                             <span>Subtotal</span>
                             <span>{yen(cart.subtotal_cents)}</span>
                         </div>
@@ -279,20 +295,23 @@ export default function CartIndex({ initialCart }: PageProps) {
                                             {cart.coupon_code}
                                         </span>
                                     </span>
-                                    <span className="text-rose-700">
-                                        -{yen(cart.coupon_discount_cents || 0)}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-rose-700">
+                                            -{yen(cart.coupon_discount_cents || 0)}
+                                        </span>
+                                        <button
+                                            type="button"
+                                            onClick={removeCouponFromCart}
+                                            disabled={couponBusy}
+                                            className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
                                 {cart.coupon_summary && (
                                     <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
                                 )}
-                                <button
-                                    onClick={removeCoupon}
-                                    disabled={couponBusy}
-                                    className="mt-2 text-xs text-neutral-600 underline hover:text-neutral-800 disabled:cursor-not-allowed"
-                                >
-                                    Remove coupon
-                                </button>
                             </div>
                         )}
                         <div className="mt-2 border-t pt-2">
@@ -315,6 +334,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                         className="flex-1 rounded-md border px-3 py-2 text-sm"
                                     />
                                     <button
+                                        type="button"
                                         onClick={applyCoupon}
                                         disabled={couponBusy || !couponInput.trim()}
                                         className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
@@ -322,13 +342,14 @@ export default function CartIndex({ initialCart }: PageProps) {
                                         Apply
                                     </button>
                                 </div>
-                                {couponError && (
-                                    <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
-                                )}
-                                {couponNotice && !couponError && (
-                                    <div className="mt-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
-                                )}
                             </div>
+                        )}
+
+                        {couponError && (
+                            <div className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
+                        )}
+                        {couponNotice && !couponError && (
+                            <div className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
                         )}
 
                         <div className="mt-4">
