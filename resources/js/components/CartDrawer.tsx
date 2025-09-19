@@ -42,9 +42,21 @@ type Props = {
     onRemoveLine: (line: Line) => Promise<void> | void;
     onRefresh?: () => Promise<void> | void;
     busyLineId?: string | null;
+    onRemoveCoupon?: () => Promise<void> | void;
+    couponBusy?: boolean;
 };
 
-export default function CartDrawer({ open, cart, onClose, onUpdateQty, onRemoveLine, onRefresh, busyLineId = null }: Props) {
+export default function CartDrawer({
+    open,
+    cart,
+    onClose,
+    onUpdateQty,
+    onRemoveLine,
+    onRefresh,
+    busyLineId = null,
+    onRemoveCoupon,
+    couponBusy = false,
+}: Props) {
     const overlayRef = useRef<HTMLDivElement | null>(null);
     const panelRef = useRef<HTMLDivElement | null>(null);
 
@@ -242,10 +254,33 @@ export default function CartDrawer({ open, cart, onClose, onUpdateQty, onRemoveL
                             </div>
                         )}
                         {cart?.coupon_code && (cart.coupon_discount_cents ?? 0) > 0 && (
-                            <div className="mb-1">
-                                <div className="flex items-center justify-between text-sm text-rose-600">
-                                    <span>Coupon ({cart.coupon_code})</span>
-                                    <span>-{yen(cart.coupon_discount_cents ?? 0)}</span>
+                            <div className="mb-1 text-sm">
+                                <div className="flex items-center justify-between gap-2">
+                                    <span>
+                                        Coupon
+                                        <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
+                                            {cart.coupon_code}
+                                        </span>
+                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-rose-600">-{yen(cart.coupon_discount_cents ?? 0)}</span>
+                                        {onRemoveCoupon && (
+                                            <button
+                                                type="button"
+                                                onClick={async () => {
+                                                    try {
+                                                        await onRemoveCoupon();
+                                                    } catch (error) {
+                                                        console.error('Failed to remove coupon from drawer', error);
+                                                    }
+                                                }}
+                                                disabled={couponBusy}
+                                                className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
+                                            >
+                                                Remove
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                                 {cart.coupon_summary && (
                                     <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>

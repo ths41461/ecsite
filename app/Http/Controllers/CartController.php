@@ -138,4 +138,33 @@ class CartController extends Controller
 
         return response()->json($cart);
     }
+
+    /**
+     * POST /cart/coupon/preview
+     * Body: { code: string, lines?: array }
+     * Returns coupon eligibility details without mutating the cart.
+     */
+    public function previewCoupon(Request $request)
+    {
+        $validated = $request->validate([
+            'code' => ['required', 'string', 'max:40'],
+            'lines' => ['sometimes', 'array'],
+            'lines.*.product_id' => ['required_with:lines', 'integer', 'exists:products,id'],
+            'lines.*.price_cents' => ['required_with:lines', 'integer', 'min:0'],
+            'lines.*.compare_at_cents' => ['nullable', 'integer', 'min:0'],
+            'lines.*.qty' => ['required_with:lines', 'integer', 'min:1'],
+        ]);
+
+        $sessionId = $request->session()->getId();
+        $lines = $validated['lines'] ?? null;
+
+        $result = $this->cart->previewCoupon(
+            $sessionId,
+            $validated['code'],
+            $lines,
+            optional($request->user())->id,
+        );
+
+        return response()->json($result, $result['valid'] ? 200 : 422);
+    }
 }

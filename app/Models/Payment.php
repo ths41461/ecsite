@@ -74,18 +74,28 @@ class Payment extends Model
             }
 
             // 2) write transaction row (auditable)
-            DB::table('payment_transactions')->insert([
-                'payment_id'   => $this->id,
-                'provider'     => $provider,
-                'ext_id'       => $extId,
-                'amount_yen'   => $tx['amount_yen'] ?? null,
-                'currency'     => $tx['currency'] ?? 'JPY',
-                'status'       => $statusString,
-                'payload_json' => !empty($tx['payload']) ? json_encode($tx['payload']) : null,
-                'occurred_at'  => $tx['occurred_at'] ?? now(),
-                'created_at'   => now(),
-                'updated_at'   => now(),
-            ]);
+            try {
+                DB::table('payment_transactions')->insert([
+                    'payment_id'   => $this->id,
+                    'provider'     => $provider,
+                    'ext_id'       => $extId,
+                    'amount_yen'   => $tx['amount_yen'] ?? null,
+                    'currency'     => $tx['currency'] ?? 'JPY',
+                    'status'       => $statusString,
+                    'payload_json' => !empty($tx['payload']) ? json_encode($tx['payload']) : null,
+                    'occurred_at'  => $tx['occurred_at'] ?? now(),
+                    'created_at'   => now(),
+                    'updated_at'   => now(),
+                ]);
+            } catch (\Illuminate\Database\QueryException $e) {
+                if ($e->getCode() !== '23000') {
+                    throw $e;
+                }
+
+                if (!str_contains(strtolower($e->getMessage()), 'duplicate')) {
+                    throw $e;
+                }
+            }
 
             // 3) bump payment status if provided
             $updates = [];

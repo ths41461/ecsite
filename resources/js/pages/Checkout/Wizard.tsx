@@ -98,12 +98,16 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
         zip: order?.zip ?? '',
     });
     const [validationErrors, setValidationErrors] = useState<Record<string, string[]>>({});
+    const [cartSnapshot, setCartSnapshot] = useState<CartPayload | null>(cart ?? null);
+    const [couponBusy, setCouponBusy] = useState(false);
+    const [couponError, setCouponError] = useState<string | null>(null);
+    const [couponNotice, setCouponNotice] = useState<string | null>(null);
 
     const orderNumber = order?.order_number ?? null;
 
     const cartLines = useMemo(() => {
-        return cart?.lines ?? [];
-    }, [cart]);
+        return cartSnapshot?.lines ?? [];
+    }, [cartSnapshot]);
 
     async function startOrder() {
         if (loading) return;
@@ -185,8 +189,33 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
         throw new Error('Checkout session could not be created');
     }
 
+    async function removeCoupon() {
+        if (couponBusy) return;
+        setCouponBusy(true);
+        setCouponError(null);
+        setCouponNotice(null);
+        try {
+            const res = await fetch('/cart/coupon', {
+                method: 'DELETE',
+                headers: xsrfHeaders(),
+                credentials: 'same-origin',
+            });
+            const data = (await res.json().catch(() => null)) as CartPayload | null;
+            if (!res.ok || !data) {
+                const message = (data as any)?.errors?.code?.[0] || (data as any)?.message || 'Failed to remove coupon';
+                throw new Error(message);
+            }
+            setCartSnapshot(data);
+            setCouponNotice('Coupon removed.');
+        } catch (e: any) {
+            setCouponError(e?.message || 'Failed to remove coupon.');
+        } finally {
+            setCouponBusy(false);
+        }
+    }
+
     function renderCart() {
-        if (!cart) {
+        if (!cartSnapshot) {
             return <div className="rounded-lg border border-neutral-200 p-4 text-sm text-neutral-600">Your cart is empty.</div>;
         }
 
@@ -220,29 +249,45 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
                     <div className="flex justify-between">
                         <span>Subtotal</span>
-                        <span>{formatYen((cart.subtotal_cents ?? 0) / 100)}</span>
+                        <span>{formatYen((cartSnapshot.subtotal_cents ?? 0) / 100)}</span>
                     </div>
-                    {(cart.coupon_discount_cents ?? 0) > 0 && (
-                        <div className="flex justify-between text-rose-600">
+                    {(cartSnapshot.coupon_discount_cents ?? 0) > 0 && (
+                        <div className="flex items-center justify-between text-rose-600">
                             <span>
-                                Coupon{cart.coupon_code ? ` (${cart.coupon_code})` : ''}
+                                Coupon{cartSnapshot.coupon_code ? ` (${cartSnapshot.coupon_code})` : ''}
+                                {cartSnapshot.coupon_summary && (
+                                    <span className="ml-2 text-[11px] text-neutral-500">{cartSnapshot.coupon_summary}</span>
+                                )}
                             </span>
-                            <span>-{formatYen((cart.coupon_discount_cents ?? 0) / 100)}</span>
+                            <div className="flex items-center gap-2">
+                                <span>-{formatYen((cartSnapshot.coupon_discount_cents ?? 0) / 100)}</span>
+                                <button
+                                    type="button"
+                                    onClick={removeCoupon}
+                                    disabled={couponBusy}
+                                    className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </div>
                     )}
-                    {cart.coupon_summary && (
-                        <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
-                    )}
-                    {(cart.tax_cents ?? 0) > 0 && (
+                    {(cartSnapshot.tax_cents ?? 0) > 0 && (
                         <div className="flex justify-between">
                             <span>Tax</span>
-                            <span>{formatYen((cart.tax_cents ?? 0) / 100)}</span>
+                            <span>{formatYen((cartSnapshot.tax_cents ?? 0) / 100)}</span>
                         </div>
                     )}
                     <div className="mt-1 flex justify-between font-semibold">
                         <span>Total</span>
-                        <span>{formatYen((cart.total_cents ?? 0) / 100)}</span>
+                        <span>{formatYen((cartSnapshot.total_cents ?? 0) / 100)}</span>
                     </div>
+                    {couponError && (
+                        <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
+                    )}
+                    {couponNotice && !couponError && (
+                        <div className="mt-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
+                    )}
                 </div>
             </div>
         );

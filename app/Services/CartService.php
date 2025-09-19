@@ -315,26 +315,81 @@ class CartService
         $lines = array_values(array_filter($lines, fn($l) => $l['qty'] > 0));
 
         // Coupon (from meta)
-        $meta = $this->loadMeta($sessionId);
-        $couponCode = isset($meta['coupon_code']) ? (string)$meta['coupon_code'] : null;
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        $couponsMeta = $meta['coupons'] ?? [];
+        $activeCoupons = [];
         $couponDiscount = 0;
         $couponSummary = null;
-        if ($couponCode) {
+        $couponCode = null;
+
+        foreach ($couponsMeta as $entry) {
+            $code = strtoupper((string)($entry['code'] ?? ''));
+            if ($code === '') {
+                continue;
+            }
+
+            $lockedLineIds = null;
+            if (isset($entry['locked_line_ids']) && is_array($entry['locked_line_ids'])) {
+                $ids = array_values(array_map('strval', $entry['locked_line_ids']));
+                if (!empty($ids)) {
+                    $lockedLineIds = $ids;
+                }
+            }
+
+            $couponableLines = $lines;
+            if ($lockedLineIds !== null) {
+                $couponableLines = array_values(array_filter(
+                    $lines,
+                    fn ($line) => isset($line['line_id']) && in_array((string)$line['line_id'], $lockedLineIds, true)
+                ));
+            }
+
+            if (empty($couponableLines)) {
+                continue;
+            }
+
+            $couponableSubtotal = array_reduce(
+                $couponableLines,
+                fn ($carry, $line) => $carry + (int) ($line['line_total_cents'] ?? 0),
+                0
+            );
+
+            if ($couponableSubtotal <= 0) {
+                continue;
+            }
+
             $evaluation = $this->couponEligibility->evaluate(
-                $couponCode,
-                $lines,
-                $subtotal,
+                $code,
+                $couponableLines,
+                $couponableSubtotal,
                 null,
                 ['enforce_per_user' => false],
             );
 
             if ($evaluation->isValid()) {
-                $couponDiscount = $evaluation->discountCents;
-                $couponSummary = $evaluation->summary;
-            } else {
-                $this->saveMeta($sessionId, []);
-                $couponCode = null;
+                if ($couponCode === null) {
+                    $couponCode = $code;
+                    $couponSummary = $evaluation->summary;
+                }
+
+                $couponDiscount += $evaluation->discountCents;
+                $activeCoupons[] = [
+                    'code' => $code,
+                    ...(isset($lockedLineIds) ? ['locked_line_ids' => $lockedLineIds] : []),
+                ];
+
+                // Maintain current single-coupon behaviour for now.
+                break;
             }
+        }
+
+        if (!empty($couponsMeta) && empty($activeCoupons)) {
+            $meta['coupons'] = [];
+            $this->saveMeta($sessionId, $meta);
+            $couponCode = null;
+        } elseif ($couponDiscount > 0 && $activeCoupons !== $couponsMeta) {
+            $meta['coupons'] = $activeCoupons;
+            $this->saveMeta($sessionId, $meta);
         }
 
         $taxableBase = max(0, $subtotal - $couponDiscount);
@@ -360,6 +415,7 @@ class CartService
     public function clear(string $sessionId): void
     {
         Redis::del($this->key($sessionId));
+        Redis::del($this->metaKey($sessionId));
     }
 
     /**
@@ -393,6 +449,15 @@ class CartService
 
         $this->saveRaw($toSessionId, $to);
         Redis::del($this->key($fromSessionId));
+
+        $fromMeta = $this->normalizeCouponMeta($fromSessionId, $this->loadMeta($fromSessionId));
+        $toMeta = $this->normalizeCouponMeta($toSessionId, $this->loadMeta($toSessionId));
+        if (!empty($fromMeta) && empty($toMeta)) {
+            $this->saveMeta($toSessionId, $fromMeta);
+        }
+        if (!empty($fromMeta)) {
+            Redis::del($this->metaKey($fromSessionId));
+        }
     }
 
     /**
@@ -470,7 +535,42 @@ class CartService
             throw ValidationException::withMessages(['code' => $message]);
         }
 
-        $this->saveMeta($sessionId, ['coupon_code' => $code]);
+        $lockedLineIds = [];
+        $couponRow = $evaluation->coupon;
+        $excludeSaleItems = is_object($couponRow) && !empty($couponRow->exclude_sale_items);
+
+        foreach (($cart['lines'] ?? []) as $line) {
+            $productId = $line['product']['id'] ?? null;
+            if ($productId === null) {
+                continue;
+            }
+            if (!in_array((int) $productId, $evaluation->eligibleProductIds, true)) {
+                continue;
+            }
+
+            if ($excludeSaleItems) {
+                $compare = $line['compare_at_cents'] ?? null;
+                $price = $line['price_cents'] ?? null;
+                if ($compare !== null && $price !== null && (int) $compare > (int) $price) {
+                    continue;
+                }
+            }
+
+            $lockedLineIds[] = (string) ($line['line_id'] ?? $line['variant_id'] ?? '');
+        }
+
+        $lockedLineIds = array_values(array_filter($lockedLineIds, fn ($id) => $id !== ''));
+
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        $entry = ['code' => $code];
+        if (!empty($lockedLineIds)) {
+            $entry['locked_line_ids'] = $lockedLineIds;
+        }
+
+        // For now we only keep a single coupon entry, but the structure supports more.
+        $meta['coupons'] = [$entry];
+
+        $this->saveMeta($sessionId, $meta);
 
         return $this->get($sessionId);
     }
@@ -480,9 +580,10 @@ class CartService
      */
     public function removeCoupon(string $sessionId): array
     {
-        $meta = $this->loadMeta($sessionId);
-        if (!empty($meta['coupon_code'])) {
-            $this->saveMeta($sessionId, []);
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        if (!empty($meta['coupons'])) {
+            $meta['coupons'] = [];
+            $this->saveMeta($sessionId, $meta);
         }
 
         return $this->get($sessionId);
@@ -497,6 +598,62 @@ class CartService
         return [
             'code' => $cart['coupon_code'] ?? null,
             'discount_cents' => (int)($cart['coupon_discount_cents'] ?? 0),
+        ];
+    }
+
+    /**
+     * Preview a coupon against the current cart (or supplied lines) without mutating state.
+     */
+    public function previewCoupon(string $sessionId, string $code, ?array $lines = null, ?int $userId = null): array
+    {
+        $code = strtoupper(trim($code));
+        if ($code === '') {
+            return [
+                'valid' => false,
+                'error' => 'Coupon code is required.',
+                'discount_cents' => 0,
+                'summary' => null,
+                'eligible_product_ids' => [],
+            ];
+        }
+
+        if ($lines === null) {
+            $cart = $this->get($sessionId);
+            $candidateLines = $cart['lines'] ?? [];
+        } else {
+            $candidateLines = $this->normalizePreviewLines($lines);
+        }
+
+        if (empty($candidateLines)) {
+            return [
+                'valid' => false,
+                'error' => 'Cart is empty.',
+                'discount_cents' => 0,
+                'summary' => null,
+                'eligible_product_ids' => [],
+            ];
+        }
+
+        $subtotal = array_reduce(
+            $candidateLines,
+            fn ($carry, $line) => $carry + (int) ($line['line_total_cents'] ?? 0),
+            0
+        );
+
+        $evaluation = $this->couponEligibility->evaluate(
+            $code,
+            $candidateLines,
+            $subtotal,
+            $userId,
+            ['enforce_per_user' => true],
+        );
+
+        return [
+            'valid' => $evaluation->isValid(),
+            'error' => $evaluation->error,
+            'discount_cents' => $evaluation->isValid() ? $evaluation->discountCents : 0,
+            'summary' => $evaluation->summary,
+            'eligible_product_ids' => $evaluation->eligibleProductIds,
         ];
     }
 
@@ -515,5 +672,51 @@ class CartService
             return;
         }
         Redis::setex($this->metaKey($sessionId), $this->ttl, json_encode($meta));
+    }
+
+    private function normalizeCouponMeta(string $sessionId, array $meta): array
+    {
+        if (isset($meta['coupon_code'])) {
+            $entry = ['code' => strtoupper((string) $meta['coupon_code'])];
+            if (!empty($meta['coupon_locked_lines']) && is_array($meta['coupon_locked_lines'])) {
+                $entry['locked_line_ids'] = array_values(array_map('strval', $meta['coupon_locked_lines']));
+            }
+            $meta['coupons'] = [$entry];
+            unset($meta['coupon_code'], $meta['coupon_locked_lines']);
+            $this->saveMeta($sessionId, $meta);
+        }
+
+        return $meta;
+    }
+
+    private function normalizePreviewLines(array $lines): array
+    {
+        $normalized = [];
+        foreach ($lines as $index => $line) {
+            $productId = (int) ($line['product_id'] ?? 0);
+            $qty = max(1, (int) ($line['qty'] ?? 0));
+            $price = (int) ($line['price_cents'] ?? 0);
+            $compare = isset($line['compare_at_cents']) ? (int) $line['compare_at_cents'] : null;
+            if ($productId <= 0 || $price < 0 || $qty <= 0) {
+                continue;
+            }
+
+            $normalized[] = [
+                'line_id' => (string) ($line['line_id'] ?? ('preview-' . $index)),
+                'variant_id' => $line['variant_id'] ?? null,
+                'sku' => $line['sku'] ?? null,
+                'product' => [
+                    'id' => $productId,
+                    'name' => (string) ($line['name'] ?? ''),
+                    'slug' => (string) ($line['slug'] ?? ''),
+                ],
+                'price_cents' => $price,
+                'compare_at_cents' => $compare,
+                'qty' => $qty,
+                'line_total_cents' => $price * $qty,
+            ];
+        }
+
+        return $normalized;
     }
 }

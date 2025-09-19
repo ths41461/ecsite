@@ -57,6 +57,7 @@ export default function Show({ product, gallery, related }: Props) {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [drawerCart, setDrawerCart] = useState<DrawerCart | null>(null);
     const [busyLineId, setBusyLineId] = useState<string | null>(null);
+    const [couponBusy, setCouponBusy] = useState(false);
 
     function showToast(message: string, kind: 'success' | 'warning' | 'error' = 'success') {
         setToast({ message, kind });
@@ -233,6 +234,30 @@ export default function Show({ product, gallery, related }: Props) {
             setDrawerCart(data);
         } finally {
             setBusyLineId(null);
+        }
+    }
+
+    async function removeDrawerCoupon() {
+        setCouponBusy(true);
+        try {
+            const res = await fetch('/cart/coupon', {
+                method: 'DELETE',
+                headers: xsrfHeaders(),
+                credentials: 'same-origin',
+            });
+            if (!res.ok) {
+                const data = await res.json().catch(() => null);
+                const message = data?.errors?.code?.[0] || data?.message || 'Failed to remove coupon';
+                throw new Error(message);
+            }
+            const data = (await res.json()) as DrawerCart;
+            setDrawerCart(data);
+            showToast('Coupon removed.', 'success');
+        } catch (error: any) {
+            console.error('Failed to remove coupon:', error);
+            showToast(error?.message || 'Failed to remove coupon. Please try again.', 'error');
+        } finally {
+            setCouponBusy(false);
         }
     }
 
@@ -451,6 +476,8 @@ export default function Show({ product, gallery, related }: Props) {
                 onClose={() => setDrawerOpen(false)}
                 onUpdateQty={updateDrawerQty}
                 onRemoveLine={removeDrawerLine}
+                onRemoveCoupon={removeDrawerCoupon}
+                couponBusy={couponBusy}
                 busyLineId={busyLineId}
             />
         </div>

@@ -62,7 +62,7 @@ class CartCouponFlowTest extends TestCase
         });
     }
 
-    public function test_coupon_can_be_applied_and_removed_via_cart_endpoints(): void
+    public function test_coupon_only_affects_lines_present_when_entered_and_can_be_removed(): void
     {
         $this->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
@@ -76,24 +76,47 @@ class CartCouponFlowTest extends TestCase
             'slug' => 'test-category',
         ]);
 
-        $product = Product::create([
-            'name' => 'Test Product',
-            'slug' => 'test-product-' . Str::random(6),
+        $productA = Product::create([
+            'name' => 'Test Product A',
+            'slug' => 'test-product-a-' . Str::random(6),
             'brand_id' => $brand->id,
             'category_id' => $category->id,
             'is_active' => true,
         ]);
 
-        $variant = ProductVariant::create([
-            'product_id' => $product->id,
+        $productB = Product::create([
+            'name' => 'Test Product B',
+            'slug' => 'test-product-b-' . Str::random(6),
+            'brand_id' => $brand->id,
+            'category_id' => $category->id,
+            'is_active' => true,
+        ]);
+
+        $variantA = ProductVariant::create([
+            'product_id' => $productA->id,
             'sku' => 'SKU-' . Str::upper(Str::random(8)),
             'price_yen' => 1200,
             'sale_price_yen' => null,
             'is_active' => true,
         ]);
 
+        $variantB = ProductVariant::create([
+            'product_id' => $productB->id,
+            'sku' => 'SKU-' . Str::upper(Str::random(8)),
+            'price_yen' => 2000,
+            'sale_price_yen' => null,
+            'is_active' => true,
+        ]);
+
         Inventory::create([
-            'product_variant_id' => $variant->id,
+            'product_variant_id' => $variantA->id,
+            'stock' => 10,
+            'safety_stock' => 0,
+            'managed' => true,
+        ]);
+
+        Inventory::create([
+            'product_variant_id' => $variantB->id,
             'stock' => 10,
             'safety_stock' => 0,
             'managed' => true,
@@ -116,16 +139,21 @@ class CartCouponFlowTest extends TestCase
 
         DB::table('coupon_products')->insert([
             'coupon_id' => $coupon->id,
-            'product_id' => $product->id,
+            'product_id' => $productA->id,
+        ]);
+
+        DB::table('coupon_products')->insert([
+            'coupon_id' => $coupon->id,
+            'product_id' => $productB->id,
         ]);
 
         $cartResponse = $this
             ->withSession([])
-            ->postJson('/cart', ['variant_id' => $variant->id, 'qty' => 1]);
+            ->postJson('/cart', ['variant_id' => $variantA->id, 'qty' => 1]);
 
         $cartResponse
             ->assertOk()
-            ->assertJsonPath('lines.0.variant_id', $variant->id);
+            ->assertJsonPath('lines.0.variant_id', $variantA->id);
 
         $sessionId = session()->getId();
 
@@ -137,6 +165,37 @@ class CartCouponFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('coupon_code', 'SALE11')
             ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > 0);
+
+        $initialDiscount = $applyResponse->json('coupon_discount_cents');
+
+        // Add another product after the coupon has been applied.
+        $secondAdd = $this
+            ->withSession([])
+            ->postJson('/cart', ['variant_id' => $variantB->id, 'qty' => 1]);
+
+        $secondAdd
+            ->assertOk()
+            ->assertJsonPath('coupon_code', 'SALE11')
+            ->assertJsonPath('coupon_discount_cents', $initialDiscount);
+
+        // Reapply the coupon so the new line becomes eligible.
+        $reapplyResponse = $this
+            ->withSession([])
+            ->postJson('/cart/coupon', ['code' => 'SALE11']);
+
+        $reapplyResponse
+            ->assertOk()
+            ->assertJsonPath('coupon_code', 'SALE11')
+            ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > $initialDiscount);
+
+        $previewResponse = $this
+            ->withSession([])
+            ->postJson('/cart/coupon/preview', ['code' => 'SALE11']);
+
+        $previewResponse
+            ->assertOk()
+            ->assertJsonPath('valid', true)
+            ->assertJsonPath('discount_cents', fn ($value) => $value > 0);
 
         $this->assertNotNull(Redis::get('cartmeta:' . $sessionId));
 
