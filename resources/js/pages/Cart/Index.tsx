@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 type ProductRef = { id: number; name: string; slug: string };
 type LineNotice = { code: 'qty_clamped_to_available'; requested: number; available: number };
@@ -28,6 +28,8 @@ type Cart = {
     coupon_code?: string | null;
     coupon_discount_cents?: number;
     coupon_summary?: string;
+    coupon_line_ids?: string[];
+    coupon_line_names?: string[];
 };
 
 type PageProps = { initialCart: Cart };
@@ -168,6 +170,7 @@ export default function CartIndex({ initialCart }: PageProps) {
 
     // Derived values
     const hasItems = cart.lines.length > 0;
+    const couponLineIdSet = useMemo(() => new Set(cart.coupon_line_ids ?? []), [cart.coupon_line_ids]);
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-6">
@@ -202,6 +205,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                     <div className="space-y-4">
                         {cart.lines.map((line) => {
                             const clamped = line.notice?.code === 'qty_clamped_to_available';
+                            const couponApplied = couponLineIdSet.has(line.line_id);
 
                             return (
                                 <div key={line.line_id} className="rounded-xl border p-4">
@@ -260,6 +264,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                             )}
                                             <div className="text-lg font-semibold">{yen(line.price_cents)}</div>
                                             <div className="text-sm text-neutral-600">Line total: {yen(line.line_total_cents)}</div>
+                                            {couponApplied && <div className="text-xs font-medium text-emerald-600">Coupon applied</div>}
                                         </div>
                                     </div>
                                 </div>
@@ -311,6 +316,11 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 </div>
                                 {cart.coupon_summary && (
                                     <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
+                                )}
+                                {(cart.coupon_line_names?.length ?? 0) > 0 && (
+                                    <div className="text-xs text-neutral-500">
+                                        Applies to: {cart.coupon_line_names?.join(', ')}
+                                    </div>
                                 )}
                             </div>
                         )}

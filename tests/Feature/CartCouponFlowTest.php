@@ -155,6 +155,8 @@ class CartCouponFlowTest extends TestCase
             ->assertOk()
             ->assertJsonPath('lines.0.variant_id', $variantA->id);
 
+        $lineAId = $cartResponse->json('lines.0.line_id');
+
         $sessionId = session()->getId();
 
         $applyResponse = $this
@@ -164,7 +166,8 @@ class CartCouponFlowTest extends TestCase
         $applyResponse
             ->assertOk()
             ->assertJsonPath('coupon_code', 'SALE11')
-            ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > 0);
+            ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > 0)
+            ->assertJsonPath('coupon_line_ids.0', $lineAId);
 
         $initialDiscount = $applyResponse->json('coupon_discount_cents');
 
@@ -173,20 +176,15 @@ class CartCouponFlowTest extends TestCase
             ->withSession([])
             ->postJson('/cart', ['variant_id' => $variantB->id, 'qty' => 1]);
 
+        $lineB = collect($secondAdd->json('lines') ?? [])->firstWhere('variant_id', $variantB->id);
+        $this->assertNotNull($lineB);
+        $lineBId = $lineB['line_id'] ?? null;
+
         $secondAdd
             ->assertOk()
             ->assertJsonPath('coupon_code', 'SALE11')
-            ->assertJsonPath('coupon_discount_cents', $initialDiscount);
-
-        // Reapply the coupon so the new line becomes eligible.
-        $reapplyResponse = $this
-            ->withSession([])
-            ->postJson('/cart/coupon', ['code' => 'SALE11']);
-
-        $reapplyResponse
-            ->assertOk()
-            ->assertJsonPath('coupon_code', 'SALE11')
-            ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > $initialDiscount);
+            ->assertJsonPath('coupon_discount_cents', fn ($value) => $value > $initialDiscount)
+            ->assertJsonPath('coupon_line_ids', fn ($ids) => in_array($lineAId, $ids ?? []) && in_array($lineBId, $ids ?? []));
 
         $previewResponse = $this
             ->withSession([])
@@ -195,7 +193,8 @@ class CartCouponFlowTest extends TestCase
         $previewResponse
             ->assertOk()
             ->assertJsonPath('valid', true)
-            ->assertJsonPath('discount_cents', fn ($value) => $value > 0);
+            ->assertJsonPath('discount_cents', fn ($value) => $value > 0)
+            ->assertJsonPath('eligible_line_names', fn ($names) => in_array($productA->name, $names ?? []) && in_array($productB->name, $names ?? []));
 
         $this->assertNotNull(Redis::get('cartmeta:' . $sessionId));
 

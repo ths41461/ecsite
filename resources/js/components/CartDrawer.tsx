@@ -25,6 +25,8 @@ export type Cart = {
     coupon_code?: string | null;
     coupon_discount_cents?: number;
     coupon_summary?: string;
+    coupon_line_ids?: string[];
+    coupon_line_names?: string[];
     tax_cents?: number;
     total_cents: number;
     currency: string;
@@ -126,6 +128,11 @@ export default function CartDrawer({
         return map;
     }, [cart]);
 
+    const couponLineIdSet = useMemo(() => {
+        if (!cart?.coupon_line_ids) return new Set<string>();
+        return new Set(cart.coupon_line_ids);
+    }, [cart?.coupon_line_ids]);
+
     return (
         <div aria-hidden={!open} className={`fixed inset-0 z-50 ${open ? '' : 'pointer-events-none'}`}>
             {/* Overlay */}
@@ -177,6 +184,7 @@ export default function CartDrawer({
                             <div className="space-y-3">
                                 {cart!.lines.map((line) => {
                                     const clamped = clampedById.has(line.line_id);
+                                    const couponApplied = couponLineIdSet.has(line.line_id);
                                     return (
                                         <div key={line.line_id} className="rounded-xl border p-4">
                                             <div className="mb-2 flex items-center justify-between">
@@ -232,6 +240,7 @@ export default function CartDrawer({
                                                     )}
                                                     <div className="text-lg font-semibold">{yen(line.price_cents)}</div>
                                                     <div className="text-sm text-neutral-600">Line total: {yen(line.line_total_cents)}</div>
+                                                    {couponApplied && <div className="text-xs font-medium text-emerald-600">Coupon applied</div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -268,11 +277,7 @@ export default function CartDrawer({
                                             <button
                                                 type="button"
                                                 onClick={async () => {
-                                                    try {
-                                                        await onRemoveCoupon();
-                                                    } catch (error) {
-                                                        console.error('Failed to remove coupon from drawer', error);
-                                                    }
+                                                    await onRemoveCoupon();
                                                 }}
                                                 disabled={couponBusy}
                                                 className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
@@ -284,6 +289,11 @@ export default function CartDrawer({
                                 </div>
                                 {cart.coupon_summary && (
                                     <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
+                                )}
+                                {(cart.coupon_line_names?.length ?? 0) > 0 && (
+                                    <div className="text-xs text-neutral-500">
+                                        Applies to: {cart.coupon_line_names?.join(', ')}
+                                    </div>
                                 )}
                             </div>
                         )}

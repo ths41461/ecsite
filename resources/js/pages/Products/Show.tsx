@@ -168,7 +168,6 @@ export default function Show({ product, gallery, related }: Props) {
                 }
             }
         } catch (error) {
-            console.error('Failed to add to cart event:', error);
             showToast('Failed to add to cart. Please try again.', 'error');
         } finally {
             setIsAddingToCart(false);
@@ -189,7 +188,6 @@ export default function Show({ product, gallery, related }: Props) {
             // Toggle UI to indicate wishlisted (filled heart)
             setIsWishlisted(true);
         } catch (err) {
-            console.error(err);
             showToast('Failed to add to wishlist. Please try again.', 'error');
         } finally {
             setIsWishlisting(false);
@@ -254,7 +252,6 @@ export default function Show({ product, gallery, related }: Props) {
             setDrawerCart(data);
             showToast('Coupon removed.', 'success');
         } catch (error: any) {
-            console.error('Failed to remove coupon:', error);
             showToast(error?.message || 'Failed to remove coupon. Please try again.', 'error');
         } finally {
             setCouponBusy(false);

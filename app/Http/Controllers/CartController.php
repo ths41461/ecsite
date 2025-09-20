@@ -6,7 +6,6 @@ use App\Services\CartService;
 use App\Http\Requests\StoreCartRequest;
 use App\Http\Requests\UpdateCartRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class CartController extends Controller
@@ -92,27 +91,10 @@ class CartController extends Controller
     {
         $sessionId = $request->session()->getId();
         $code = (string) $request->string('code')->toString();
-        Log::debug('CartController::applyCoupon called', [
-            'session' => $sessionId,
-            'code' => $code,
-            'user_id' => optional($request->user())->id,
-        ]);
         try {
             $cart = $this->cart->applyCoupon($sessionId, $code, optional($request->user())->id);
-            Log::debug('CartController::applyCoupon success', [
-                'session' => $sessionId,
-                'code' => $code,
-                'coupon_code' => $cart['coupon_code'] ?? null,
-                'coupon_discount_cents' => $cart['coupon_discount_cents'] ?? null,
-            ]);
             return response()->json($cart);
         } catch (\Illuminate\Validation\ValidationException $ve) {
-            Log::debug('CartController::applyCoupon validation failed', [
-                'session' => $sessionId,
-                'code' => $code,
-                'message' => $ve->getMessage(),
-                'errors' => $ve->errors(),
-            ]);
             return response()->json(['message' => $ve->getMessage(), 'errors' => $ve->errors()], 422);
         }
     }
@@ -124,17 +106,8 @@ class CartController extends Controller
     public function removeCoupon(Request $request)
     {
         $sessionId = $request->session()->getId();
-        Log::debug('CartController::removeCoupon called', [
-            'session' => $sessionId,
-            'user_id' => optional($request->user())->id,
-        ]);
 
         $cart = $this->cart->removeCoupon($sessionId);
-
-        Log::debug('CartController::removeCoupon success', [
-            'session' => $sessionId,
-            'coupon_code' => $cart['coupon_code'] ?? null,
-        ]);
 
         return response()->json($cart);
     }

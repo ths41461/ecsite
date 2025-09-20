@@ -108,7 +108,9 @@ class CouponEligibilityService
             $eligibleIds = array_merge($eligibleIds, $direct, $viaPivot);
         }
 
-        if (empty($includeProductIds) && empty($includeCategoryIds)) {
+        $hasRestrictions = !empty($includeProductIds) || !empty($includeCategoryIds);
+
+        if (!$hasRestrictions) {
             $eligibleIds = $productIds;
         }
 
@@ -153,7 +155,7 @@ class CouponEligibilityService
 
         $summary = $this->buildSummary($coupon);
 
-        return CouponEvaluationResult::valid($coupon, $discountCents, $summary, $eligibleIds);
+        return CouponEvaluationResult::valid($coupon, $discountCents, $summary, $eligibleIds, !$hasRestrictions);
     }
 
     private function asCarbon($value): ?CarbonInterface
