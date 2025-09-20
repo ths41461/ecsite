@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 type ProductRef = { id: number; name: string; slug: string };
 type LineNotice = { code: 'qty_clamped_to_available'; requested: number; available: number };
@@ -110,6 +110,10 @@ export default function CartIndex({ initialCart }: PageProps) {
         }
     }
 
+    useEffect(() => {
+        setCouponInput(cart.coupon_code ?? '');
+    }, [cart.coupon_code]);
+
     async function applyCoupon() {
         setCouponError(null);
         setCouponNotice(null);
@@ -130,9 +134,10 @@ export default function CartIndex({ initialCart }: PageProps) {
                 setCouponError(msg);
                 return;
             }
-            setCart(data as Cart);
+            const nextCart = data as Cart;
+            setCart(nextCart);
             setCouponNotice('Coupon applied');
-            setCouponInput('');
+            setCouponInput(nextCart.coupon_code ?? '');
         } catch (e: any) {
             const fallback = e?.message || 'Failed to apply coupon';
             const msg = fallback === 'Coupon not currently valid.'
@@ -319,7 +324,9 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 )}
                                 {(cart.coupon_line_names?.length ?? 0) > 0 && (
                                     <div className="text-xs text-neutral-500">
-                                        Applies to: {cart.coupon_line_names?.join(', ')}
+                                        {cart.coupon_line_names?.[0] === 'All items'
+                                            ? 'Applies to all items in your cart'
+                                            : `Applies to: ${cart.coupon_line_names?.join(', ')}`}
                                     </div>
                                 )}
                             </div>
@@ -333,27 +340,42 @@ export default function CartIndex({ initialCart }: PageProps) {
                         </div>
 
                         {/* Coupon entry */}
-                        {!cart.coupon_code && (
-                            <div className="mt-4 rounded-lg border border-neutral-200 p-3">
-                                <div className="mb-2 text-sm font-medium">Have a coupon?</div>
-                                <div className="flex items-center gap-2">
-                                    <input
-                                        value={couponInput}
-                                        onChange={(e) => setCouponInput(e.target.value)}
-                                        placeholder="Enter code"
-                                        className="flex-1 rounded-md border px-3 py-2 text-sm"
-                                    />
+                        <div className="mt-4 rounded-lg border border-neutral-200 p-3">
+                            <div className="mb-2 flex items-center justify-between text-sm font-medium">
+                                <span>Have a coupon?</span>
+                                {cart.coupon_code && (
                                     <button
                                         type="button"
-                                        onClick={applyCoupon}
-                                        disabled={couponBusy || !couponInput.trim()}
-                                        className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                        onClick={removeCouponFromCart}
+                                        disabled={couponBusy}
+                                        className="text-xs text-neutral-600 hover:underline disabled:cursor-not-allowed"
                                     >
-                                        Apply
+                                        Remove current
                                     </button>
-                                </div>
+                                )}
                             </div>
-                        )}
+                            <div className="flex items-center gap-2">
+                                <input
+                                    value={couponInput}
+                                    onChange={(e) => setCouponInput(e.target.value)}
+                                    placeholder="Enter code"
+                                    className="flex-1 rounded-md border px-3 py-2 text-sm"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={applyCoupon}
+                                    disabled={couponBusy || !couponInput.trim()}
+                                    className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Apply
+                                </button>
+                            </div>
+                            {cart.coupon_code && couponInput !== cart.coupon_code && (
+                                <p className="mt-2 text-xs text-neutral-500">
+                                    Enter a new code and press Apply to replace the current coupon.
+                                </p>
+                            )}
+                        </div>
 
                         {couponError && (
                             <div className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>

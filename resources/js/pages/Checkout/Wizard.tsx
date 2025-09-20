@@ -300,7 +300,9 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                     )}
                     {(cartSnapshot.coupon_line_names?.length ?? 0) > 0 && (
                         <div className="mt-2 text-xs text-neutral-500">
-                            Coupon applies to: {cartSnapshot.coupon_line_names?.join(', ')}
+                            {cartSnapshot.coupon_line_names?.[0] === 'All items'
+                                ? 'Coupon applies to all items in your cart'
+                                : `Coupon applies to: ${cartSnapshot.coupon_line_names?.join(', ')}`}
                         </div>
                     )}
                 </div>

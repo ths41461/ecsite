@@ -292,7 +292,9 @@ export default function CartDrawer({
                                 )}
                                 {(cart.coupon_line_names?.length ?? 0) > 0 && (
                                     <div className="text-xs text-neutral-500">
-                                        Applies to: {cart.coupon_line_names?.join(', ')}
+                                        {cart.coupon_line_names?.[0] === 'All items'
+                                            ? 'Applies to all items in your cart'
+                                            : `Applies to: ${cart.coupon_line_names?.join(', ')}`}
                                     </div>
                                 )}
                             </div>

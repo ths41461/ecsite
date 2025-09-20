@@ -342,36 +342,40 @@ class CartService
                 continue;
             }
 
-            $qualifiedLines = array_values(array_filter(
-                $lines,
-                fn ($line) => $this->lineQualifiesForCoupon($line, $evaluation)
-            ));
+            $qualifiedLines = $evaluation->isUniversal
+                ? $lines
+                : array_values(array_filter(
+                    $lines,
+                    fn ($line) => $this->lineQualifiesForCoupon($line, $evaluation)
+                ));
 
             if (empty($qualifiedLines)) {
                 continue;
             }
 
-            if ($couponCode === null) {
-                $couponCode = $code;
-                $couponSummary = $evaluation->summary;
-            }
-
-            $couponDiscount += $evaluation->discountCents;
+            $couponCode = $code;
+            $couponSummary = $evaluation->summary;
+            $couponDiscount = $evaluation->discountCents;
             $couponLineIds = array_values(array_unique(array_filter(array_map(
                 fn ($line) => isset($line['line_id'])
                     ? (string) $line['line_id']
                     : (isset($line['variant_id']) ? (string) $line['variant_id'] : null),
                 $qualifiedLines
             ))));
-            $couponLineNames = array_values(array_unique(array_filter(array_map(
-                fn ($line) => (string) ($line['product']['name'] ?? ''),
-                $qualifiedLines
-            ))));
+
+            if ($evaluation->isUniversal) {
+                $couponLineNames = ['All items'];
+            } else {
+                $couponLineNames = array_values(array_unique(array_filter(array_map(
+                    fn ($line) => (string) ($line['product']['name'] ?? ''),
+                    $qualifiedLines
+                ))));
+            }
+
             $activeCoupons[] = [
                 'code' => $code,
             ];
 
-            // Maintain current single-coupon behaviour for now.
             break;
         }
 
@@ -611,13 +615,17 @@ class CartService
         );
 
         $qualifiedPreviewLines = $evaluation->isValid()
-            ? array_values(array_filter($candidateLines, fn ($line) => $this->lineQualifiesForCoupon($line, $evaluation)))
+            ? ($evaluation->isUniversal
+                ? $candidateLines
+                : array_values(array_filter($candidateLines, fn ($line) => $this->lineQualifiesForCoupon($line, $evaluation))))
             : [];
 
-        $lineNames = array_values(array_unique(array_filter(array_map(
-            fn ($line) => (string) ($line['product']['name'] ?? ''),
-            $qualifiedPreviewLines
-        ))));
+        $lineNames = $evaluation->isUniversal
+            ? ['All items']
+            : array_values(array_unique(array_filter(array_map(
+                fn ($line) => (string) ($line['product']['name'] ?? ''),
+                $qualifiedPreviewLines
+            ))));
 
         return [
             'valid' => $evaluation->isValid(),
