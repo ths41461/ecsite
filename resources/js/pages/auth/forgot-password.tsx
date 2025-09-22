@@ -13,8 +13,8 @@ import AuthLayout from '@/layouts/auth-layout';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
-        <AuthLayout title="Forgot password" description="Enter your email to receive a password reset link">
-            <Head title="Forgot password" />
+        <AuthLayout title="パスワードをお忘れですか" description="パスワードリセットリンクを受け取るにはメールアドレスを入力してください">
+            <Head title="パスワードリセット" />
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
@@ -23,7 +23,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">Email address</Label>
+                                <Label htmlFor="email">メールアドレス</Label>
                                 <Input id="email" type="email" name="email" autoComplete="off" autoFocus placeholder="email@example.com" />
 
                                 <InputError message={errors.email} />
@@ -32,7 +32,7 @@ export default function ForgotPassword({ status }: { status?: string }) {
                             <div className="my-6 flex items-center justify-start">
                                 <Button className="w-full" disabled={processing}>
                                     {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                                    Email password reset link
+                                    パスワードリセットリンクを送信
                                 </Button>
                             </div>
                         </>
@@ -40,8 +40,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </Form>
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
-                    <span>Or, return to</span>
-                    <TextLink href={login()}>log in</TextLink>
+                    <span>または、</span>
+                    <TextLink href={login()}>ログイン</TextLink>
+                    <span>に戻る</span>
                 </div>
             </div>
         </AuthLayout>

@@ -128,7 +128,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => null);
-                throw new Error(data?.message || 'Unable to start checkout');
+                throw new Error(data?.message || 'チェックアウトを開始できません');
             }
             const data = await res.json();
             if (data?.redirect) {
@@ -137,7 +137,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 window.location.reload();
             }
         } catch (e: any) {
-            setError(e?.message || 'Something went wrong');
+            setError(e?.message || '問題が発生しました');
         } finally {
             setLoading(false);
         }
@@ -158,17 +158,17 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             if (res.status === 422) {
                 const data = await res.json().catch(() => null);
                 setValidationErrors(data?.errors || {});
-                throw new Error(data?.message || 'Please correct the highlighted fields.');
+                throw new Error(data?.message || 'ハイライトされたフィールドを修正してください。');
             }
             if (!res.ok) {
                 const data = await res.json().catch(() => null);
-                throw new Error(data?.message || 'Unable to save details');
+                throw new Error(data?.message || '詳細を保存できません');
             }
             const data = await res.json();
             const nextOrderNumber = data?.order?.order_number ?? orderNumber;
             await beginPayment(nextOrderNumber);
         } catch (e: any) {
-            setError(e?.message || 'Something went wrong');
+            setError(e?.message || '問題が発生しました');
         } finally {
             setLoading(false);
         }
@@ -182,7 +182,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
         });
         if (!res.ok) {
             const data = await res.json().catch(() => null);
-            throw new Error(data?.message || 'Unable to start payment');
+            throw new Error(data?.message || '支払いを開始できません');
         }
         const data = await res.json();
         if (data?.redirect) {
@@ -193,7 +193,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             window.location.href = data.url;
             return;
         }
-        throw new Error('Checkout session could not be created');
+        throw new Error('チェックアウトセッションを作成できませんでした');
     }
 
     async function removeCoupon() {
@@ -209,13 +209,13 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             });
             const data = (await res.json().catch(() => null)) as CartPayload | null;
             if (!res.ok || !data) {
-                const message = (data as any)?.errors?.code?.[0] || (data as any)?.message || 'Failed to remove coupon';
+                const message = (data as any)?.errors?.code?.[0] || (data as any)?.message || 'クーポンの削除に失敗しました';
                 throw new Error(message);
             }
             setCartSnapshot(data);
-            setCouponNotice('Coupon removed.');
+            setCouponNotice('クーポンを削除しました。');
         } catch (e: any) {
-            setCouponError(e?.message || 'Failed to remove coupon.');
+            setCouponError(e?.message || 'クーポンの削除に失敗しました。');
         } finally {
             setCouponBusy(false);
         }
@@ -223,7 +223,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
 
     function renderCart() {
         if (!cartSnapshot) {
-            return <div className="rounded-lg border border-neutral-200 p-4 text-sm text-neutral-600">Your cart is empty.</div>;
+            return <div className="rounded-lg border border-neutral-200 p-4 text-sm text-neutral-600">カートが空です。</div>;
         }
 
         return (
@@ -232,10 +232,10 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                     <table className="w-full text-sm">
                         <thead className="bg-neutral-50 text-left text-xs text-neutral-500 uppercase">
                             <tr>
-                                <th className="px-4 py-2">Item</th>
+                                <th className="px-4 py-2">商品</th>
                                 <th className="px-4 py-2">SKU</th>
-                                <th className="px-4 py-2 text-right">Qty</th>
-                                <th className="px-4 py-2 text-right">Price</th>
+                                <th className="px-4 py-2 text-right">数量</th>
+                                <th className="px-4 py-2 text-right">価格</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -245,7 +245,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                                         <div className="font-medium text-neutral-800">{line.product.name}</div>
                                         <div className="text-xs text-neutral-500">#{line.product.slug}</div>
                                         {couponLineIdSet.has(line.line_id) && (
-                                            <div className="text-xs font-medium text-emerald-600">Coupon applied</div>
+                                            <div className="text-xs font-medium text-emerald-600">クーポン適用</div>
                                         )}
                                     </td>
                                     <td className="px-4 py-2 text-sm text-neutral-600">{line.sku}</td>
@@ -258,13 +258,13 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 </div>
                 <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
                     <div className="flex justify-between">
-                        <span>Subtotal</span>
+                        <span>小計</span>
                         <span>{formatYen((cartSnapshot.subtotal_cents ?? 0) / 100)}</span>
                     </div>
                     {(cartSnapshot.coupon_discount_cents ?? 0) > 0 && (
                         <div className="flex items-center justify-between text-rose-600">
                             <span>
-                                Coupon{cartSnapshot.coupon_code ? ` (${cartSnapshot.coupon_code})` : ''}
+                                クーポン{cartSnapshot.coupon_code ? ` (${cartSnapshot.coupon_code})` : ''}
                                 {cartSnapshot.coupon_summary && (
                                     <span className="ml-2 text-[11px] text-neutral-500">{cartSnapshot.coupon_summary}</span>
                                 )}
@@ -277,19 +277,19 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                                     disabled={couponBusy}
                                     className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
                                 >
-                                    Remove
+                                    削除
                                 </button>
                             </div>
                         </div>
                     )}
                     {(cartSnapshot.tax_cents ?? 0) > 0 && (
                         <div className="flex justify-between">
-                            <span>Tax</span>
+                            <span>税金</span>
                             <span>{formatYen((cartSnapshot.tax_cents ?? 0) / 100)}</span>
                         </div>
                     )}
                     <div className="mt-1 flex justify-between font-semibold">
-                        <span>Total</span>
+                        <span>合計</span>
                         <span>{formatYen((cartSnapshot.total_cents ?? 0) / 100)}</span>
                     </div>
                     {couponError && (
@@ -300,9 +300,9 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                     )}
                     {(cartSnapshot.coupon_line_names?.length ?? 0) > 0 && (
                         <div className="mt-2 text-xs text-neutral-500">
-                            {cartSnapshot.coupon_line_names?.[0] === 'All items'
-                                ? 'Coupon applies to all items in your cart'
-                                : `Coupon applies to: ${cartSnapshot.coupon_line_names?.join(', ')}`}
+                            {cartSnapshot.coupon_line_names?.[0] === 'すべての商品'
+                                ? 'クーポンはカート内のすべての商品に適用されます'
+                                : `クーポン適用対象: ${cartSnapshot.coupon_line_names?.join(', ')}`}
                         </div>
                     )}
                 </div>
@@ -317,10 +317,10 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 <table className="w-full text-sm">
                     <thead className="bg-neutral-50 text-left text-xs text-neutral-500 uppercase">
                         <tr>
-                            <th className="px-4 py-2">Item</th>
+                            <th className="px-4 py-2">商品</th>
                             <th className="px-4 py-2">SKU</th>
-                            <th className="px-4 py-2 text-right">Qty</th>
-                            <th className="px-4 py-2 text-right">Price</th>
+                            <th className="px-4 py-2 text-right">数量</th>
+                            <th className="px-4 py-2 text-right">価格</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -340,12 +340,12 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
 
     return (
         <div className="mx-auto max-w-3xl px-4 py-8">
-            <Head title="Checkout" />
+            <Head title="チェックアウト" />
             <CheckoutTimeline steps={timeline} />
 
             {previousCancelledReason && step === 'review' && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                    Last checkout attempt ended because: {previousCancelledReason}
+                    前回のチェックアウトは以下の理由で終了しました: {previousCancelledReason}
                 </div>
             )}
 
@@ -353,18 +353,18 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
 
             {step === 'review' && (
                 <div className="space-y-6">
-                    <h1 className="text-2xl font-semibold">Review your cart</h1>
+                    <h1 className="text-2xl font-semibold">カートを確認</h1>
                     {renderCart()}
                     <div className="flex items-center justify-between">
                         <a href="/cart" className="text-sm text-neutral-600 hover:underline">
-                            Back to cart
+                            カートに戻る
                         </a>
                         <button
                             onClick={startOrder}
                             disabled={loading || !cartLines.length}
                             className="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                         >
-                            {loading ? 'Preparing…' : 'Continue to details'}
+                            {loading ? '準備中…' : '詳細へ進む'}
                         </button>
                     </div>
                 </div>
@@ -374,52 +374,52 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 <div className="space-y-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-semibold">Shipping & contact details</h1>
-                            <p className="text-sm text-neutral-600">Order #{orderNumber}</p>
+                            <h1 className="text-2xl font-semibold">配送先と連絡先</h1>
+                            <p className="text-sm text-neutral-600">注文番号 #{orderNumber}</p>
                         </div>
                         <a href="/checkout" className="text-sm text-neutral-600 hover:underline">
-                            Start over
+                            最初からやり直す
                         </a>
                     </div>
 
                     {renderOrderItems(order?.items)}
                     <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
                         <div className="flex justify-between">
-                            <span>Subtotal</span>
+                            <span>小計</span>
                             <span>{formatYen(order?.subtotal_yen ?? 0)}</span>
                         </div>
                         {(order?.discount_yen ?? 0) > 0 && (
                             <div className="flex justify-between text-rose-600">
-                                <span>Discount</span>
+                                <span>割引</span>
                                 <span>-{formatYen(order?.discount_yen ?? 0)}</span>
                             </div>
                         )}
                         {order?.coupon_code && (order?.coupon_discount_yen ?? 0) > 0 && (
                             <div className="flex justify-between text-rose-600 text-xs">
-                                <span>Coupon ({order.coupon_code})</span>
+                                <span>クーポン ({order.coupon_code})</span>
                                 <span>-{formatYen(order.coupon_discount_yen ?? 0)}</span>
                             </div>
                         )}
                         <div className="flex justify-between">
-                            <span>Shipping</span>
+                            <span>送料</span>
                             <span>{formatYen(order?.shipping_yen ?? 0)}</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>Tax</span>
+                            <span>税金</span>
                             <span>{formatYen(order?.tax_yen ?? 0)}</span>
                         </div>
                         <div className="mt-1 flex justify-between font-semibold">
-                            <span>Total</span>
+                            <span>合計</span>
                             <span>{formatYen(order?.total_yen ?? 0)}</span>
                         </div>
                     </div>
 
-          <p className="text-sm text-neutral-600">We use this information to confirm your order and deliver updates.</p>
+          <p className="text-sm text-neutral-600">この情報は注文の確認と更新通知に使用されます。</p>
           <form onSubmit={submitDetails} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className="text-xs font-semibold text-neutral-500 uppercase">
-                  Email <span className="text-rose-500">*</span>
+                  メールアドレス <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -434,7 +434,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
               </div>
               <div>
                 <label className="text-xs font-semibold text-neutral-500 uppercase">
-                  Name <span className="text-rose-500">*</span>
+                  お名前 <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -450,7 +450,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">Phone <span className="text-neutral-400">(optional)</span></label>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">電話番号 <span className="text-neutral-400">(任意)</span></label>
                 <input
                   type="tel"
                   value={form.phone ?? ''}
@@ -463,7 +463,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             </div>
             <div>
               <label className="text-xs font-semibold text-neutral-500 uppercase">
-                Address line 1 <span className="text-rose-500">*</span>
+                住所1 <span className="text-rose-500">*</span>
               </label>
               <input
                 type="text"
@@ -477,7 +477,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
               {validationErrors.address_line1 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line1[0]}</p>}
             </div>
             <div>
-              <label className="text-xs font-semibold text-neutral-500 uppercase">Address line 2 <span className="text-neutral-400">(optional)</span></label>
+              <label className="text-xs font-semibold text-neutral-500 uppercase">住所2 <span className="text-neutral-400">(任意)</span></label>
               <input
                 type="text"
                 value={form.address_line2 ?? ''}
@@ -489,7 +489,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
             </div>
             <div className="grid gap-4 md:grid-cols-3">
               <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">City <span className="text-neutral-400">(optional)</span></label>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">市区町村 <span className="text-neutral-400">(任意)</span></label>
                 <input
                   type="text"
                   value={form.city ?? ''}
@@ -500,7 +500,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 {validationErrors.city && <p className="mt-1 text-xs text-rose-600">{validationErrors.city[0]}</p>}
               </div>
               <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">State <span className="text-neutral-400">(optional)</span></label>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">都道府県 <span className="text-neutral-400">(任意)</span></label>
                 <input
                   type="text"
                   value={form.state ?? ''}
@@ -511,7 +511,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                 {validationErrors.state && <p className="mt-1 text-xs text-rose-600">{validationErrors.state[0]}</p>}
               </div>
               <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">Postal code <span className="text-neutral-400">(optional)</span></label>
+                <label className="text-xs font-semibold text-neutral-500 uppercase">郵便番号 <span className="text-neutral-400">(任意)</span></label>
                 <input
                   type="text"
                   value={form.zip ?? ''}
@@ -525,14 +525,14 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
 
                         <div className="flex items-center justify-between">
                             <a href="/checkout" className="text-sm text-neutral-600 hover:underline">
-                                Back to cart review
+                                カート確認に戻る
                             </a>
                             <button
                                 type="submit"
                                 disabled={loading}
                                 className="rounded-md bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-60"
                             >
-                                {loading ? 'Saving…' : 'Continue to payment'}
+                                {loading ? '保存中…' : '支払いへ進む'}
                             </button>
                         </div>
                     </form>

@@ -53,13 +53,13 @@ class CartService
     {
         // Only enforce minimum of 1 on add; upper bound is clamped, not rejected
         if ($qty < 1) {
-            throw ValidationException::withMessages(['qty' => 'Quantity must be at least 1.']);
+            throw ValidationException::withMessages(['qty' => '数量は1以上である必要があります。']);
         }
 
         // NEW: pre-validate that the variant exists (avoid ghost writes)
         $exists = DB::table('product_variants')->where('id', $variantId)->exists();
         if (!$exists) {
-            throw ValidationException::withMessages(['variant_id' => 'Selected variant does not exist.']);
+            throw ValidationException::withMessages(['variant_id' => '選択された商品が存在しません。']);
         }
 
         $raw = $this->loadRaw($sessionId);
@@ -108,7 +108,7 @@ class CartService
     public function update(string $sessionId, string $lineId, int $qty): array
     {
         if ($qty < 0 || $qty > $this->maxQty) {
-            throw ValidationException::withMessages(['qty' => "Quantity must be between 0 and {$this->maxQty}."]);
+            throw ValidationException::withMessages(['qty' => "数量は0から{$this->maxQty}の間でなければなりません。"]);
         }
 
         $raw = $this->loadRaw($sessionId);
@@ -364,7 +364,7 @@ class CartService
             ))));
 
             if ($evaluation->isUniversal) {
-                $couponLineNames = ['All items'];
+                $couponLineNames = ['すべての商品'];
             } else {
                 $couponLineNames = array_values(array_unique(array_filter(array_map(
                     fn ($line) => (string) ($line['product']['name'] ?? ''),
@@ -501,11 +501,11 @@ class CartService
 
     private function stockBadge(bool $managed, ?int $stock, int $safety): string
     {
-        if (!$managed) return 'In stock';
+        if (!$managed) return '在庫あり';
         $s = (int)($stock ?? 0);
-        if ($s <= 0) return 'Out of stock';
-        if ($s <= $safety) return 'Low stock';
-        return 'In stock';
+        if ($s <= 0) return '在庫切れ';
+        if ($s <= $safety) return '在庫僅少';
+        return '在庫あり';
     }
 
     /**
@@ -516,7 +516,7 @@ class CartService
     {
         $code = strtoupper(trim($code));
         if ($code === '') {
-            throw ValidationException::withMessages(['code' => 'Coupon code is required.']);
+            throw ValidationException::withMessages(['code' => 'クーポンコードは必須です。']);
         }
 
         $cart = $this->get($sessionId);
@@ -529,7 +529,7 @@ class CartService
         );
 
         if (! $evaluation->isValid()) {
-            $message = $evaluation->error ?? 'Coupon not currently valid.';
+            $message = $evaluation->error ?? 'クーポンは現在有効ではありません。';
             throw ValidationException::withMessages(['code' => $message]);
         }
 
@@ -576,7 +576,7 @@ class CartService
         if ($code === '') {
             return [
                 'valid' => false,
-                'error' => 'Coupon code is required.',
+                'error' => 'クーポンコードは必須です。',
                 'discount_cents' => 0,
                 'summary' => null,
                 'eligible_product_ids' => [],
@@ -593,7 +593,7 @@ class CartService
         if (empty($candidateLines)) {
             return [
                 'valid' => false,
-                'error' => 'Cart is empty.',
+                'error' => 'カートが空です。',
                 'discount_cents' => 0,
                 'summary' => null,
                 'eligible_product_ids' => [],
@@ -621,7 +621,7 @@ class CartService
             : [];
 
         $lineNames = $evaluation->isUniversal
-            ? ['All items']
+            ? ['すべての商品']
             : array_values(array_unique(array_filter(array_map(
                 fn ($line) => (string) ($line['product']['name'] ?? ''),
                 $qualifiedPreviewLines

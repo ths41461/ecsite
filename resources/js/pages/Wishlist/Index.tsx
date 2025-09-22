@@ -31,16 +31,16 @@ export default function Index({ items: initialItems, count }: Props) {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-6">
-            <Head title="Wishlist" />
-            <h1 className="mb-4 text-2xl font-semibold">Wishlist</h1>
+            <Head title="お気に入り" />
+            <h1 className="mb-4 text-2xl font-semibold">お気に入り</h1>
 
             {items.length === 0 ? (
                 <div className="rounded-lg border p-6 text-sm text-neutral-600">
-                    Your wishlist is empty.{' '}
+                    お気に入りリストが空です。{' '}
                     <Link href="/products" className="text-rose-600 underline">
-                        Browse products
+                        商品をブラウズ
                     </Link>
-                    .
+                    してください。
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -58,7 +58,7 @@ export default function Index({ items: initialItems, count }: Props) {
                                 onClick={() => removeItem(p.id)}
                                 className="mt-2 w-full rounded-lg border px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
                             >
-                                Remove
+                                削除
                             </button>
                         </div>
                     ))}

@@ -127,21 +127,21 @@ export default function CartIndex({ initialCart }: PageProps) {
             });
             const data = await res.json();
             if (!res.ok) {
-                let msg = data?.errors?.code?.[0] || data?.message || 'Failed to apply coupon';
+                let msg = data?.errors?.code?.[0] || data?.message || 'クーポンの適用に失敗しました';
                 if (msg === 'Coupon not currently valid.') {
-                    msg = `${msg} Double-check that the coupon has already started and has not yet expired.`;
+                    msg = `${msg} クーポンの開始日時と終了日時を確認してください。`;
                 }
                 setCouponError(msg);
                 return;
             }
             const nextCart = data as Cart;
             setCart(nextCart);
-            setCouponNotice('Coupon applied');
+            setCouponNotice('クーポンを適用しました');
             setCouponInput(nextCart.coupon_code ?? '');
         } catch (e: any) {
-            const fallback = e?.message || 'Failed to apply coupon';
+            const fallback = e?.message || 'クーポンの適用に失敗しました';
             const msg = fallback === 'Coupon not currently valid.'
-                ? `${fallback} Double-check that the coupon has already started and has not yet expired.`
+                ? `${fallback} クーポンの開始日時と終了日時を確認してください。`
                 : fallback;
             setCouponError(msg);
         } finally {
@@ -160,14 +160,14 @@ export default function CartIndex({ initialCart }: PageProps) {
                 credentials: 'same-origin',
             });
             if (!res.ok) {
-                setCouponError('Failed to remove coupon');
+                setCouponError('クーポンの削除に失敗しました');
                 return;
             }
             const data: Cart = await res.json();
             setCart(data);
-            setCouponNotice('Coupon removed');
+            setCouponNotice('クーポンを削除しました');
         } catch (e: any) {
-            setCouponError(e?.message || 'Failed to remove coupon');
+            setCouponError(e?.message || 'クーポンの削除に失敗しました');
         } finally {
             setCouponBusy(false);
         }
@@ -179,27 +179,27 @@ export default function CartIndex({ initialCart }: PageProps) {
 
     return (
         <div className="mx-auto max-w-5xl px-4 py-6">
-            <Head title="Your Cart" />
+            <Head title="ショッピングカート" />
 
             <div className="mb-6 flex items-end justify-between">
                 <div>
-                    <h1 className="text-2xl font-semibold">Your Cart</h1>
-                    <p className="text-sm text-neutral-500">{hasItems ? `${cart.lines.length} item(s)` : 'No items yet'}</p>
+                    <h1 className="text-2xl font-semibold">ショッピングカート</h1>
+                    <p className="text-sm text-neutral-500">{hasItems ? `${cart.lines.length} 個の商品` : '商品がありません'}</p>
                 </div>
                 <button
                     onClick={refreshCart}
                     disabled={loading}
                     className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                    {loading ? 'Refreshing…' : 'Refresh'}
+                    {loading ? '更新中…' : '更新'}
                 </button>
             </div>
 
             {!hasItems && (
                 <div className="rounded-xl border p-6 text-center">
-                    <p className="mb-4 text-neutral-600">Your cart is empty.</p>
+                    <p className="mb-4 text-neutral-600">カートに商品がありません。</p>
                     <a href="/products" className="inline-block rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-700">
-                        Continue shopping
+                        買い物を続ける
                     </a>
                 </div>
             )}
@@ -227,14 +227,14 @@ export default function CartIndex({ initialCart }: PageProps) {
                                             disabled={busyLine === line.line_id}
                                             className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
                                         >
-                                            Remove
+                                            削除
                                         </button>
                                     </div>
 
                                     {/* notice if qty clamped */}
                                     {clamped && (
                                         <div className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                                            Requested {line.notice!.requested}, but only {line.notice!.available} available. Quantity was adjusted.
+                                            {line.notice!.requested} 個リクエストしましたが、在庫は {line.notice!.available} 個のみです。数量を調整しました。
                                         </div>
                                     )}
 
@@ -247,7 +247,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                                     onClick={() => updateQty(line, Math.max(0, line.qty - 1))}
                                                     disabled={busyLine === line.line_id}
                                                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
-                                                    aria-label="Decrease quantity"
+                                                    aria-label="数量を減らす"
                                                 >
                                                     -
                                                 </button>
@@ -256,7 +256,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                                     onClick={() => updateQty(line, Math.min(20, line.qty + 1))}
                                                     disabled={busyLine === line.line_id}
                                                     className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
-                                                    aria-label="Increase quantity"
+                                                    aria-label="数量を増やす"
                                                 >
                                                     +
                                                 </button>
@@ -268,8 +268,8 @@ export default function CartIndex({ initialCart }: PageProps) {
                                                 <div className="text-xs text-neutral-500 line-through">{yen(line.compare_at_cents)}</div>
                                             )}
                                             <div className="text-lg font-semibold">{yen(line.price_cents)}</div>
-                                            <div className="text-sm text-neutral-600">Line total: {yen(line.line_total_cents)}</div>
-                                            {couponApplied && <div className="text-xs font-medium text-emerald-600">Coupon applied</div>}
+                                            <div className="text-sm text-neutral-600">小計: {yen(line.line_total_cents)}</div>
+                                            {couponApplied && <div className="text-xs font-medium text-emerald-600">クーポン適用</div>}
                                         </div>
                                     </div>
                                 </div>
@@ -279,20 +279,20 @@ export default function CartIndex({ initialCart }: PageProps) {
 
                     {/* Summary */}
         <aside className="h-fit rounded-xl border p-4">
-            <h2 className="mb-3 text-lg font-semibold">Summary</h2>
+            <h2 className="mb-3 text-lg font-semibold">合計</h2>
             <div className="mb-1 flex items-center justify-between text-sm">
-                            <span>Subtotal</span>
+                            <span>小計</span>
                             <span>{yen(cart.subtotal_cents)}</span>
                         </div>
                         {cart.savings_cents > 0 && (
                             <div className="mb-1 flex items-center justify-between text-sm text-emerald-700">
-                                <span>Savings</span>
+                                <span>割引</span>
                                 <span>-{yen(cart.savings_cents)}</span>
                             </div>
                         )}
                         {(cart.tax_cents ?? 0) > 0 && (
                             <div className="mb-1 flex items-center justify-between text-sm">
-                                <span>Tax</span>
+                                <span>税金</span>
                                 <span>{yen(cart.tax_cents ?? 0)}</span>
                             </div>
                         )}
@@ -300,7 +300,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                             <div className="mb-1 text-sm">
                                 <div className="mb-1 flex items-center justify-between">
                                     <span>
-                                        Coupon
+                                        クーポン
                                         <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
                                             {cart.coupon_code}
                                         </span>
@@ -315,7 +315,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                             disabled={couponBusy}
                                             className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
                                         >
-                                            Remove
+                                            削除
                                         </button>
                                     </div>
                                 </div>
@@ -324,25 +324,25 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 )}
                                 {(cart.coupon_line_names?.length ?? 0) > 0 && (
                                     <div className="text-xs text-neutral-500">
-                                        {cart.coupon_line_names?.[0] === 'All items'
-                                            ? 'Applies to all items in your cart'
-                                            : `Applies to: ${cart.coupon_line_names?.join(', ')}`}
+                                        {cart.coupon_line_names?.[0] === 'すべての商品'
+                                            ? 'カート内のすべての商品に適用'
+                                            : `適用対象: ${cart.coupon_line_names?.join(', ')}`}
                                     </div>
                                 )}
                             </div>
                         )}
                         <div className="mt-2 border-t pt-2">
                             <div className="flex items-center justify-between text-base font-semibold">
-                                <span>Total</span>
+                                <span>合計</span>
                                 <span>{yen(cart.total_cents)}</span>
                             </div>
-                            <p className="mt-1 text-xs text-neutral-500">Tax included. Shipping calculated at checkout.</p>
+                            <p className="mt-1 text-xs text-neutral-500">税込み。配送料はチェックアウト時に計算されます。</p>
                         </div>
 
                         {/* Coupon entry */}
                         <div className="mt-4 rounded-lg border border-neutral-200 p-3">
                             <div className="mb-2 flex items-center justify-between text-sm font-medium">
-                                <span>Have a coupon?</span>
+                                <span>クーポンコードをお持ちですか？</span>
                                 {cart.coupon_code && (
                                     <button
                                         type="button"
@@ -350,7 +350,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                         disabled={couponBusy}
                                         className="text-xs text-neutral-600 hover:underline disabled:cursor-not-allowed"
                                     >
-                                        Remove current
+                                        現在のクーポンを削除
                                     </button>
                                 )}
                             </div>
@@ -358,7 +358,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 <input
                                     value={couponInput}
                                     onChange={(e) => setCouponInput(e.target.value)}
-                                    placeholder="Enter code"
+                                    placeholder="コードを入力"
                                     className="flex-1 rounded-md border px-3 py-2 text-sm"
                                 />
                                 <button
@@ -367,12 +367,12 @@ export default function CartIndex({ initialCart }: PageProps) {
                                     disabled={couponBusy || !couponInput.trim()}
                                     className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                    Apply
+                                    適用
                                 </button>
                             </div>
                             {cart.coupon_code && couponInput !== cart.coupon_code && (
                                 <p className="mt-2 text-xs text-neutral-500">
-                                    Enter a new code and press Apply to replace the current coupon.
+                                    新しいコードを入力して「適用」ボタンを押すと、現在のクーポンを置き換えます。
                                 </p>
                             )}
                         </div>
@@ -389,13 +389,13 @@ export default function CartIndex({ initialCart }: PageProps) {
                                 href="/checkout"
                                 className="block w-full rounded-lg bg-rose-600 px-4 py-3 text-center font-medium text-white hover:bg-rose-700"
                             >
-                                Proceed to Checkout
+                                チェックアウトに進む
                             </a>
                         </div>
 
                         <div className="mt-2 text-center">
                             <a href="/products" className="text-sm text-neutral-600 hover:underline">
-                                Continue shopping
+                                買い物を続ける
                             </a>
                         </div>
                     </aside>

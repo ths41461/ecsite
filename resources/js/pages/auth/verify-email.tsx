@@ -10,12 +10,12 @@ import AuthLayout from '@/layouts/auth-layout';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
-        <AuthLayout title="Verify email" description="Please verify your email address by clicking on the link we just emailed to you.">
-            <Head title="Email verification" />
+        <AuthLayout title="メールアドレスの確認" description="ご登録時にご提供いただいたメールアドレスに送信したリンクをクリックして、メールアドレスをご確認ください。">
+            <Head title="メールアドレスの確認" />
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address you provided during registration.
+                    新しい確認リンクが、ご登録時にご提供いただいたメールアドレスに送信されました。
                 </div>
             )}
 
@@ -24,11 +24,11 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <LoaderCircle className="h-4 w-4 animate-spin" />}
-                            Resend verification email
+                            確認メールを再送信
                         </Button>
 
                         <TextLink href={logout()} className="mx-auto block text-sm">
-                            Log out
+                            ログアウト
                         </TextLink>
                     </>
                 )}

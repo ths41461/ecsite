@@ -21,10 +21,10 @@ class UpdateCartRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'qty.required' => 'Please choose a quantity.',
-            'qty.integer'  => 'Quantity must be a number.',
-            'qty.min'      => 'Quantity cannot be negative.',
-            'qty.max'      => 'Quantity may not exceed ' . (int)config('cart.max_qty', 20) . '.',
+            'qty.required' => '数量を選択してください。',
+            'qty.integer'  => '数量は数字で入力してください。',
+            'qty.min'      => '数量は負の数にできません。',
+            'qty.max'      => '数量は ' . (int)config('cart.max_qty', 20) . ' を超えることはできません。',
         ];
     }
 }

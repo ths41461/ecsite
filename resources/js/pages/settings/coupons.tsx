@@ -77,22 +77,22 @@ type StatusFilter = 'all' | 'active' | 'scheduled' | 'expired' | 'inactive';
 type StatusMeta = { label: string; tone: 'neutral' | 'warning' | 'danger' | 'success' };
 
 const statusFilters: { key: StatusFilter; label: string }[] = [
-    { key: 'all', label: 'All' },
-    { key: 'active', label: 'Active' },
-    { key: 'scheduled', label: 'Scheduled' },
-    { key: 'expired', label: 'Expired' },
-    { key: 'inactive', label: 'Inactive' },
+    { key: 'all', label: 'すべて' },
+    { key: 'active', label: '有効' },
+    { key: 'scheduled', label: 'スケジュール済み' },
+    { key: 'expired', label: '期限切れ' },
+    { key: 'inactive', label: '無効' },
 ];
 
 type WizardStep = 'basics' | 'discount' | 'schedule' | 'eligibility' | 'review';
 type WizardStepDefinition = { key: WizardStep; title: string; description: string };
 
 const wizardSteps: WizardStepDefinition[] = [
-    { key: 'basics', title: 'Basics', description: 'Code and description' },
-    { key: 'discount', title: 'Discount', description: 'Value and exclusions' },
-    { key: 'schedule', title: 'Schedule', description: 'Timing and limits' },
-    { key: 'eligibility', title: 'Eligibility', description: 'Products and thresholds' },
-    { key: 'review', title: 'Review', description: 'Preview and launch' },
+    { key: 'basics', title: '基本', description: 'コードと説明' },
+    { key: 'discount', title: '割引', description: '値と除外条件' },
+    { key: 'schedule', title: 'スケジュール', description: '時間と制限' },
+    { key: 'eligibility', title: '適用条件', description: '商品と閾値' },
+    { key: 'review', title: '確認', description: 'プレビューと公開' },
 ];
 
 type StatCardProps = {
@@ -120,16 +120,16 @@ function StatCard({ label, value, description, tone = 'default' }: StatCardProps
 }
 
 function describeStatus(coupon: Coupon): StatusMeta {
-    if (!coupon.is_active) return { label: 'Inactive', tone: 'neutral' };
+    if (!coupon.is_active) return { label: '無効', tone: 'neutral' };
 
     const now = Date.now();
     const starts = coupon.starts_at ? new Date(coupon.starts_at).getTime() : null;
-    if (starts && starts > now) return { label: `Scheduled • ${new Date(starts).toLocaleString()}`, tone: 'warning' };
+    if (starts && starts > now) return { label: `スケジュール済み • ${new Date(starts).toLocaleString()}`, tone: 'warning' };
 
     const ends = coupon.ends_at ? new Date(coupon.ends_at).getTime() : null;
-    if (ends && ends < now) return { label: `Expired ${new Date(ends).toLocaleString()}`, tone: 'danger' };
+    if (ends && ends < now) return { label: `期限切れ ${new Date(ends).toLocaleString()}`, tone: 'danger' };
 
-    return { label: 'Active now', tone: 'success' };
+    return { label: '現在有効', tone: 'success' };
 }
 
 function statusMatches(coupon: Coupon, filter: StatusFilter): boolean {
@@ -143,19 +143,19 @@ function statusMatches(coupon: Coupon, filter: StatusFilter): boolean {
 }
 
 function discountSummary(coupon: Coupon): string {
-    return coupon.type === 'percent' ? `${coupon.value}% off` : `¥${coupon.value.toLocaleString('en-US')} off`;
+    return coupon.type === 'percent' ? `${coupon.value}%オフ` : `¥${coupon.value.toLocaleString('ja-JP')}オフ`;
 }
 
 function formatYen(value?: number | null): string {
-    if (value === null || value === undefined || Number.isNaN(value)) return 'None';
-    return `¥${value.toLocaleString('en-US')}`;
+    if (value === null || value === undefined || Number.isNaN(value)) return 'なし';
+    return `¥${value.toLocaleString('ja-JP')}`;
 }
 
 function usageSummary(coupon: Coupon): string {
     const max = coupon.max_uses ?? Infinity;
     const used = coupon.used_count;
-    if (max === Infinity) return `${used.toLocaleString()} redemptions`;
-    return `${used.toLocaleString()} of ${max.toLocaleString()} used`;
+    if (max === Infinity) return `${used.toLocaleString()}回利用`;
+    return `${used.toLocaleString()}回 / ${max.toLocaleString()}回 利用済み`;
 }
 
 function statusBadgeClasses(tone: StatusMeta['tone']): string {
@@ -205,23 +205,23 @@ function CouponListPanel({
             >
                 <header className="flex items-start justify-between gap-3 border-b border-neutral-200/70 px-6 py-5">
                     <div className="space-y-1">
-                        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-600">Coupon Control Center</h2>
-                        <p className="text-xs text-neutral-500">Browse, filter, and jump into any coupon in seconds.</p>
+                        <h2 className="text-sm font-semibold uppercase tracking-wide text-neutral-600">クーポン管理センター</h2>
+                        <p className="text-xs text-neutral-500">クーポンを素早く閲覧、フィルター、編集できます。</p>
                     </div>
                     <div className="rounded-full border border-neutral-300/80 bg-neutral-100/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-neutral-600">
-                        {hasCoupons ? `${coupons.length} entr${coupons.length === 1 ? 'y' : 'ies'}` : 'No entries'}
+                        {hasCoupons ? `${coupons.length}件` : 'エントリーなし'}
                     </div>
                 </header>
 
                 <div className="grid gap-4 border-b border-neutral-200/60 px-6 py-5">
                     <label className="space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Quick search</span>
+                        <span className="text-xs font-semibold uppercase tracking-wide text-neutral-500">クイック検索</span>
                         <div className="relative">
                             <input
                                 value={search}
                                 onChange={(event) => onSearchChange(event.target.value)}
                                 className="w-full rounded-lg border border-neutral-200 bg-neutral-50/90 px-3 py-2 text-sm text-neutral-700 shadow-inner focus:border-neutral-900 focus:ring-neutral-900"
-                                placeholder="Find by code, description, or product"
+                                placeholder="コード、説明、商品で検索"
                             />
                             <span className="pointer-events-none absolute inset-y-0 right-3 hidden items-center text-[11px] uppercase tracking-wide text-neutral-400 sm:flex">
                                 Ctrl / ⌘ K
@@ -230,7 +230,7 @@ function CouponListPanel({
                     </label>
 
                     <div className="space-y-3">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">Status</p>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">ステータス</p>
                         <div className="flex flex-wrap gap-2">
                             {statusFilters.map((chip) => (
                                 <button
@@ -251,16 +251,16 @@ function CouponListPanel({
 
                     <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-500">
                         <span className="rounded-full bg-neutral-200/70 px-3 py-1 font-semibold uppercase tracking-wide text-neutral-600">
-                            Active view: {statusFilter}
+                            表示中: {statusFilter}
                         </span>
-                        <span>Tip: select a coupon to edit on the right.</span>
+                        <span>ヒント: クーポンを選択して右側で編集してください。</span>
                     </div>
                 </div>
 
                 <div className="flex-1 space-y-3 overflow-y-auto px-6 py-5">
                     {!hasCoupons && (
                         <p className="rounded-2xl border border-dashed border-neutral-300 px-4 py-6 text-sm text-neutral-500">
-                            No coupons match your filters. Adjust the search or status filter to see more results.
+                            条件に一致するクーポンがありません。検索条件やステータスフィルターを調整してください。
                         </p>
                     )}
 
@@ -285,17 +285,17 @@ function CouponListPanel({
                                                     {coupon.code}
                                                 </span>
                                                 <span className="rounded-full bg-neutral-200 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-600">
-                                                    {coupon.type === 'percent' ? 'Percent' : 'Fixed'}
+                                                    {coupon.type === 'percent' ? 'パーセント' : '固定額'}
                                                 </span>
                                             </div>
                                             <p className="text-sm font-medium text-neutral-700">{discountSummary(coupon)}</p>
                                             <p className="text-xs text-neutral-500">
-                                                {coupon.description ? coupon.description : 'No description provided yet.'}
+                                                {coupon.description ? coupon.description : '説明がありません。'}
                                             </p>
                                             <div className="flex flex-wrap items-center gap-3 text-[11px] text-neutral-500">
                                                 <span>{usageSummary(coupon)}</span>
-                                                {coupon.starts_at && <span>Starts {new Date(coupon.starts_at).toLocaleDateString()}</span>}
-                                                {coupon.ends_at && <span>Ends {new Date(coupon.ends_at).toLocaleDateString()}</span>}
+                                                {coupon.starts_at && <span>開始 {new Date(coupon.starts_at).toLocaleDateString()}</span>}
+                                                {coupon.ends_at && <span>終了 {new Date(coupon.ends_at).toLocaleDateString()}</span>}
                                             </div>
                                         </div>
                                         <span className={`rounded-full px-3 py-1 text-xs font-semibold ${statusBadgeClasses(status.tone)}`}>
@@ -306,10 +306,10 @@ function CouponListPanel({
 
                                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[11px]">
                                     <div className="flex flex-wrap items-center gap-2 text-neutral-500">
-                                        {coupon.min_subtotal_yen && <span>Min {formatYen(coupon.min_subtotal_yen)}</span>}
-                                        {coupon.max_discount_yen && <span>Cap {formatYen(coupon.max_discount_yen)}</span>}
-                                        {coupon.product_names.length > 0 && <span>{coupon.product_names.length} product(s)</span>}
-                                        {coupon.exclude_sale_items && <span>Excludes sale</span>}
+                                        {coupon.min_subtotal_yen && <span>最小 {formatYen(coupon.min_subtotal_yen)}</span>}
+                                        {coupon.max_discount_yen && <span>上限 {formatYen(coupon.max_discount_yen)}</span>}
+                                        {coupon.product_names.length > 0 && <span>{coupon.product_names.length}商品</span>}
+                                        {coupon.exclude_sale_items && <span>セール商品除外</span>}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs">
                                         <button
@@ -317,14 +317,14 @@ function CouponListPanel({
                                             onClick={() => onToggleActive(coupon)}
                                             className="rounded-full border border-neutral-300 px-3 py-1 font-semibold text-neutral-600 transition hover:border-neutral-400 hover:bg-neutral-100"
                                         >
-                                            {coupon.is_active ? 'Pause' : 'Activate'}
+                                            {coupon.is_active ? '一時停止' : '有効化'}
                                         </button>
                                         <button
                                             type="button"
                                             onClick={() => onDelete(coupon)}
                                             className="rounded-full border border-rose-200 px-3 py-1 font-semibold text-rose-600 transition hover:border-rose-300 hover:bg-rose-50"
                                         >
-                                            Delete
+                                            削除
                                         </button>
                                     </div>
                                 </div>
@@ -369,12 +369,12 @@ function ProductSelector({ selected, options, search, onSearchChange, onAdd, onR
     return (
         <div className="space-y-3">
             <div className="flex items-center justify-between text-sm font-semibold text-neutral-700">
-                <span>Eligible products</span>
-                <span className="text-xs text-neutral-500">{selected.length === 0 ? 'All products eligible' : `${selected.length} selected`}</span>
+                <span>適用商品</span>
+                <span className="text-xs text-neutral-500">{selected.length === 0 ? 'すべての商品が対象' : `${selected.length}件選択`}</span>
             </div>
 
             <div className="flex flex-wrap gap-2">
-                {selected.length === 0 && <span className="rounded-full bg-neutral-200/60 px-3 py-1 text-xs text-neutral-600">All products</span>}
+                {selected.length === 0 && <span className="rounded-full bg-neutral-200/60 px-3 py-1 text-xs text-neutral-600">すべての商品</span>}
                 {selected.map((product) => (
                     <span key={product.id} className="inline-flex items-center gap-2 rounded-full bg-neutral-300/60 px-3 py-1 text-xs text-neutral-700">
                         <span>{product.name}</span>
@@ -382,7 +382,7 @@ function ProductSelector({ selected, options, search, onSearchChange, onAdd, onR
                             type="button"
                             onClick={() => onRemove(product.id)}
                             className="text-neutral-500 transition hover:text-neutral-700"
-                            aria-label={`Remove ${product.name}`}
+                            aria-label={`${product.name}を削除`}
                         >
                             ×
                         </button>
@@ -394,13 +394,13 @@ function ProductSelector({ selected, options, search, onSearchChange, onAdd, onR
                 <input
                     value={search}
                     onChange={(event) => onSearchChange(event.target.value)}
-                    placeholder="Search products by name or slug"
+                    placeholder="商品名またはスラッグで検索"
                     className="w-full rounded-lg border border-neutral-200 bg-neutral-50/90 px-3 py-2 text-sm text-neutral-700 shadow-inner focus:border-neutral-900 focus:ring-neutral-900"
                     type="search"
                 />
                 <div className="max-h-48 overflow-y-auto rounded-lg border border-neutral-200 bg-neutral-50/80 text-sm">
                     {options.length === 0 ? (
-                        <p className="px-3 py-2 text-neutral-500">No matches. Try a different search.</p>
+                        <p className="px-3 py-2 text-neutral-500">一致する商品がありません。別の検索を試してください。</p>
                     ) : (
                         options.map((product) => (
                             <button
@@ -439,7 +439,7 @@ type CouponPreviewProps = {
 function CouponPreview({ summary, isActive, className }: CouponPreviewProps) {
     return (
         <div className={`rounded-2xl border border-neutral-200/70 bg-neutral-50/80 p-4 ${className ?? ''}`}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">Customer-facing preview</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-neutral-500">顧客向けプレビュー</h3>
 
             <div className="mt-3 space-y-3">
                 <div className="flex items-start justify-between gap-4">
@@ -452,31 +452,31 @@ function CouponPreview({ summary, isActive, className }: CouponPreviewProps) {
 
                 <dl className="grid gap-3 text-xs text-neutral-600 md:grid-cols-2">
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Status</dt>
-                        <dd className="text-neutral-600">{isActive ? 'Active' : 'Inactive'}</dd>
+                        <dt className="font-semibold text-neutral-700">ステータス</dt>
+                        <dd className="text-neutral-600">{isActive ? '有効' : '無効'}</dd>
                     </div>
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Schedule</dt>
+                        <dt className="font-semibold text-neutral-700">スケジュール</dt>
                         <dd className="text-neutral-600">{summary.schedule}</dd>
                     </div>
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Limits</dt>
+                        <dt className="font-semibold text-neutral-700">制限</dt>
                         <dd className="text-neutral-600">{summary.limits}</dd>
                     </div>
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Min subtotal</dt>
+                        <dt className="font-semibold text-neutral-700">最小購入額</dt>
                         <dd className="text-neutral-600">{summary.minSubtotal}</dd>
                     </div>
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Discount cap</dt>
+                        <dt className="font-semibold text-neutral-700">割引上限</dt>
                         <dd className="text-neutral-600">{summary.cap}</dd>
                     </div>
                     <div className="space-y-1">
-                        <dt className="font-semibold text-neutral-700">Sale items</dt>
+                        <dt className="font-semibold text-neutral-700">セール商品</dt>
                         <dd className="text-neutral-600">{summary.saleNotice}</dd>
                     </div>
                     <div className="space-y-1 md:col-span-2">
-                        <dt className="font-semibold text-neutral-700">Eligibility</dt>
+                        <dt className="font-semibold text-neutral-700">適用条件</dt>
                         <dd className="text-neutral-600">{summary.eligibleProducts}</dd>
                     </div>
                 </dl>
@@ -520,14 +520,14 @@ function CouponForm({
 }: CouponFormProps) {
     const previewSummary = {
         headline: data.code || 'COUPONCODE',
-        description: data.description || 'Describe this coupon so shoppers immediately understand it.',
-        discount: data.type === 'percent' ? `${data.value || 0}% off` : formatYen(typeof data.value === 'number' ? data.value : 0),
-        schedule: `${data.starts_at || 'Immediate'} → ${data.ends_at || 'No end'}`,
-        limits: `${data.max_uses || '∞'} total • ${data.max_uses_per_user || '∞'} per customer`,
-        minSubtotal: data.min_subtotal_yen ? formatYen(Number(data.min_subtotal_yen)) : 'None',
-        cap: data.max_discount_yen ? formatYen(Number(data.max_discount_yen)) : 'None',
-        saleNotice: data.exclude_sale_items ? 'Excludes sale items' : 'Includes sale items',
-        eligibleProducts: selectedProducts.length === 0 ? 'All products eligible' : `${selectedProducts.length} product(s) targeted`,
+        description: data.description || 'このクーポンの説明を入力してください。',
+        discount: data.type === 'percent' ? `${data.value || 0}%オフ` : formatYen(typeof data.value === 'number' ? data.value : 0),
+        schedule: `${data.starts_at || '即時'} → ${data.ends_at || '終了日なし'}`,
+        limits: `${data.max_uses || '∞'}回 合計 • ${data.max_uses_per_user || '∞'}回 顧客ごと`,
+        minSubtotal: data.min_subtotal_yen ? formatYen(Number(data.min_subtotal_yen)) : 'なし',
+        cap: data.max_discount_yen ? formatYen(Number(data.max_discount_yen)) : 'なし',
+        saleNotice: data.exclude_sale_items ? 'セール商品を除外' : 'セール商品を含む',
+        eligibleProducts: selectedProducts.length === 0 ? 'すべての商品が対象' : `${selectedProducts.length}商品が対象`,
     };
 
     return (
@@ -537,10 +537,10 @@ function CouponForm({
                     <div className="flex items-center justify-between">
                         <div>
                             <h2 className="text-xl font-semibold text-neutral-800">
-                                {editing ? `Edit coupon • ${editing.code}` : 'Create a new coupon'}
+                                {editing ? `クーポン編集 • ${editing.code}` : '新しいクーポンを作成'}
                             </h2>
                             <p className="text-sm text-neutral-500">
-                                {editing ? 'Update the coupon details and save your changes.' : 'Fill in the details below to publish a new coupon.'}
+                                {editing ? 'クーポンの詳細を更新して変更を保存してください。' : '以下の詳細を入力して新しいクーポンを公開してください。'}
                             </p>
                         </div>
                         <label className="inline-flex items-center gap-2 rounded-full border border-neutral-300 bg-neutral-50/90 px-3 py-2 text-sm font-medium text-neutral-600 shadow-sm transition hover:border-neutral-400">
@@ -550,7 +550,7 @@ function CouponForm({
                                 onChange={(event) => onFieldChange('is_active', event.target.checked)}
                                 className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                             />
-                            Active now
+                            現在有効
                         </label>
                     </div>
                 </header>
@@ -558,62 +558,62 @@ function CouponForm({
                 <form onSubmit={onSubmit} className="mt-5 space-y-6">
                     <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Code</label>
+                            <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">コード</label>
                             <input
                                 value={data.code}
                                 onChange={(event) => onFieldChange('code', event.target.value.toUpperCase())}
                                 className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                placeholder="Example: SPRING25"
+                                placeholder="例: SPRING25"
                                 required
                             />
-                            <p className="text-xs text-neutral-500">Shoppers will enter this exact code at checkout. Use uppercase for clarity.</p>
+                            <p className="text-xs text-neutral-500">お買い物客はチェックアウト時にこのコードを正確に入力します。明確にするために大文字を使用してください。</p>
                             {errors.code && <p className="text-xs text-rose-600">{errors.code}</p>}
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Short description</label>
+                            <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">簡単な説明</label>
                             <input
                                 value={data.description}
                                 onChange={(event) => onFieldChange('description', event.target.value)}
                                 className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                placeholder="Shown to shoppers (optional)"
+                                placeholder="お買い物客に表示される説明（任意）"
                             />
                             {errors.description && <p className="text-xs text-rose-600">{errors.description}</p>}
                         </div>
                     </div>
 
                     <div className="rounded-xl border border-neutral-200/70 bg-neutral-50/80 p-4">
-                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Discount</h3>
+                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">割引</h3>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Type</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">種類</label>
                                 <select
                                     value={data.type}
                                     onChange={(event) => onFieldChange('type', event.target.value as 'percent' | 'fixed')}
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
                                 >
-                                    <option value="percent">Percent</option>
-                                    <option value="fixed">Fixed amount (¥)</option>
+                                    <option value="percent">パーセント</option>
+                                    <option value="fixed">固定額（¥）</option>
                                 </select>
                                 {errors.type && <p className="text-xs text-rose-600">{errors.type}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Value</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">値</label>
                                 <input
                                     type="number"
                                     min={1}
                                     value={data.value}
                                     onChange={(event) => onFieldChange('value', event.target.value === '' ? '' : Number(event.target.value))}
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                    placeholder={data.type === 'percent' ? 'e.g. 10 for 10% off' : 'Amount in ¥'}
+                                    placeholder={data.type === 'percent' ? '例: 10 で 10%オフ' : '円単位の金額'}
                                     required
                                 />
                                 {errors.value && <p className="text-xs text-rose-600">{errors.value}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Maximum discount (¥)</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">最大割引額（¥）</label>
                                 <input
                                     type="number"
                                     min={0}
@@ -622,7 +622,7 @@ function CouponForm({
                                         onFieldChange('max_discount_yen', event.target.value === '' ? '' : Number(event.target.value))
                                     }
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                    placeholder="Optional cap"
+                                    placeholder="任意の上限"
                                 />
                                 {errors.max_discount_yen && <p className="text-xs text-rose-600">{errors.max_discount_yen}</p>}
                             </div>
@@ -634,16 +634,16 @@ function CouponForm({
                                     onChange={(event) => onFieldChange('exclude_sale_items', event.target.checked)}
                                     className="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-900"
                                 />
-                                <span className="text-sm text-neutral-600">Exclude sale-priced items</span>
+                                <span className="text-sm text-neutral-600">セール価格の商品を除外</span>
                             </div>
                         </div>
                     </div>
 
                     <div className="rounded-xl border border-neutral-200/70 bg-neutral-50/80 p-4">
-                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Limits & schedule</h3>
+                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">制限とスケジュール</h3>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Starts at</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">開始日時</label>
                                 <input
                                     type="datetime-local"
                                     value={data.starts_at}
@@ -654,7 +654,7 @@ function CouponForm({
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Ends at</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">終了日時</label>
                                 <input
                                     type="datetime-local"
                                     value={data.ends_at}
@@ -665,20 +665,20 @@ function CouponForm({
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Max uses (total)</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">最大利用回数（合計）</label>
                                 <input
                                     type="number"
                                     min={0}
                                     value={data.max_uses}
                                     onChange={(event) => onFieldChange('max_uses', event.target.value === '' ? '' : Number(event.target.value))}
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                    placeholder="Leave blank for unlimited"
+                                    placeholder="空白で無制限"
                                 />
                                 {errors.max_uses && <p className="text-xs text-rose-600">{errors.max_uses}</p>}
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Max uses per customer</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">顧客ごとの最大利用回数</label>
                                 <input
                                     type="number"
                                     min={0}
@@ -687,7 +687,7 @@ function CouponForm({
                                         onFieldChange('max_uses_per_user', event.target.value === '' ? '' : Number(event.target.value))
                                     }
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                    placeholder="Leave blank for unlimited"
+                                    placeholder="空白で無制限"
                                 />
                                 {errors.max_uses_per_user && <p className="text-xs text-rose-600">{errors.max_uses_per_user}</p>}
                             </div>
@@ -695,10 +695,10 @@ function CouponForm({
                     </div>
 
                     <div className="rounded-xl border border-neutral-200/70 bg-neutral-50/80 p-4">
-                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Eligibility</h3>
+                        <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">適用条件</h3>
                         <div className="grid gap-4 md:grid-cols-2">
                             <div className="space-y-2">
-                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">Minimum subtotal (¥)</label>
+                                <label className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">最小購入額（¥）</label>
                                 <input
                                     type="number"
                                     min={0}
@@ -707,7 +707,7 @@ function CouponForm({
                                         onFieldChange('min_subtotal_yen', event.target.value === '' ? '' : Number(event.target.value))
                                     }
                                     className="w-full rounded-lg border px-3 py-2 text-sm focus:border-neutral-900 focus:ring-neutral-900"
-                                    placeholder="Optional"
+                                    placeholder="任意"
                                 />
                                 {errors.min_subtotal_yen && <p className="text-xs text-rose-600">{errors.min_subtotal_yen}</p>}
                             </div>
@@ -731,7 +731,7 @@ function CouponForm({
                             disabled={processing}
                             className="rounded-md bg-neutral-900 px-4 py-2 text-sm font-semibold text-white hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-70"
                         >
-                            {processing ? 'Saving…' : editing ? 'Update coupon' : 'Create coupon'}
+                            {processing ? '保存中…' : editing ? 'クーポンを更新' : 'クーポンを作成'}
                         </button>
                         {editing && (
                             <button
@@ -739,7 +739,7 @@ function CouponForm({
                                 onClick={onReset}
                                 className="rounded-md border border-neutral-300 px-4 py-2 text-sm text-neutral-600 hover:bg-neutral-50"
                             >
-                                Cancel editing
+                                編集をキャンセル
                             </button>
                         )}
                     </div>
@@ -748,16 +748,16 @@ function CouponForm({
 
             {editing && (
                 <div className="rounded-3xl border border-rose-200/70 bg-rose-50/80 p-5 text-sm text-rose-700 shadow-sm">
-                    <h3 className="mb-2 text-sm font-semibold tracking-wide uppercase">Danger zone</h3>
+                    <h3 className="mb-2 text-sm font-semibold tracking-wide uppercase">危険ゾーン</h3>
                     <p className="mb-3 text-xs text-rose-600">
-                        Deleting a coupon removes it immediately. Existing orders keep their applied discount history.
+                        クーポンを削除すると即座に削除されます。既存の注文は適用された割引履歴を保持します。
                     </p>
                     <button
                         type="button"
                         onClick={onRemoveCoupon}
                         className="rounded-md border border-rose-300 px-3 py-2 text-sm font-medium text-rose-700 hover:bg-rose-100"
                     >
-                        Delete coupon
+                        クーポンを削除
                     </button>
                 </div>
             )}
@@ -878,7 +878,7 @@ export default function CouponsSettings({ coupons, productOptions }: Props) {
     };
 
     const handleDelete = (coupon: Coupon) => {
-        if (!confirm(`Delete coupon ${coupon.code}? This action cannot be undone.`)) return;
+        if (!confirm(`クーポン ${coupon.code} を削除しますか？この操作は元に戻せません。`)) return;
         destroy(destroyCouponRoute(coupon.id).url, {
             onSuccess: () => {
                 if (editing?.id === coupon.id) {
@@ -926,16 +926,16 @@ export default function CouponsSettings({ coupons, productOptions }: Props) {
 
     return (
         <AppLayout>
-            <Head title="Coupon settings" />
+            <Head title="クーポン設定" />
 
             <SettingsLayout fullWidth>
                 <div className="mx-auto max-w-6xl space-y-10 px-4 py-10">
                     <header className="rounded-3xl border border-neutral-200/80 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 shadow-lg">
                         <div className="flex flex-wrap items-start justify-between gap-4">
                             <div className="space-y-1">
-                                <h1 className="text-3xl font-semibold text-neutral-800">Coupons</h1>
+                                <h1 className="text-3xl font-semibold text-neutral-800">クーポン</h1>
                                 <p className="text-sm text-neutral-600">
-                                    Build, schedule, and optimize discounts. Local time: <span className="font-medium text-neutral-700">{clockLabel}</span>
+                                    割引を構築、スケジュール、最適化します。現在時刻: <span className="font-medium text-neutral-700">{clockLabel}</span>
                                 </p>
                             </div>
                             <div className="flex flex-wrap gap-2">
@@ -943,16 +943,16 @@ export default function CouponsSettings({ coupons, productOptions }: Props) {
                                     onClick={resetForm}
                                     className="rounded-md border border-neutral-300 bg-neutral-50/90 px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm backdrop-blur-md transition hover:border-neutral-400 hover:bg-neutral-100"
                                 >
-                                    {editing ? 'Create new coupon' : 'Reset form'}
+                                    {editing ? '新しいクーポンを作成' : 'フォームをリセット'}
                                 </button>
                             </div>
                         </div>
 
                         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                            <StatCard label="Total" value={statusCounts.total} description="Coupons in this workspace" />
-                            <StatCard label="Active" value={statusCounts.active} description="Live and redeemable" tone="success" />
-                            <StatCard label="Scheduled" value={statusCounts.scheduled} description="Starting soon" tone="warning" />
-                            <StatCard label="Inactive & expired" value={statusCounts.inactive + statusCounts.expired} description="Paused or expired" tone="muted" />
+                            <StatCard label="合計" value={statusCounts.total} description="このワークスペースのクーポン" />
+                            <StatCard label="有効" value={statusCounts.active} description="ライブで利用可能" tone="success" />
+                            <StatCard label="スケジュール済み" value={statusCounts.scheduled} description="近日開始" tone="warning" />
+                            <StatCard label="無効と期限切れ" value={statusCounts.inactive + statusCounts.expired} description="一時停止または期限切れ" tone="muted" />
                         </div>
                     </header>
 

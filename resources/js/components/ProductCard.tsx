@@ -30,7 +30,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                             loading="lazy"
                         />
                     ) : (
-                        <div className="grid h-full w-full place-items-center text-sm text-gray-400">No image</div>
+                        <div className="grid h-full w-full place-items-center text-sm text-gray-400">画像なし</div>
                     )}
                 </div>
 
@@ -50,7 +50,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             {/* wishlist placeholder */}
             <button
                 type="button"
-                aria-label="Add to wishlist"
+                aria-label="お気に入りに追加"
                 className="absolute top-4 right-4 rounded-full bg-white/90 px-2 py-1 text-xs shadow-sm hover:bg-white"
             >
                 ♡

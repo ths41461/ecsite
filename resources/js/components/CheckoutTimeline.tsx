@@ -49,4 +49,3 @@ export default function CheckoutTimeline({ steps }: Props) {
     </div>
   )
 }
-

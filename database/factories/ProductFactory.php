@@ -11,21 +11,39 @@ class ProductFactory extends Factory
 {
     public function definition(): array
     {
-        // No Faker: deterministic, collision-safe values
-        $suffix = strtoupper(Str::random(3)) . '-' . random_int(10, 99);
-        $name   = 'Aroma ' . $suffix;
-        $slug   = Str::slug($name) . '-' . strtolower(Str::random(6));
+        // Japanese product names and descriptions
+        $productNames = [
+            'ローズアロマ', 'ラベンダーエッセンス', 'バニラフレグランス', 'サンダルウッドパフューム',
+            'ベルガモットミスト', 'ゼラニウムオイル', 'ユーカリスプレー', 'シトラスコロン',
+            'ジャスミンローション', 'フリージアジェル', 'ローズウッドクリーム', 'スイートオレンジアロマ',
+            'ペパーミントミスト', 'ローズマリーオイル', 'ゼラニウムウォーター', 'サンダルウッドクリーム',
+            'バニラエキス', 'ラベンダーミスト', 'ローズオードパルファム', 'ユーカリディフューザー'
+        ];
+        
+        $descriptions = [
+            '清らかで現代的な香り。',
+            '新鮮なトップノートと暖かいベースノートのバランスの取れた構成。',
+            '上品で洗練されたフレグランス。',
+            '心地よい花の香りがリラックス効果をもたらします。',
+            'ナチュラルな香りで日常に癒しを。',
+            '上質な香料を使用した贅沢なアロマ。',
+            '四季を通じて楽しめる心地よい香り。',
+            '洗練された香りで特別な時間を演出します。'
+        ];
+        
+        $name = $this->faker->randomElement($productNames) . ' ' . strtoupper(Str::random(3)) . '-' . random_int(10, 99);
+        $slug = Str::slug($name) . '-' . strtolower(Str::random(6));
 
         return [
             'name'           => $name,
             'slug'           => $slug,
             'brand_id'       => Brand::factory(),
             'category_id'    => Category::factory(),
-            'short_desc'     => 'Clean, modern scent.',
-            'long_desc'      => 'Balanced composition with fresh top and warm base notes.',
+            'short_desc'     => $this->faker->randomElement($descriptions),
+            'long_desc'      => $this->faker->randomElement($descriptions),
             'is_active'      => true,
             'featured'       => (bool) random_int(0, 9) === 0, // ~10%
-            'attributes_json' => ['notes' => ['top' => 'citrus', 'middle' => 'floral', 'base' => 'musk']],
+            'attributes_json' => ['notes' => ['top' => 'シトラス', 'middle' => 'フローラル', 'base' => 'マスク']],
             'meta_json'      => ['seo_title' => $name],
             'published_at'   => now(),
         ];

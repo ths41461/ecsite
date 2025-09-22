@@ -13,7 +13,7 @@ class CouponDemoSeeder extends Seeder
         DB::table('coupons')->updateOrInsert(
             ['code' => 'WELCOME10'],
             [
-                'description' => '10% off for first order',
+                'description' => '初回注文で10%オフ',
                 'type'        => 'percent',
                 'value'       => 10,
                 'starts_at'   => now()->subDay(),

@@ -62,7 +62,7 @@ class CouponController extends Controller
         $coupon = Coupon::create($data + ['used_count' => 0]);
         $coupon->products()->sync($productIds);
 
-        return back()->with('success', 'Coupon created.');
+        return back()->with('success', 'クーポンを作成しました。');
     }
 
     public function update(Request $request, Coupon $coupon): RedirectResponse
@@ -73,7 +73,7 @@ class CouponController extends Controller
         $coupon->update($data);
         $coupon->products()->sync($productIds);
 
-        return back()->with('success', 'Coupon updated.');
+        return back()->with('success', 'クーポンを更新しました。');
     }
 
     public function destroy(Coupon $coupon): RedirectResponse
@@ -86,7 +86,7 @@ class CouponController extends Controller
             $coupon->delete();
         });
 
-        return back()->with('success', 'Coupon removed.');
+        return back()->with('success', 'クーポンを削除しました。');
     }
 
     private function validated(Request $request, ?int $couponId = null): array

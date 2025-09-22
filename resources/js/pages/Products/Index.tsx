@@ -33,13 +33,13 @@ export default function Index({ products, filters, facets }: Props) {
     const sortParam = allowedSort.has(safeSort) && safeSort !== '' ? safeSort : undefined;
     return (
         <div className="mx-auto max-w-7xl px-4 py-6">
-            <Head title="Products" />
-            <h1 className="mb-4 text-2xl font-bold">Products</h1>
+            <Head title="商品" />
+            <h1 className="mb-4 text-2xl font-bold">商品</h1>
 
             {/* Filter bar */}
             <div className="mb-6 grid gap-3 rounded-lg border p-3 md:grid-cols-3">
                 <div>
-                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">Brands</div>
+                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">ブランド</div>
                     <div className="flex flex-wrap gap-2">
                         {facets.brands.map((b) => (
                             <Link
@@ -61,7 +61,7 @@ export default function Index({ products, filters, facets }: Props) {
                     </div>
                 </div>
                 <div>
-                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">Categories</div>
+                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">カテゴリ</div>
                     <div className="flex flex-wrap gap-2">
                         {facets.categories.map((c) => (
                             <Link
@@ -83,7 +83,7 @@ export default function Index({ products, filters, facets }: Props) {
                     </div>
                 </div>
                 <div>
-                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">Price</div>
+                    <div className="mb-2 text-xs font-semibold text-neutral-500 uppercase">価格</div>
                     <div className="flex flex-wrap gap-2">
                         {facets.prices.map((p, i) => (
                             <Link
@@ -108,12 +108,12 @@ export default function Index({ products, filters, facets }: Props) {
 
             {/* Sort */}
             <div className="mb-4 flex items-center gap-2 text-sm">
-                <span className="text-neutral-500">Sort:</span>
+                <span className="text-neutral-500">並び替え:</span>
                 {[
-                    { key: '', label: 'Relevance/Newest' },
-                    { key: 'newest', label: 'Newest' },
-                    { key: 'price_asc', label: 'Price ↑' },
-                    { key: 'price_desc', label: 'Price ↓' },
+                    { key: '', label: '関連性/新着' },
+                    { key: 'newest', label: '新着' },
+                    { key: 'price_asc', label: '価格 ↑' },
+                    { key: 'price_desc', label: '価格 ↓' },
                 ].map((s) => (
                     <Link
                         key={s.key || 'relevance'}
@@ -137,7 +137,7 @@ export default function Index({ products, filters, facets }: Props) {
             <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
                 {products.data.length === 0 && (
                     <div className="col-span-full rounded-lg border p-8 text-center text-sm text-neutral-600 dark:text-neutral-300">
-                        No products found. Try adjusting filters.
+                        商品が見つかりません。フィルターを調整してみてください。
                     </div>
                 )}
                 {products.data.map((p) => {

@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Order {{ $order->order_number }} canceled</title>
+    <title>注文 {{ $order->order_number }} がキャンセルされました</title>
     <style>
         body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #111; }
         .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
@@ -16,27 +16,27 @@
 </head>
 <body>
 <div class="wrap">
-    <h1>Your payment attempt was canceled.</h1>
-    <p class="muted">Order #{{ $order->order_number }}</p>
+    <h1>お支払いがキャンセルされました。</h1>
+    <p class="muted">注文番号 #{{ $order->order_number }}</p>
     <p>
-        Hi {{ $order->name }},<br>
-        We’ve canceled this order. If this was a mistake, you can restart checkout anytime.
+        {{ $order->name }} 様<br>
+        ご注文をキャンセルしました。もし誤ってキャンセルされた場合は、いつでもチェックアウトを再開できます。
     </p>
 
-    <table role="presentation" aria-label="Order summary">
+    <table role="presentation" aria-label="注文概要">
         <tbody>
-        <tr><th>Subtotal</th><td>{{ $yen($order->subtotal_yen) }}</td></tr>
+        <tr><th>小計</th><td>{{ $yen($order->subtotal_yen) }}</td></tr>
         @if($order->discount_yen > 0)
-            <tr><th>Discount</th><td>-{{ $yen($order->discount_yen) }}</td></tr>
+            <tr><th>割引</th><td>-{{ $yen($order->discount_yen) }}</td></tr>
         @endif
-        <tr><th><strong>Total</strong></th><td><strong>{{ $yen($order->total_yen) }}</strong></td></tr>
+        <tr><th><strong>合計</strong></th><td><strong>{{ $yen($order->total_yen) }}</strong></td></tr>
         </tbody>
     </table>
 
-    <h3 style="margin-top:16px;">Items</h3>
-    <table role="presentation" aria-label="Items">
+    <h3 style="margin-top:16px;">商品</h3>
+    <table role="presentation" aria-label="商品">
         <thead>
-            <tr><th>Item</th><th>Qty</th><th align="right">Line total</th></tr>
+            <tr><th>商品</th><th>数量</th><th align="right">小計</th></tr>
         </thead>
         <tbody>
         @foreach($order->items as $item)
@@ -49,8 +49,7 @@
         </tbody>
     </table>
 
-    <p class="muted" style="margin-top: 16px;">This message was sent to {{ $order->email }}.</p>
+    <p class="muted" style="margin-top: 16px">このメッセージは {{ $order->email }} に送信されました。</p>
 </div>
 </body>
 </html>
-

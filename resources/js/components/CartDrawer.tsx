@@ -146,7 +146,7 @@ export default function CartDrawer({
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-label="Cart"
+                aria-label="ショッピングカート"
                 ref={panelRef}
                 tabIndex={-1}
                 className={`absolute top-0 right-0 h-full w-full max-w-md transform overflow-y-auto bg-white shadow-xl transition-transform focus:outline-none dark:bg-neutral-900 ${
@@ -156,15 +156,15 @@ export default function CartDrawer({
                 {/* Header */}
                 <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white p-4 dark:bg-neutral-900">
                     <div>
-                        <h2 className="text-lg font-semibold">Your Cart</h2>
-                        <p className="text-xs text-neutral-500">{hasItems ? `${cart!.lines.length} item(s)` : 'No items yet'}</p>
+                        <h2 className="text-lg font-semibold">ショッピングカート</h2>
+                        <p className="text-xs text-neutral-500">{hasItems ? `${cart!.lines.length} 個の商品` : '商品がありません'}</p>
                     </div>
                     <button
                         onClick={onClose}
                         className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-neutral-800"
-                        aria-label="Close cart"
+                        aria-label="カートを閉じる"
                     >
-                        Esc
+                        閉じる
                     </button>
                 </div>
 
@@ -173,9 +173,9 @@ export default function CartDrawer({
                     <div className="flex-1 space-y-3 overflow-y-auto p-4">
                         {!hasItems && (
                             <div className="rounded-xl border p-6 text-center">
-                                <p className="mb-4 text-neutral-600">Your cart is empty.</p>
+                                <p className="mb-4 text-neutral-600">カートに商品がありません。</p>
                                 <a href="/products" className="inline-block rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-700">
-                                    Continue shopping
+                                    買い物を続ける
                                 </a>
                             </div>
                         )}
@@ -199,14 +199,13 @@ export default function CartDrawer({
                                                 disabled={busyLineId === line.line_id}
                                                 className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:cursor-not-allowed dark:border-gray-700 dark:hover:bg-neutral-800"
                                             >
-                                                Remove
+                                                削除
                                             </button>
                                             </div>
 
                                             {clamped && (
                                                 <div className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                                                    Requested {line.notice!.requested}, but only {line.notice!.available} available. Quantity was
-                                                    adjusted.
+                                                    {line.notice!.requested} 個リクエストしましたが、在庫は {line.notice!.available} 個のみです。数量を調整しました。
                                                 </div>
                                             )}
 
@@ -218,7 +217,7 @@ export default function CartDrawer({
                                                             onClick={() => onUpdateQty(line, Math.max(0, line.qty - 1))}
                                                             disabled={busyLineId === line.line_id}
                                                             className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed dark:border-gray-700 dark:hover:bg-neutral-800"
-                                                            aria-label="Decrease quantity"
+                                                            aria-label="数量を減らす"
                                                         >
                                                             -
                                                         </button>
@@ -227,7 +226,7 @@ export default function CartDrawer({
                                                             onClick={() => onUpdateQty(line, Math.min(20, line.qty + 1))}
                                                             disabled={busyLineId === line.line_id}
                                                             className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed dark:border-gray-700 dark:hover:bg-neutral-800"
-                                                            aria-label="Increase quantity"
+                                                            aria-label="数量を増やす"
                                                         >
                                                             +
                                                         </button>
@@ -239,8 +238,8 @@ export default function CartDrawer({
                                                         <div className="text-xs text-neutral-500 line-through">{yen(line.compare_at_cents)}</div>
                                                     )}
                                                     <div className="text-lg font-semibold">{yen(line.price_cents)}</div>
-                                                    <div className="text-sm text-neutral-600">Line total: {yen(line.line_total_cents)}</div>
-                                                    {couponApplied && <div className="text-xs font-medium text-emerald-600">Coupon applied</div>}
+                                                    <div className="text-sm text-neutral-600">小計: {yen(line.line_total_cents)}</div>
+                                                    {couponApplied && <div className="text-xs font-medium text-emerald-600">クーポン適用</div>}
                                                 </div>
                                             </div>
                                         </div>
@@ -253,12 +252,12 @@ export default function CartDrawer({
                     {/* Summary */}
                     <div className="border-t p-4">
                         <div className="mb-1 flex items-center justify-between text-sm">
-                            <span>Subtotal</span>
+                            <span>小計</span>
                             <span>{yen(cart?.subtotal_cents ?? 0)}</span>
                         </div>
                         {cart && cart.savings_cents > 0 && (
                             <div className="mb-1 flex items-center justify-between text-sm text-emerald-700">
-                                <span>Savings</span>
+                                <span>割引</span>
                                 <span>-{yen(cart.savings_cents)}</span>
                             </div>
                         )}
@@ -266,7 +265,7 @@ export default function CartDrawer({
                             <div className="mb-1 text-sm">
                                 <div className="flex items-center justify-between gap-2">
                                     <span>
-                                        Coupon
+                                        クーポン
                                         <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
                                             {cart.coupon_code}
                                         </span>
@@ -282,7 +281,7 @@ export default function CartDrawer({
                                                 disabled={couponBusy}
                                                 className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
                                             >
-                                                Remove
+                                                削除
                                             </button>
                                         )}
                                     </div>
@@ -292,25 +291,25 @@ export default function CartDrawer({
                                 )}
                                 {(cart.coupon_line_names?.length ?? 0) > 0 && (
                                     <div className="text-xs text-neutral-500">
-                                        {cart.coupon_line_names?.[0] === 'All items'
-                                            ? 'Applies to all items in your cart'
-                                            : `Applies to: ${cart.coupon_line_names?.join(', ')}`}
+                                        {cart.coupon_line_names?.[0] === 'すべての商品'
+                                            ? 'カート内のすべての商品に適用'
+                                            : `適用対象: ${cart.coupon_line_names?.join(', ')}`}
                                     </div>
                                 )}
                             </div>
                         )}
                         {cart && (cart.tax_cents ?? 0) > 0 && (
                             <div className="mb-1 flex items-center justify-between text-sm">
-                                <span>Tax</span>
+                                <span>税金</span>
                                 <span>{yen(cart.tax_cents ?? 0)}</span>
                             </div>
                         )}
                         <div className="mt-2 border-t pt-2">
                             <div className="flex items-center justify-between text-base font-semibold">
-                                <span>Total</span>
+                                <span>合計</span>
                                 <span>{yen(cart?.total_cents ?? 0)}</span>
                             </div>
-                            <p className="mt-1 text-xs text-neutral-500">Tax included. Shipping calculated at checkout.</p>
+                            <p className="mt-1 text-xs text-neutral-500">税込み。配送料はチェックアウト時に計算されます。</p>
                         </div>
 
                         <div className="mt-4 flex gap-2">
@@ -318,21 +317,21 @@ export default function CartDrawer({
                                 href="/checkout"
                                 className="block flex-1 rounded-lg bg-rose-600 px-4 py-3 text-center font-medium text-white hover:bg-rose-700"
                             >
-                                Checkout
+                                チェックアウト
                             </a>
                             {onRefresh && (
                                 <button
                                     onClick={() => onRefresh()}
                                     className="rounded-lg border border-gray-300 px-4 py-3 text-sm hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-neutral-800"
                                 >
-                                    Refresh
+                                    更新
                                 </button>
                             )}
                         </div>
 
                         <div className="mt-2 text-center">
                             <a href="/cart" className="text-sm text-neutral-600 hover:underline">
-                                View full cart
+                                カートを表示
                             </a>
                         </div>
                     </div>

@@ -21,30 +21,30 @@ class CouponEligibilityService
     {
         $code = strtoupper(trim($code));
         if ($code === '') {
-            return CouponEvaluationResult::invalid('Coupon code is required.');
+            return CouponEvaluationResult::invalid('クーポンコードは必須です。');
         }
 
         $coupon = DB::table('coupons')->whereRaw('UPPER(code) = ?', [$code])->first();
         if (!$coupon || (int) ($coupon->is_active ?? 0) !== 1) {
-            return CouponEvaluationResult::invalid('Coupon not found or inactive.');
+            return CouponEvaluationResult::invalid('クーポンが見つからないか、無効です。');
         }
 
         $now = now();
         $startsAt = $this->asCarbon($coupon->starts_at ?? null);
         if ($startsAt && $now->lt($startsAt)) {
-            return CouponEvaluationResult::invalid('Coupon not currently valid.', $coupon);
+            return CouponEvaluationResult::invalid('クーポンは現在有効ではありません。');
         }
 
         $endsAt = $this->asCarbon($coupon->ends_at ?? null);
         if ($endsAt && $now->gt($endsAt)) {
-            return CouponEvaluationResult::invalid('Coupon not currently valid.', $coupon);
+            return CouponEvaluationResult::invalid('クーポンは現在有効ではありません。');
         }
 
         if (!is_null($coupon->max_uses) && (int) $coupon->max_uses >= 0) {
             $max = (int) $coupon->max_uses;
             $used = (int) ($coupon->used_count ?? 0);
             if ($max > 0 && $used >= $max) {
-                return CouponEvaluationResult::invalid('Coupon usage limit reached.', $coupon);
+                return CouponEvaluationResult::invalid('クーポンの利用上限に達しました。');
             }
         }
 
@@ -57,19 +57,19 @@ class CouponEligibilityService
                     ->where('user_id', $userId)
                     ->count();
                 if ($userCount >= $perUserCap) {
-                    return CouponEvaluationResult::invalid('You have already used this coupon the maximum number of times.', $coupon);
+                    return CouponEvaluationResult::invalid('このクーポンはすでに最大利用回数を使用しています。');
                 }
             }
         }
 
         if (!in_array($coupon->type, ['percent', 'fixed'], true)) {
-            return CouponEvaluationResult::invalid('Coupon configuration invalid.', $coupon);
+            return CouponEvaluationResult::invalid('クーポンの設定が無効です。');
         }
 
         $requiredSubtotal = is_null($coupon->min_subtotal_yen) ? null : max(0, (int) $coupon->min_subtotal_yen) * 100;
         if (!is_null($requiredSubtotal) && $subtotalCents < $requiredSubtotal) {
             $minYen = number_format((int) $coupon->min_subtotal_yen);
-            return CouponEvaluationResult::invalid("Order subtotal must be at least ¥{$minYen} to use this coupon.", $coupon);
+            return CouponEvaluationResult::invalid("このクーポンを利用するには、小計が少なくとも¥{$minYen}必要です。");
         }
 
         $productIds = array_map(function ($line) {
@@ -135,7 +135,7 @@ class CouponEligibilityService
         }
 
         if ($eligibleSubtotal <= 0) {
-            return CouponEvaluationResult::invalid('Coupon does not apply to the items in your cart.', $coupon);
+            return CouponEvaluationResult::invalid('このクーポンはカート内の商品に適用できません。');
         }
 
         $discountCents = 0;
@@ -150,7 +150,7 @@ class CouponEligibilityService
         }
 
         if ($discountCents <= 0) {
-            return CouponEvaluationResult::invalid('Coupon configuration invalid.', $coupon);
+            return CouponEvaluationResult::invalid('クーポンの設定が無効です。');
         }
 
         $summary = $this->buildSummary($coupon);

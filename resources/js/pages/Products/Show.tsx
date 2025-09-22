@@ -130,7 +130,7 @@ export default function Show({ product, gallery, related }: Props) {
 
             // 2) Actual cart mutation
             if (selectedVariant.id == null) {
-                throw new Error('Variant id missing');
+                throw new Error('商品バリエーションIDが見つかりません');
             }
             const res = await postJson('/cart', {
                 variant_id: selectedVariant.id,
@@ -138,7 +138,7 @@ export default function Show({ product, gallery, related }: Props) {
             });
             if (!res.ok) {
                 const text = await res.text();
-                throw new Error(text || 'Failed to add to cart');
+                throw new Error(text || 'カートへの追加に失敗しました');
             }
             // Inspect response to detect clamp notice for a better message and open drawer with server cart
             let cart: DrawerCart | null = null;
@@ -148,9 +148,9 @@ export default function Show({ product, gallery, related }: Props) {
 
             const line = cart?.lines?.find((l) => l.variant_id === selectedVariant.id);
             if (line && line.notice && line.notice.code === 'qty_clamped_to_available') {
-                showToast(`Only ${line.notice.available} available. Quantity adjusted.`, 'warning');
+                showToast(`在庫は${line.notice.available}個のみです。数量を調整しました。`, 'warning');
             } else {
-                showToast('Added to cart.', 'success');
+                showToast('カートに追加しました。', 'success');
             }
 
             // Prefer using the POST response; fallback to GET /cart if parsing fails
@@ -168,7 +168,7 @@ export default function Show({ product, gallery, related }: Props) {
                 }
             }
         } catch (error) {
-            showToast('Failed to add to cart. Please try again.', 'error');
+            showToast('カートへの追加に失敗しました。もう一度お試しください。', 'error');
         } finally {
             setIsAddingToCart(false);
         }
@@ -182,13 +182,13 @@ export default function Show({ product, gallery, related }: Props) {
             const res = await postJson('/wishlist', { product_id: product.id });
             if (!res.ok) {
                 const text = await res.text();
-                throw new Error(text || `Wishlist failed (${res.status})`);
+                throw new Error(text || `お気に入り追加に失敗しました (${res.status})`);
             }
-            showToast('Added to wishlist.', 'success');
+            showToast('お気に入りに追加しました。', 'success');
             // Toggle UI to indicate wishlisted (filled heart)
             setIsWishlisted(true);
         } catch (err) {
-            showToast('Failed to add to wishlist. Please try again.', 'error');
+            showToast('お気に入りへの追加に失敗しました。もう一度お試しください。', 'error');
         } finally {
             setIsWishlisting(false);
         }
@@ -197,10 +197,10 @@ export default function Show({ product, gallery, related }: Props) {
     const stockBadgeFor = (v: Variant) => {
         const stock = v.stock ?? null;
         const managed = v.managed ?? false;
-        if (!managed) return 'In stock';
-        if ((stock ?? 0) <= 0) return 'Out of stock';
-        if (stock! <= (v.safety_stock ?? 1)) return 'Low stock';
-        return 'In stock';
+        if (!managed) return '在庫あり';
+        if ((stock ?? 0) <= 0) return '在庫切れ';
+        if (stock! <= (v.safety_stock ?? 1)) return '在庫僅少';
+        return '在庫あり';
     };
 
     // Drawer actions reuse same endpoints as Cart page
@@ -245,14 +245,14 @@ export default function Show({ product, gallery, related }: Props) {
             });
             if (!res.ok) {
                 const data = await res.json().catch(() => null);
-                const message = data?.errors?.code?.[0] || data?.message || 'Failed to remove coupon';
+                const message = data?.errors?.code?.[0] || data?.message || 'クーポンの削除に失敗しました';
                 throw new Error(message);
             }
             const data = (await res.json()) as DrawerCart;
             setDrawerCart(data);
-            showToast('Coupon removed.', 'success');
+            showToast('クーポンを削除しました。', 'success');
         } catch (error: any) {
-            showToast(error?.message || 'Failed to remove coupon. Please try again.', 'error');
+            showToast(error?.message || 'クーポンの削除に失敗しました。もう一度お試しください。', 'error');
         } finally {
             setCouponBusy(false);
         }
@@ -262,7 +262,7 @@ export default function Show({ product, gallery, related }: Props) {
         const hero = gallery[activeIndex];
         const src = hero?.url ?? product.image ?? null;
         if (!src) {
-            return <div className="grid h-full w-full place-items-center text-sm text-neutral-500">No image</div>;
+            return <div className="grid h-full w-full place-items-center text-sm text-neutral-500">画像なし</div>;
         }
         return <img src={src} alt={hero?.alt ?? product.name} className="h-full w-full object-cover" />;
     };
@@ -289,7 +289,7 @@ export default function Show({ product, gallery, related }: Props) {
                                         className={`aspect-square overflow-hidden rounded border transition ${
                                             selected ? 'ring-2 ring-black' : 'hover:border-neutral-300'
                                         }`}
-                                        aria-label={`Thumbnail ${i + 1}`}
+                                        aria-label={`サムネイル ${i + 1}`}
                                     >
                                         {g.url ? (
                                             <img src={g.url} alt={g.alt ?? product.name} className="h-full w-full object-cover" />
@@ -313,12 +313,12 @@ export default function Show({ product, gallery, related }: Props) {
                         {/* VARIANT PICKER (inline for now; will extract later) */}
                         {product.variants.length > 1 && (
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Select Variant</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">バリエーションを選択</label>
                                 <div className="space-y-2">
                                     {product.variants.map((v) => {
                                         const badge = stockBadgeFor(v);
                                         const isSelected = selectedVariant?.sku === v.sku;
-                                        const isOut = badge === 'Out of stock';
+                                        const isOut = badge === '在庫切れ';
                                         return (
                                             <button
                                                 key={v.sku}
@@ -342,9 +342,9 @@ export default function Show({ product, gallery, related }: Props) {
                                                     </div>
                                                     <span
                                                         className={`rounded px-2 py-0.5 text-xs ${
-                                                            badge === 'Out of stock'
+                                                            badge === '在庫切れ'
                                                                 ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                                                : badge === 'Low stock'
+                                                                : badge === '在庫僅少'
                                                                   ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                                                   : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                                         }`}
@@ -373,9 +373,9 @@ export default function Show({ product, gallery, related }: Props) {
                                         <span className="ml-2 text-xs text-neutral-500">SKU: {v.sku}</span>
                                         <span
                                             className={`ml-2 rounded px-2 py-0.5 text-xs ${
-                                                badge === 'Out of stock'
+                                                badge === '在庫切れ'
                                                     ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                                    : badge === 'Low stock'
+                                                    : badge === '在庫僅少'
                                                       ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
                                                       : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                             }`}
@@ -390,7 +390,7 @@ export default function Show({ product, gallery, related }: Props) {
                         {selectedVariant && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">Quantity</label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">数量</label>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -414,13 +414,13 @@ export default function Show({ product, gallery, related }: Props) {
                                         disabled={isAddingToCart || !selectedVariant}
                                         className="flex-1 rounded-lg bg-rose-600 px-6 py-3 font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-rose-500 dark:hover:bg-rose-600"
                                     >
-                                        {isAddingToCart ? 'Adding...' : 'Add to Cart'}
+                                        {isAddingToCart ? '追加中...' : 'カートに追加'}
                                     </button>
                                     <button
                                         onClick={handleWishlistAdd}
                                         disabled={isWishlisting || isWishlisted}
                                         className="rounded-lg border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
-                                        aria-label={isWishlisted ? 'Wishlisted' : 'Add to wishlist'}
+                                        aria-label={isWishlisted ? 'お気に入り登録済み' : 'お気に入りに追加'}
                                     >
                                         {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
                                     </button>
@@ -435,7 +435,7 @@ export default function Show({ product, gallery, related }: Props) {
 
             {related.length > 0 && (
                 <div className="mt-10">
-                    <h2 className="mb-3 text-lg font-semibold">Related products</h2>
+                    <h2 className="mb-3 text-lg font-semibold">関連商品</h2>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                         {related.map((p) => (
                             <div key={p.id} className="rounded-xl border p-2">

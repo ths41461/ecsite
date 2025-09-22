@@ -20,7 +20,7 @@ class OrderConfirmedMail extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('Order ' . $this->order->order_number . ' confirmed')
+        return $this->subject('注文 ' . $this->order->order_number . ' が確定しました')
             ->view('emails.order_confirmed')
             ->with([
                 'order' => $this->order,

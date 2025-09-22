@@ -9,9 +9,19 @@ class CategoryFactory extends Factory
 {
     public function definition(): array
     {
-        $name = $this->faker->unique()->words(2, true);
+        // Japanese category names
+        $categories = [
+            '香水', 'コロン', 'ボディスプレーア', 'ローション', 
+            'オードパルファム', 'オードトワレ', 'ミスト', 'クリーム', 
+            'ジェル', 'オイル', 'デオドラント', 'フェイスミスト',
+            'ヘアミスト', 'バスオイル', 'シャワージェル', 'ソープ',
+            'キャンドル', 'ディフューザー', 'インセンス', 'アロマ',
+            'スキンケア', 'メイク', 'ネイル', 'ヘアケア'
+        ];
+        
+        $name = $this->faker->randomElement($categories);
         return [
-            'name' => ucfirst($name),
+            'name' => $name,
             'slug' => Str::slug($name . '-' . Str::random(4)),
             'parent_id' => null,
         ];

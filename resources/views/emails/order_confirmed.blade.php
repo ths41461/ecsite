@@ -1,63 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
+
 <head>
     <meta charset="UTF-8">
-    <title>Order {{ $order->order_number }} confirmed</title>
+    <title>注文 {{ $order->order_number }} が確定しました</title>
     <style>
-        body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #111; }
-        .wrap { max-width: 640px; margin: 0 auto; padding: 16px; }
-        .muted { color: #6b7280; font-size: 12px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { text-align: left; padding: 8px 0; border-bottom: 1px solid #e5e7eb; }
+        body {
+            font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            color: #111;
+        }
+
+        .wrap {
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .muted {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
     </style>
     @php
         $yen = fn($v) => number_format($v) . '円';
     @endphp
 </head>
+
 <body>
-<div class="wrap">
-    <h1>Thank you — your order is confirmed.</h1>
-    <p class="muted">Order #{{ $order->order_number }}</p>
-    <p>
-        Hi {{ $order->name }},<br>
-        We’re processing your order. A summary is below.
-    </p>
+    <div class="wrap">
+        <h1>ありがとうございます — ご注文が確定しました。</h1>
+        <p class="muted">注文番号 #{{ $order->order_number }}</p>
+        <p>
+            {{ $order->name }} 様<br>
+            ご注文を処理中です。以下が注文概要です。
+        </p>
 
-    <table role="presentation" aria-label="Order summary">
-        <tbody>
-        <tr><th>Subtotal</th><td>{{ $yen($order->subtotal_yen) }}</td></tr>
-        @if($order->discount_yen > 0)
-            <tr><th>Discount</th><td>-{{ $yen($order->discount_yen) }}</td></tr>
-        @endif
-        @if($order->shipping_yen > 0)
-            <tr><th>Shipping</th><td>{{ $yen($order->shipping_yen) }}</td></tr>
-        @endif
-        @if($order->tax_yen > 0)
-            <tr><th>Tax</th><td>{{ $yen($order->tax_yen) }}</td></tr>
-        @endif
-        <tr><th><strong>Total</strong></th><td><strong>{{ $yen($order->total_yen) }}</strong></td></tr>
-        </tbody>
-    </table>
+        <table role="presentation" aria-label="注文概要">
+            <tbody>
+                <tr>
+                    <th>小計</th>
+                    <td>{{ $yen($order->subtotal_yen) }}</td>
+                </tr>
+                @if ($order->discount_yen > 0)
+                    <tr>
+                        <th>割引</th>
+                        <td>-{{ $yen($order->discount_yen) }}</td>
+                    </tr>
+                @endif
+                @if (!empty($order->coupon_code) && $order->coupon_discount_yen > 0)
+                    <tr>
+                        <th>クーポン ({{ $order->coupon_code }})</th>
+                        <td>-{{ $yen($order->coupon_discount_yen) }}</td>
+                    </tr>
+                @endif
+                @if ($order->shipping_yen > 0)
+                    <tr>
+                        <th>送料</th>
+                        <td>{{ $yen($order->shipping_yen) }}</td>
+                    </tr>
+                @endif
+                @if ($order->tax_yen > 0)
+                    <tr>
+                        <th>税金</th>
+                        <td>{{ $yen($order->tax_yen) }}</td>
+                    </tr>
+                @endif
+                <tr>
+                    <th><strong>合計</strong></th>
+                    <td><strong>{{ $yen($order->total_yen) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
 
-    <h3 style="margin-top:16px;">Items</h3>
-    <table role="presentation" aria-label="Items">
-        <thead>
-            <tr><th>Item</th><th>Qty</th><th align="right">Line total</th></tr>
-        </thead>
-        <tbody>
-        @foreach($order->items as $item)
-            <tr>
-                <td>{{ $item->name_snapshot }} <span class="muted">({{ $item->sku_snapshot }})</span></td>
-                <td>{{ $item->qty }}</td>
-                <td align="right">{{ $yen($item->line_total_yen) }}</td>
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
+        <h3 style="margin-top:16px;">商品</h3>
+        <table role="presentation" aria-label="商品">
+            <thead>
+                <tr>
+                    <th>商品</th>
+                    <th>数量</th>
+                    <th align="right">小計</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($order->items as $item)
+                    <tr>
+                        <td>{{ $item->name_snapshot }} <span class="muted">({{ $item->sku_snapshot }})</span></td>
+                        <td>{{ $item->qty }}</td>
+                        <td align="right">{{ $yen($item->line_total_yen) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
-    <p class="muted" style="margin-top: 16px;">Payment method: Stripe • Checkout</p>
-    <p class="muted">We’ve also sent this to {{ $order->email }}.</p>
-</div>
+        <p class="muted" style="margin-top: 16px;">お支払い方法: Stripe • Checkout</p>
+        <p class="muted">{{ $order->email }} にも同じ内容を送信しました。</p>
+    </div>
 </body>
-</html>
 
+</html>

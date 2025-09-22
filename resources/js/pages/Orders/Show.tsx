@@ -15,16 +15,44 @@ type PageProps = {
   }
 }
 
+// Function to translate order status to Japanese
+const translateOrderStatus = (status: string): string => {
+  const translations: Record<string, string> = {
+    'ordered': '注文済み',
+    'processing': '処理中',
+    'paid': '支払い済み',
+    'shipped': '発送済み',
+    'delivered': '配送済み',
+    'canceled': 'キャンセル済み',
+    'refunded': '返金済み'
+  }
+  
+  return translations[status] || status.replace('_', ' ')
+}
+
+// Function to translate order status badge to Japanese
+const translateOrderStatusBadge = (status: string | null | undefined): string => {
+  if (!status) return '保留中'
+  
+  const translations: Record<string, string> = {
+    'canceled': 'キャンセル済み',
+    'paid': '支払い済み',
+    'pending': '保留中'
+  }
+  
+  return translations[status] || status
+}
+
 export default function OrdersShow({ order }: PageProps) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-10">
-      <Head title={`Order ${order.order_number}`} />
+      <Head title={`注文 ${order.order_number}`} />
       <div className="mb-1 flex items-center gap-3">
-        <h1 className="text-2xl font-semibold">Order #{order.order_number}</h1>
+        <h1 className="text-2xl font-semibold">注文 #{order.order_number}</h1>
         {(() => {
           const isCanceled = order.status === 'canceled'
           const isPaid = order.payments?.some((p) => p.processed_at)
-          const label = isCanceled ? 'Canceled' : isPaid ? 'Paid' : 'Pending'
+          const label = isCanceled ? translateOrderStatusBadge('canceled') : isPaid ? translateOrderStatusBadge('paid') : translateOrderStatusBadge('pending')
           const cls = isCanceled
             ? 'bg-rose-100 text-rose-800'
             : isPaid
@@ -34,25 +62,25 @@ export default function OrdersShow({ order }: PageProps) {
         })()}
       </div>
       {(order.confirmation_emailed_at || order.cancellation_emailed_at) && order.email && (
-        <p className="mb-4 text-xs text-neutral-500">We sent a copy to {order.email}.</p>
+        <p className="mb-4 text-xs text-neutral-500">{order.email} にコピーを送信しました。</p>
       )}
       <OrderSummary order={order} />
       {order.timeline && order.timeline.length > 0 && (
         <div className="mb-6 rounded-xl border p-4">
-          <h2 className="mb-3 text-lg font-semibold">Timeline</h2>
+          <h2 className="mb-3 text-lg font-semibold">タイムライン</h2>
           <ul className="space-y-2">
             {order.timeline.map((t, i) => (
               <li key={i} className="flex items-center justify-between text-sm">
-                <span className="capitalize">{t.status.replace('_', ' ')}</span>
-                <span className="text-neutral-500">{new Date(t.changed_at).toLocaleString()}</span>
+                <span>{translateOrderStatus(t.status)}</span>
+                <span className="text-neutral-500">{new Date(t.changed_at).toLocaleString('ja-JP')}</span>
               </li>
             ))}
           </ul>
         </div>
       )}
       <div className="flex items-center gap-4">
-        <a href="/products" className="text-sm text-neutral-700 hover:underline">Continue shopping</a>
-        <a href="/" className="text-sm text-neutral-700 hover:underline">Home</a>
+        <a href="/products" className="text-sm text-neutral-700 hover:underline">買い物を続ける</a>
+        <a href="/" className="text-sm text-neutral-700 hover:underline">ホーム</a>
       </div>
     </div>
   )}

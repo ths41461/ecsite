@@ -23,14 +23,14 @@ class StoreCartRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'variant_id.required' => 'Please choose a variant.',
-            'variant_id.integer'  => 'Invalid variant.',
-            'variant_id.min'      => 'Invalid variant.',
-            'variant_id.exists'   => 'Selected variant is unavailable.',
-            'qty.required'        => 'Please choose a quantity.',
-            'qty.integer'         => 'Quantity must be a number.',
-            'qty.min'             => 'Quantity must be at least 1.',
-            'qty.max'             => 'Quantity may not exceed ' . (int)config('cart.max_qty', 20) . '.',
+            'variant_id.required' => 'バリエーションを選択してください。',
+            'variant_id.integer'  => '無効なバリエーションです。',
+            'variant_id.min'      => '無効なバリエーションです。',
+            'variant_id.exists'   => '選択されたバリエーションはご利用いただけません。',
+            'qty.required'        => '数量を選択してください。',
+            'qty.integer'         => '数量は数字で入力してください。',
+            'qty.min'             => '数量は1以上で入力してください。',
+            'qty.max'             => '数量は ' . (int)config('cart.max_qty', 20) . ' を超えることはできません。',
         ];
     }
 }

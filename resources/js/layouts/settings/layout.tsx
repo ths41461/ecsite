@@ -16,22 +16,22 @@ interface SettingsLayoutProps extends PropsWithChildren {
 
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'プロフィール',
         href: edit(),
         icon: null,
     },
     {
-        title: 'Password',
+        title: 'パスワード',
         href: editPassword(),
         icon: null,
     },
     {
-        title: 'Appearance',
+        title: '外観',
         href: appearance(),
         icon: null,
     },
     {
-        title: 'Coupons',
+        title: 'クーポン',
         href: couponsIndex(),
         icon: null,
     },
@@ -47,7 +47,7 @@ export default function SettingsLayout({ children, fullWidth = false }: Settings
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Settings" description="Manage your profile and account settings" />
+            <Heading title="設定" description="プロフィールとアカウント設定を管理" />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">

@@ -19,7 +19,7 @@ class OrderCanceledMail extends Mailable implements ShouldQueue
 
     public function build(): self
     {
-        return $this->subject('Order ' . $this->order->order_number . ' canceled')
+        return $this->subject('注文 ' . $this->order->order_number . ' がキャンセルされました')
             ->view('emails.order_canceled')
             ->with([
                 'order' => $this->order,

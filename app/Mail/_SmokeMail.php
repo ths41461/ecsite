@@ -27,7 +27,7 @@ class _SmokeMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Smoke Mail',
+            subject: 'テストメール',
         );
     }
 

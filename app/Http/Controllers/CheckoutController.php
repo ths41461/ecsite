@@ -58,7 +58,7 @@ class CheckoutController extends Controller
         $sessionId = $request->session()->getId();
         $customer = [
             'email' => $request->string('email')->toString() ?: 'guest@example.com',
-            'name' => $request->string('name')->toString() ?: 'Guest',
+            'name' => $request->string('name')->toString() ?: 'ゲスト',
             'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
         ];
 
@@ -67,7 +67,7 @@ class CheckoutController extends Controller
         } catch (\RuntimeException $e) {
             if ($e->getMessage() === 'Cart is empty') {
                 return response()->json([
-                    'message' => 'Cart is empty. Add items before proceeding to checkout.'
+                    'message' => 'カートが空です。チェックアウトに進む前に商品を追加してください。'
                 ], 422);
             }
             throw $e;
@@ -131,12 +131,12 @@ class CheckoutController extends Controller
             ->orderByDesc('id')->first();
         if (!$order) return null;
         if ($order->status === 'canceled') {
-            return $order->cancel_reason ?: 'canceled';
+            return $order->cancel_reason ?: 'キャンセルされました';
         }
         $paymentId = \DB::table('payments')->where('order_id', $order->id)->orderByDesc('id')->value('id');
         if ($paymentId) {
             $status = \DB::table('payment_transactions')->where('payment_id', $paymentId)->orderByDesc('id')->value('status');
-            if ($status === 'failed') return 'failed';
+            if ($status === 'failed') return '支払い失敗';
         }
         return null;
     }
@@ -155,7 +155,7 @@ class CheckoutController extends Controller
         } else {
             $customer = [
                 'email' => $request->string('email')->toString() ?: 'guest@example.com',
-                'name'  => $request->string('name')->toString() ?: 'Guest',
+                'name'  => $request->string('name')->toString() ?: 'ゲスト',
                 'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
             ];
 
@@ -164,7 +164,7 @@ class CheckoutController extends Controller
             } catch (\RuntimeException $e) {
                 if ($e->getMessage() === 'Cart is empty') {
                     return response()->json([
-                        'message' => 'Cart is empty. Add items before proceeding to checkout.'
+                        'message' => 'カートが空です。チェックアウトに進む前に商品を追加してください。'
                     ], 422);
                 }
                 throw $e;
@@ -244,14 +244,14 @@ class CheckoutController extends Controller
     {
         $sessionId = (string) $request->query('session_id', '');
         if (!$sessionId) {
-            abort(400, 'session_id is required');
+            abort(400, 'セッションIDは必須です');
         }
 
         $stripe = new \Stripe\StripeClient(config('stripe.secret'));
         $session = $stripe->checkout->sessions->retrieve($sessionId);
         $orderNumber = $session->metadata->order_number ?? null;
         if (!$orderNumber) {
-            abort(404, 'Order not found');
+            abort(404, '注文が見つかりません');
         }
 
         // Reuse the thanks() rendering by loading the order and building identical props
@@ -385,7 +385,7 @@ class CheckoutController extends Controller
     {
         $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items', 'payments');
         $clientSecret = (string) $request->query('cs', '');
-        if (!$clientSecret) abort(400, 'client_secret is required');
+        if (!$clientSecret) abort(400, 'クライアントシークレットは必須です');
         $sid = (string) $request->query('sid', '');
 
         // If we have a session id, pre-check its status to avoid rendering a dead/finished checkout
@@ -486,13 +486,13 @@ class CheckoutController extends Controller
 
         $steps[] = [
             'key' => 'review',
-            'label' => 'Review',
+            'label' => '確認',
             'status' => $order ? 'complete' : 'current',
         ];
 
         $steps[] = [
             'key' => 'details',
-            'label' => 'Details',
+            'label' => '詳細',
             'status' => !$order
                 ? 'pending'
                 : ($detailsCompleted ? 'complete' : 'current'),
@@ -510,7 +510,7 @@ class CheckoutController extends Controller
 
         $steps[] = [
             'key' => 'payment',
-            'label' => 'Payment',
+            'label' => '支払い',
             'status' => $paymentStatus,
             'started_at' => optional($order?->payment_started_at)->toIso8601String(),
             'completed_at' => $paymentComplete ? optional($order?->updated_at)->toIso8601String() : null,
@@ -525,12 +525,12 @@ class CheckoutController extends Controller
         $sessionId = $request->session()->getId();
 
         if ($order->cart_session_id && $order->cart_session_id !== $sessionId) {
-            \Log::warning('Checkout session mismatch', [
+            \Log::warning('チェックアウトセッションの不一致', [
                 'order_number' => $orderNumber,
                 'stored_session' => $order->cart_session_id,
                 'current_session' => $sessionId,
             ]);
-            abort(403, 'Checkout session mismatch for this order.');
+            abort(403, 'この注文のチェックアウトセッションが一致しません。');
         }
 
         return $order;
