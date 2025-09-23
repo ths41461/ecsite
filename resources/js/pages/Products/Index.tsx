@@ -10,6 +10,8 @@ type ProductItem = {
     image?: string | null;
     price_cents: number | null;
     compare_at_cents: number | null;
+    average_rating?: number;
+    review_count?: number;
 };
 type Paginated<T> = {
     data: T[];
@@ -203,6 +205,8 @@ export default function Index({ products, filters, facets }: Props) {
                                 salePrice: salePrice ?? undefined,
                                 imageUrl: p.image ?? undefined,
                                 imageAlt: p.name,
+                                averageRating: p.average_rating,
+                                reviewCount: p.review_count,
                             }}
                         />
                     );

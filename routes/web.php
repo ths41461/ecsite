@@ -74,6 +74,12 @@ Route::get('/checkout/pay/{orderNumber}', [CheckoutController::class, 'pay'])->n
 Route::get('/orders/{orderNumber}', [OrdersController::class, 'show'])->name('orders.show');
 Route::get('/orders/{orderNumber}/view', [OrdersController::class, 'view'])->name('orders.view');
 
+// Reviews
+Route::get('/products/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'index'])->name('reviews.index');
+Route::post('/products/{product}/reviews', [App\Http\Controllers\ReviewController::class, 'store'])->name('reviews.store');
+Route::put('/reviews/{review}', [App\Http\Controllers\ReviewController::class, 'update'])->name('reviews.update');
+Route::delete('/reviews/{review}', [App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
+
 // Stripe webhook (no CSRF)
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])

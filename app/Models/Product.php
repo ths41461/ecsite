@@ -84,4 +84,28 @@ class Product extends Model
     {
         return $this->hasOne(\App\Models\ProductImage::class)->where('is_hero', true)->orderBy('rank');
     }
+    
+    /**
+     * Get the reviews for the product.
+     */
+    public function reviews()
+    {
+        return $this->hasMany(\App\Models\Review::class);
+    }
+    
+    /**
+     * Get the average rating for the product.
+     */
+    public function averageRating()
+    {
+        return $this->reviews()->where('approved', true)->avg('rating');
+    }
+    
+    /**
+     * Get the review count for the product.
+     */
+    public function reviewCount()
+    {
+        return $this->reviews()->where('approved', true)->count();
+    }
 }

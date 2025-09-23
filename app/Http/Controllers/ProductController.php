@@ -41,6 +41,8 @@ class ProductController extends Controller
                 'image' => $imageUrl,
                 'price_cents' => $minSaleYen !== null ? $minSaleYen * 100 : ($minPriceYen * 100),
                 'compare_at_cents' => $minSaleYen !== null ? ($minPriceYen * 100) : null,
+                'average_rating' => round($p->averageRating() ?? 0, 1),
+                'review_count' => $p->reviewCount(),
             ];
         };
 
@@ -389,6 +391,8 @@ class ProductController extends Controller
                     'price_cents' => $minSaleYen !== null ? $minSaleYen * 100 : ($minPriceYen * 100),
                     'compare_at_cents' => $minSaleYen !== null ? ($minPriceYen * 100) : null,
                     'image' => $imageUrl,
+                    'average_rating' => round($p->averageRating() ?? 0, 1),
+                    'review_count' => $p->reviewCount(),
                 ];
             });
 
@@ -405,6 +409,8 @@ class ProductController extends Controller
                 'short_desc' => $product->short_desc,
                 'long_desc' => $product->long_desc,
                 'variants' => $variants,
+                'average_rating' => round($product->averageRating() ?? 0, 1),
+                'review_count' => $product->reviewCount(),
             ],
             'gallery' => $product->images->map(function ($img) {
                 $url = $img->path ? (str_starts_with($img->path, 'http') || str_starts_with($img->path, '/') ? $img->path : Storage::url($img->path)) : null;

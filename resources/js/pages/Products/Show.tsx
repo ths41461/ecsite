@@ -1,3 +1,6 @@
+import RatingStars from '@/components/RatingStars';
+import ReviewForm from '@/components/ReviewForm';
+import ReviewList from '@/components/ReviewList';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
@@ -22,6 +25,8 @@ type Props = {
         short_desc?: string | null;
         long_desc?: string | null;
         variants: Variant[];
+        average_rating?: number;
+        review_count?: number;
     };
     gallery: { url: string | null; alt?: string | null; is_hero: boolean }[];
     related: {
@@ -46,6 +51,16 @@ export default function Show({ product, gallery, related }: Props) {
         return i >= 0 ? i : 0;
     }, [gallery]);
     const [activeIndex, setActiveIndex] = useState<number>(initialIndex);
+
+    // State for product ratings
+    const [productRatings, setProductRatings] = useState({
+        averageRating: product.average_rating || 0,
+        reviewCount: product.review_count || 0,
+    });
+
+    // State for reviews
+    const [reviews, setReviews] = useState([]);
+    const [loadingReviews, setLoadingReviews] = useState(true);
 
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(product.variants[0] || null);
     const [quantity, setQuantity] = useState(1);
@@ -84,6 +99,29 @@ export default function Show({ product, gallery, related }: Props) {
             credentials: 'same-origin',
         }).catch(() => {});
     }, [product.id]);
+
+    // Fetch reviews when component mounts
+    useEffect(() => {
+        const fetchReviews = async () => {
+            try {
+                const response = await fetch(`/products/${product.slug}/reviews`);
+                if (response.ok) {
+                    const data = await response.json();
+                    setReviews(data.data || []);
+                }
+            } catch (error) {
+                console.error('Error fetching reviews:', error);
+            } finally {
+                setLoadingReviews(false);
+            }
+        };
+
+        if (productRatings.reviewCount > 0) {
+            fetchReviews();
+        } else {
+            setLoadingReviews(false);
+        }
+    }, [product.slug, productRatings.reviewCount]);
 
     const postJson = (url: string, payload: Record<string, unknown>) => {
         const getCookie = (name: string) => {
@@ -430,6 +468,97 @@ export default function Show({ product, gallery, related }: Props) {
                     </div>
 
                     {product.long_desc && <div className="prose mt-6 max-w-none whitespace-pre-wrap">{product.long_desc}</div>}
+                </div>
+            </div>
+
+            {/* Reviews Section */}
+            <div className="mt-10 border-t border-gray-200 pt-10">
+                <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold">レビュー</h2>
+                    {productRatings.averageRating > 0 && productRatings.reviewCount > 0 ? (
+                        <div className="flex items-center">
+                            <RatingStars rating={productRatings.averageRating} size="md" showLabel />
+                            <span className="ml-2 text-sm text-gray-600">({productRatings.reviewCount} 件のレビュー)</span>
+                        </div>
+                    ) : (
+                        <span className="text-sm text-gray-500">レビューがまだありません</span>
+                    )}
+                </div>
+
+                {productRatings.averageRating > 0 && productRatings.reviewCount > 0 && (
+                    <div className="mt-6">
+                        {loadingReviews ? <div>Loading reviews...</div> : <ReviewList reviews={reviews} productId={product.id} />}
+                    </div>
+                )}
+
+                <div className="mt-8">
+                    <ReviewForm
+                        productId={product.id}
+                        onSubmit={async (rating, comment) => {
+                            try {
+                                // Get CSRF token from cookie using the same approach as other pages
+                                function getCookie(name: string) {
+                                    const parts = document.cookie.split('; ').map((c) => c.split('='));
+                                    const found = parts.find(([k]) => k === name);
+                                    return found ? decodeURIComponent(found[1] ?? '') : null;
+                                }
+
+                                function xsrfHeaders(): HeadersInit {
+                                    const xsrf = getCookie('XSRF-TOKEN');
+                                    return {
+                                        'Content-Type': 'application/json',
+                                        'X-Requested-With': 'XMLHttpRequest',
+                                        ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+                                    };
+                                }
+
+                                const response = await fetch(`/products/${product.slug}/reviews`, {
+                                    method: 'POST',
+                                    headers: xsrfHeaders(),
+                                    credentials: 'same-origin',
+                                    body: JSON.stringify({
+                                        rating: rating,
+                                        body: comment,
+                                    }),
+                                });
+
+                                if (!response.ok) {
+                                    const errorData = await response.json().catch(() => ({}));
+                                    throw new Error(errorData.message || 'レビューの送信に失敗しました。');
+                                }
+
+                                const reviewData = await response.json();
+                                console.log('Review submitted successfully:', reviewData);
+
+                                // Update the reviews state to include the new review
+                                setReviews((prevReviews) => [
+                                    {
+                                        id: reviewData.id,
+                                        rating: reviewData.rating,
+                                        body: reviewData.body,
+                                        created_at: reviewData.created_at,
+                                        user: reviewData.user || { name: '匿名ユーザー' },
+                                    },
+                                    ...prevReviews,
+                                ]);
+
+                                // Update the product ratings state
+                                setProductRatings((prev) => ({
+                                    averageRating: (prev.averageRating * prev.reviewCount + rating) / (prev.reviewCount + 1),
+                                    reviewCount: prev.reviewCount + 1,
+                                }));
+
+                                // Show success message
+                                alert('レビューを送信しました！');
+
+                                return reviewData;
+                            } catch (error: any) {
+                                console.error('Error submitting review:', error);
+                                alert(error.message || 'レビューの送信に失敗しました。');
+                                throw error;
+                            }
+                        }}
+                    />
                 </div>
             </div>
 

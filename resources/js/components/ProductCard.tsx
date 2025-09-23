@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import RatingStars from '@/components/RatingStars';
 
 export type ProductCardData = {
     id: number;
@@ -9,6 +10,8 @@ export type ProductCardData = {
     salePrice?: number | null; // in JPY
     imageUrl?: string | null;
     imageAlt?: string | null;
+    averageRating?: number;
+    reviewCount?: number;
 };
 
 function yen(n: number) {
@@ -44,6 +47,18 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                         </span>
                         {hasSale && <span className="text-xs text-gray-400 line-through dark:text-gray-500">{yen(product.price)}</span>}
                     </div>
+
+                    {/* Ratings */}
+                    {(product.averageRating !== undefined && product.averageRating > 0) && (
+                        <div className="flex items-center pt-1">
+                            <RatingStars rating={product.averageRating} size="sm" />
+                            {product.reviewCount !== undefined && product.reviewCount > 0 && (
+                                <span className="ml-1 text-xs text-gray-500">
+                                    ({product.reviewCount})
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
             </Link>
 
