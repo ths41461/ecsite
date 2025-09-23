@@ -1,0 +1,263 @@
+<!-- 🔍 Predictive Search-Focused Navigation -->
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Predictive Search Navigation</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Noto Sans JP", sans-serif;
+        background: #fff8f0;
+      }
+      header {
+        width: 100%;
+        border-bottom: none;
+        background-color: #fff8f0;
+        padding: 0;
+        box-shadow: none;
+      }
+      .top-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap;
+        gap: 16px;
+        padding: 16px 24px;
+        position: relative;
+      }
+      .logo {
+        font-size: 22px;
+        font-weight: bold;
+        color: #ffb300;
+        letter-spacing: 1px;
+      }
+      .search-container {
+        position: relative;
+        flex: 1 1 400px;
+        display: flex;
+        align-items: center;
+        margin: 0 24px;
+      }
+      .search-container input {
+        width: 100%;
+        padding: 10px 14px 10px 32px;
+        border: 1px solid #ffe0b2;
+        border-radius: 6px;
+        font-size: 14px;
+        background: #fff8f0;
+        color: #e75480;
+        transition: border 0.2s;
+      }
+      .search-container input:focus {
+        border: 1.5px solid #e75480;
+        outline: none;
+      }
+      .search-container .icon {
+        position: absolute;
+        left: 8px;
+        font-size: 16px;
+        color: #e75480;
+      }
+      .suggestions {
+        position: absolute;
+        top: 44px;
+        left: 0;
+        right: 0;
+        background: #fff8f0;
+        border: 1px solid #ffe0b2;
+        border-radius: 6px;
+        box-shadow: 0 4px 12px rgba(231, 84, 128, 0.06);
+        display: none;
+        z-index: 100;
+      }
+      .suggestions p {
+        margin: 0;
+        padding: 10px 14px;
+        font-size: 14px;
+        border-bottom: 1px solid #ffe0b2;
+        cursor: pointer;
+        color: #e75480;
+        background: transparent;
+        transition: background 0.2s;
+      }
+      .suggestions p:hover {
+        background-color: #ffe0b2;
+        color: #e75480;
+      }
+      .icon-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        font-size: 18px;
+        color: #e75480;
+      }
+      .icon-group span {
+        color: #e75480;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+      .icon-group span:hover {
+        color: #ffb300;
+      }
+      .hamburger {
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        cursor: pointer;
+        margin-left: 12px;
+      }
+      .hamburger span {
+        height: 3px;
+        width: 22px;
+        background: #e75480;
+        margin: 3px 0;
+        border-radius: 2px;
+        transition: 0.3s;
+      }
+      .nav-links {
+        margin-top: 12px;
+        display: flex;
+        justify-content: center;
+        gap: 32px;
+        flex-wrap: wrap;
+        transition: max-height 0.3s;
+      }
+      .nav-link {
+        text-decoration: none;
+        color: #e75480;
+        font-size: 15px;
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: color 0.2s, background 0.2s;
+      }
+      .nav-link:hover {
+        color: #fff8f0;
+        background-color: #e75480;
+        text-decoration: none;
+      }
+      @media (max-width: 700px) {
+        .top-bar {
+          padding: 12px 10px;
+        }
+        .logo {
+          font-size: 20px;
+        }
+        .search-container {
+          flex: 1 1 100%;
+          margin: 0;
+          width: 100%;
+          order: 2;
+          padding: 12px 10px 0 10px;
+        }
+        .search-container input {
+          font-size: 15px;
+        }
+        .icon-group {
+          gap: 10px;
+          font-size: 20px;
+        }
+        .hamburger {
+          display: flex;
+        }
+        .nav-links {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0;
+          margin: 0;
+          padding: 0 10px;
+          max-height: 0;
+          overflow: hidden;
+          background: #fff8f0;
+          border-bottom: 1px solid #ffe0b2;
+        }
+        .nav-links.open {
+          max-height: 300px;
+          padding-bottom: 10px;
+        }
+        .nav-link {
+          padding: 12px 0;
+          width: 100%;
+          font-size: 16px;
+        }
+        header {
+          padding: 0;
+        }
+        .search-container {
+          order: 3;
+          margin-top: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="top-bar">
+        <div class="logo">LOGO</div>
+        <div class="icon-group">
+          <span>👤</span>
+          <span>🛒</span>
+          <div
+            class="hamburger"
+            id="hamburger"
+            aria-label="メニュー"
+            tabindex="0"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </div>
+      <div class="search-container">
+        <span class="icon">🔍</span>
+        <input type="text" id="search" placeholder="キーワードや気分で検索" />
+        <div class="suggestions" id="suggestions">
+          <p>💐 フローラル系の人気商品</p>
+          <p>🕊️ 軽め・ナチュラル香水を探していますか？</p>
+          <p>🔥 今注目のウッディ香水</p>
+        </div>
+      </div>
+      <nav>
+        <div class="nav-links" id="navLinks">
+          <a href="#" class="nav-link">商品一覧</a>
+          <a href="#" class="nav-link">香り診断</a>
+          <a href="#" class="nav-link">ブランド紹介</a>
+          <a href="#" class="nav-link">お問い合わせ</a>
+        </div>
+      </nav>
+    </header>
+
+    <script>
+      const searchInput = document.getElementById("search");
+      const suggestions = document.getElementById("suggestions");
+      const hamburger = document.getElementById("hamburger");
+      const navLinks = document.getElementById("navLinks");
+
+      searchInput.addEventListener("focus", () => {
+        suggestions.style.display = "block";
+      });
+
+      searchInput.addEventListener("blur", () => {
+        setTimeout(() => {
+          suggestions.style.display = "none";
+        }, 150);
+      });
+
+      hamburger.addEventListener("click", () => {
+        navLinks.classList.toggle("open");
+      });
+      hamburger.addEventListener("keypress", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          navLinks.classList.toggle("open");
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -32,9 +32,52 @@ export default function Index({ products, filters, facets }: Props) {
     const safeSort = (filters.sort ?? '') as string;
     const sortParam = allowedSort.has(safeSort) && safeSort !== '' ? safeSort : undefined;
     return (
-        <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="mx-auto max-w-[1408px] px-4 py-6">
             <Head title="商品" />
+
+            {/* Hero Banner - 1408px × 300px */}
+            <div className="mb-8 w-full">
+                <div className="mx-auto w-full max-w-[1408px]">
+                    <div className="flex h-[300px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20">
+                        <div className="text-center">
+                            <h2 className="mb-4 text-3xl font-bold text-amber-800 dark:text-amber-200">特別キャンペーン</h2>
+                            <p className="text-xl text-amber-600 dark:text-amber-300">期間限定オファーをチェック</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <h1 className="mb-4 text-2xl font-bold">商品</h1>
+
+            {/* Filter Container */}
+            <div className="mb-6 flex items-center justify-between">
+                {/* Filter Toggle Button */}
+                <button className="flex items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-neutral-100">
+                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                        />
+                    </svg>
+                    <span>絞り込み</span>
+                </button>
+
+                {/* Sort Dropdown */}
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-neutral-500">並び替え:</span>
+                    <select className="rounded border px-2 py-1 text-sm">
+                        <option>新着</option>
+                        <option>ベストセラー</option>
+                        <option>アルファベット順</option>
+                        <option>A–Z</option>
+                        <option>価格の安い順</option>
+                        <option>価格の高い順</option>
+                        <option>古い商品順</option>
+                    </select>
+                </div>
+            </div>
 
             {/* Filter bar */}
             <div className="mb-6 grid gap-3 rounded-lg border p-3 md:grid-cols-3">
@@ -134,7 +177,7 @@ export default function Index({ products, filters, facets }: Props) {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {products.data.length === 0 && (
                     <div className="col-span-full rounded-lg border p-8 text-center text-sm text-neutral-600 dark:text-neutral-300">
                         商品が見つかりません。フィルターを調整してみてください。
