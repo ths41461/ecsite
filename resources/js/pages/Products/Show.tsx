@@ -59,7 +59,13 @@ export default function Show({ product, gallery, related }: Props) {
     });
 
     // State for reviews
-    const [reviews, setReviews] = useState([]);
+    const [reviews, setReviews] = useState<{
+        id: number;
+        rating: number;
+        body: string | null;
+        created_at: string;
+        user: { name: string };
+    }[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
 
     const [selectedVariant, setSelectedVariant] = useState<Variant | null>(product.variants[0] || null);
