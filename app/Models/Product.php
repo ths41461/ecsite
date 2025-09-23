@@ -70,6 +70,14 @@ class Product extends Model
     // --- Scout (search) payload ---
     public function toSearchableArray(): array
     {
+        // Get variant options for filtering
+        $variants = $this->variants->where('is_active', true);
+        $genders = $variants->pluck('option_json.gender')->unique()->filter()->values()->all();
+        $sizes = $variants->pluck('option_json.size_ml')->unique()->filter()->values()->all();
+        
+        // Calculate average rating from approved reviews
+        $averageRating = $this->reviews()->where('approved', true)->avg('rating') ?? 0;
+        
         return [
             'id'        => $this->id,
             'slug'      => $this->slug,
@@ -77,6 +85,9 @@ class Product extends Model
             'brand'     => $this->brand?->name,
             'category'  => $this->category?->name,
             'description' => trim(($this->short_desc ?? '') . ' ' . ($this->long_desc ?? '')),
+            'gender'    => $genders, // Array of genders from variants
+            'size_ml'   => $sizes,   // Array of sizes from variants
+            'rating'    => round($averageRating, 2),
         ];
     }
 

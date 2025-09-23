@@ -43,7 +43,13 @@ class ProductFactory extends Factory
             'long_desc'      => $this->faker->randomElement($descriptions),
             'is_active'      => true,
             'featured'       => (bool) random_int(0, 9) === 0, // ~10%
-            'attributes_json' => ['notes' => ['top' => 'シトラス', 'middle' => 'フローラル', 'base' => 'マスク']],
+            'attributes_json' => [
+                'notes' => [
+                    'top' => 'シトラス',
+                    'middle' => 'フローラル',
+                    'base' => 'マスク'
+                ]
+            ],
             'meta_json'      => ['seo_title' => $name],
             'published_at'   => now(),
         ];

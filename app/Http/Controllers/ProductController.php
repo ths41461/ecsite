@@ -13,6 +13,8 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
+        $startTime = microtime(true);
+        
         $perPage = (int) $request->integer('per_page', 12);
         $q = trim((string) $request->string('q'));
         $brand = trim((string) $request->string('brand'));
@@ -20,8 +22,12 @@ class ProductController extends Controller
         $sort = trim((string) $request->string('sort'));
         $priceMin = $request->has('price_min') ? (int) $request->integer('price_min') : null;
         $priceMax = $request->has('price_max') ? (int) $request->integer('price_max') : null;
+        $rating = $request->has('rating') ? (int) $request->integer('rating') : null;
+        $gender = trim((string) $request->string('gender'));
+        $size = $request->has('size') ? (int) $request->integer('size') : null;
 
         $mapProduct = function ($p) {
+            /** @var \App\Models\Product $p */
             $imagePath = $p->heroImage?->path;
             $imageUrl  = $imagePath
                 ? (str_starts_with($imagePath, 'http') || str_starts_with($imagePath, '/') ? $imagePath : Storage::url($imagePath))
@@ -29,6 +35,15 @@ class ProductController extends Controller
 
             $minPriceYen = (int) ($p->min_price_yen ?? 0);
             $minSaleYen  = $p->min_sale_price_yen !== null ? (int) $p->min_sale_price_yen : null;
+
+            // Get variant options for gender and size display
+            $variantOptions = $p->variants->where('is_active', true)->map(function ($variant) {
+                return $variant->option_json;
+            })->filter()->values();
+
+            // Extract unique gender and size values
+            $genders = $variantOptions->pluck('gender')->unique()->filter()->values();
+            $sizes = $variantOptions->pluck('size_ml')->unique()->filter()->values();
 
             return [
                 'id' => $p->id,
@@ -43,6 +58,8 @@ class ProductController extends Controller
                 'compare_at_cents' => $minSaleYen !== null ? ($minPriceYen * 100) : null,
                 'average_rating' => round($p->averageRating() ?? 0, 1),
                 'review_count' => $p->reviewCount(),
+                'genders' => $genders,
+                'sizes' => $sizes,
             ];
         };
 
@@ -66,7 +83,7 @@ class ProductController extends Controller
             ]);
 
         // Reusable DB filter applicator
-        $applyFilters = function ($query) use ($brand, $category, $priceMin, $priceMax) {
+        $applyFilters = function ($query) use ($brand, $category, $priceMin, $priceMax, $rating, $gender, $size) {
             if ($brand !== '') {
                 $query->whereHas('brand', function ($b) use ($brand) {
                     $b->where('slug', $brand);
@@ -81,6 +98,26 @@ class ProductController extends Controller
                 $min = $priceMin !== null ? $priceMin : 0;
                 $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
                 $query->havingRaw('(COALESCE(min_sale_price_yen, min_price_yen)) BETWEEN ? AND ?', [$min, $max]);
+            }
+            // Rating filter
+            if ($rating !== null) {
+                $query->whereHas('reviews', function ($r) use ($rating) {
+                    $r->where('rating', '>=', $rating);
+                });
+            }
+            // Gender filter (from variant options)
+            if ($gender !== '') {
+                $query->whereHas('variants', function ($v) use ($gender) {
+                    $v->where('is_active', 1)
+                      ->whereRaw("JSON_EXTRACT(option_json, '$.gender') = ?", [$gender]);
+                });
+            }
+            // Size filter (from variant options)
+            if ($size !== null) {
+                $query->whereHas('variants', function ($v) use ($size) {
+                    $v->where('is_active', 1)
+                      ->whereRaw("JSON_EXTRACT(option_json, '$.size_ml') = ?", [$size]);
+                });
             }
         };
 
@@ -101,9 +138,22 @@ class ProductController extends Controller
                         });
                         $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
 
+                        // Log performance
+                        $endTime = microtime(true);
+                        $duration = ($endTime - $startTime) * 1000; // Convert to milliseconds
+                        
+                        if ($duration > 1000) { // Log slow queries (> 1 second)
+                            \Illuminate\Support\Facades\Log::warning('Slow search query', [
+                                'duration_ms' => $duration,
+                                'query' => $q,
+                                'filters' => compact('brand', 'category', 'priceMin', 'priceMax', 'rating', 'gender', 'size'),
+                                'user_id' => auth()->id(),
+                            ]);
+                        }
+
                         return Inertia::render('Products/Index', [
                             'products' => $products,
-                            'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max']),
+                            'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max', 'rating', 'gender', 'size']),
                             'facets'   => $facets,
                         ]);
                     }
@@ -125,9 +175,22 @@ class ProductController extends Controller
             });
             $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
 
+            // Log performance
+            $endTime = microtime(true);
+            $duration = ($endTime - $startTime) * 1000; // Convert to milliseconds
+            
+            if ($duration > 1000) { // Log slow queries (> 1 second)
+                \Illuminate\Support\Facades\Log::warning('Slow search query', [
+                    'duration_ms' => $duration,
+                    'query' => $q,
+                    'filters' => compact('brand', 'category', 'priceMin', 'priceMax', 'rating', 'gender', 'size'),
+                    'user_id' => auth()->id(),
+                ]);
+            }
+
             return Inertia::render('Products/Index', [
                 'products' => $products,
-                'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max']),
+                'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max', 'rating', 'gender', 'size']),
                 'facets'   => $facets,
             ]);
         }
@@ -142,9 +205,22 @@ class ProductController extends Controller
 
         $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
 
+        // Log performance
+        $endTime = microtime(true);
+        $duration = ($endTime - $startTime) * 1000; // Convert to milliseconds
+        
+        if ($duration > 1000) { // Log slow queries (> 1 second)
+            \Illuminate\Support\Facades\Log::warning('Slow search query', [
+                'duration_ms' => $duration,
+                'query' => $q,
+                'filters' => compact('brand', 'category', 'priceMin', 'priceMax', 'rating', 'gender', 'size'),
+                'user_id' => auth()->id(),
+            ]);
+        }
+
         return Inertia::render('Products/Index', [
             'products' => $products,
-            'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max']),
+            'filters'  => $request->only(['q', 'category', 'brand', 'sort', 'price_min', 'price_max', 'rating', 'gender', 'size']),
             'facets'   => $facets,
         ]);
     }
@@ -157,6 +233,9 @@ class ProductController extends Controller
             'category' => (string) $request->query('category', ''),
             'price_min' => (string) $request->query('price_min', ''),
             'price_max' => (string) $request->query('price_max', ''),
+            'rating' => (string) $request->query('rating', ''),
+            'gender' => (string) $request->query('gender', ''),
+            'size' => (string) $request->query('size', ''),
             'sort' => (string) $request->query('sort', ''),
             'per_page' => (string) $request->query('per_page', '12'),
             'page' => (string) $request->query('page', '1'),
@@ -202,120 +281,170 @@ class ProductController extends Controller
 
     private function buildFacets($query, string $brand, string $category, ?int $priceMin, ?int $priceMax): array
     {
-        // Build an effective price subselect to avoid ONLY_FULL_GROUP_BY issues with HAVING
-        $effectivePriceSubselect = '(
-            SELECT COALESCE(MIN(sale_price_yen), MIN(price_yen))
-            FROM product_variants
-            WHERE product_variants.product_id = products.id
-              AND product_variants.is_active = 1
-        )';
+        // Create a cache key for the facets
+        $cacheKey = 'product_facets_' . md5(serialize([
+            'brand' => $brand,
+            'category' => $category,
+            'price_min' => $priceMin,
+            'price_max' => $priceMax
+        ]));
+        
+        // Return cached facets if available
+                return \Illuminate\Support\Facades\Cache::remember($cacheKey, 300, function() use ($brand, $category, $priceMin, $priceMax) {
+            // Build an effective price subselect to avoid ONLY_FULL_GROUP_BY issues with HAVING
+            $effectivePriceSubselect = '(
+                SELECT COALESCE(MIN(sale_price_yen), MIN(price_yen))
+                FROM product_variants
+                WHERE product_variants.product_id = products.id
+                  AND product_variants.is_active = 1
+            )';
 
-        // Brand facet (ignore brand filter). Start fresh to avoid inherited selects.
-        $brandQuery = \App\Models\Product::query()
-            ->from('products')
-            ->where('products.is_active', 1)
-            ->join('brands', 'brands.id', '=', 'products.brand_id')
-            ->when($category !== '', function ($q) use ($category) {
-                $q->whereHas('category', function ($c) use ($category) {
-                    $c->where('slug', $category);
-                });
-            })
-            ->when($priceMin !== null || $priceMax !== null, function ($q) use ($effectivePriceSubselect, $priceMin, $priceMax) {
-                $min = $priceMin !== null ? $priceMin : 0;
-                $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
-                $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
-            })
-            ->groupBy('brands.slug', 'brands.name')
-            ->orderBy('brands.name')
-            ->selectRaw('brands.slug as slug, brands.name as name, COUNT(products.id) as count');
-
-        $brands = $brandQuery->get()->map(function ($r) use ($brand) {
-            return [
-                'slug' => $r->slug,
-                'name' => $r->name,
-                'count' => (int) ($r->count ?? 0),
-                'active' => $brand === $r->slug,
-            ];
-        })->values();
-
-        // Category facet (ignore category filter). Start fresh similarly.
-        $categoryQuery = \App\Models\Product::query()
-            ->from('products')
-            ->where('products.is_active', 1)
-            ->join('categories', 'categories.id', '=', 'products.category_id')
-            ->when($brand !== '', function ($q) use ($brand) {
-                $q->whereHas('brand', function ($b) use ($brand) {
-                    $b->where('slug', $brand);
-                });
-            })
-            ->when($priceMin !== null || $priceMax !== null, function ($q) use ($effectivePriceSubselect, $priceMin, $priceMax) {
-                $min = $priceMin !== null ? $priceMin : 0;
-                $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
-                $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
-            })
-            ->groupBy('categories.slug', 'categories.name')
-            ->orderBy('categories.name')
-            ->selectRaw('categories.slug as slug, categories.name as name, COUNT(products.id) as count');
-
-        $categories = $categoryQuery->get()->map(function ($r) use ($category) {
-            return [
-                'slug' => $r->slug,
-                'name' => $r->name,
-                'count' => (int) ($r->count ?? 0),
-                'active' => $category === $r->slug,
-            ];
-        })->values();
-
-        // Price buckets facet
-        $buckets = [
-            ['label' => 'Under ¥3,000', 'min' => 0, 'max' => 3000],
-            ['label' => '¥3,000 – ¥7,000', 'min' => 3000, 'max' => 7000],
-            ['label' => '¥7,000 – ¥15,000', 'min' => 7000, 'max' => 15000],
-            ['label' => '¥15,000+', 'min' => 15000, 'max' => null],
-        ];
-
-        $prices = collect($buckets)->map(function ($bucket) use ($brand, $category, $effectivePriceSubselect) {
-            $q = \App\Models\Product::query()
+            // Brand facet (ignore brand filter). Start fresh to avoid inherited selects.
+            $brandQuery = \App\Models\Product::query()
                 ->from('products')
                 ->where('products.is_active', 1)
-                ->when($brand !== '', function ($qq) use ($brand) {
-                    $qq->whereHas('brand', function ($b) use ($brand) {
+                ->join('brands', 'brands.id', '=', 'products.brand_id')
+                ->when($category !== '', function ($q) use ($category) {
+                    $q->whereHas('category', function ($c) use ($category) {
+                        $c->where('slug', $category);
+                    });
+                })
+                ->when($priceMin !== null || $priceMax !== null, function ($q) use ($effectivePriceSubselect, $priceMin, $priceMax) {
+                    $min = $priceMin !== null ? $priceMin : 0;
+                    $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
+                    $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
+                })
+                ->groupBy('brands.slug', 'brands.name')
+                ->orderBy('brands.name')
+                ->selectRaw('brands.slug as slug, brands.name as name, COUNT(products.id) as count');
+
+            $brands = $brandQuery->get()->map(function ($r) use ($brand) {
+                return [
+                    'slug' => $r->slug,
+                    'name' => $r->name,
+                    'count' => (int) ($r->count ?? 0),
+                    'active' => $brand === $r->slug,
+                ];
+            })->values();
+
+            // Category facet (ignore category filter). Start fresh similarly.
+            $categoryQuery = \App\Models\Product::query()
+                ->from('products')
+                ->where('products.is_active', 1)
+                ->join('categories', 'categories.id', '=', 'products.category_id')
+                ->when($brand !== '', function ($q) use ($brand) {
+                    $q->whereHas('brand', function ($b) use ($brand) {
                         $b->where('slug', $brand);
                     });
                 })
-                ->when($category !== '', function ($qq) use ($category) {
-                    $qq->whereHas('category', function ($c) use ($category) {
-                        $c->where('slug', $category);
-                    });
-                });
-            $min = $bucket['min'];
-            $max = $bucket['max'] ?? PHP_INT_MAX;
-            $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
-            $count = (clone $q)->count();
-            return [
-                'label' => $bucket['label'],
-                'min' => $bucket['min'],
-                'max' => $bucket['max'],
-                'count' => (int) $count,
-                'active' => false,
-            ];
-        })->values();
+                ->when($priceMin !== null || $priceMax !== null, function ($q) use ($effectivePriceSubselect, $priceMin, $priceMax) {
+                    $min = $priceMin !== null ? $priceMin : 0;
+                    $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
+                    $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
+                })
+                ->groupBy('categories.slug', 'categories.name', 'categories.parent_id', 'categories.depth')
+                ->orderBy('categories.name')
+                ->selectRaw('categories.slug as slug, categories.name as name, categories.parent_id as parent_id, categories.depth as depth, COUNT(products.id) as count');
 
-        // Mark active price bucket if current filter matches
-        if ($priceMin !== null || $priceMax !== null) {
-            $prices = $prices->map(function ($p) use ($priceMin, $priceMax) {
-                $isActive = ($priceMin !== null && $p['min'] === $priceMin)
-                    && ((($p['max'] ?? null) === null && $priceMax === null) || ($p['max'] ?? null) === $priceMax);
-                $p['active'] = $isActive;
-                return $p;
+            $categories = $categoryQuery->get()->map(function ($r) use ($category) {
+                return [
+                    'slug' => $r->slug,
+                    'name' => $r->name,
+                    'count' => (int) ($r->count ?? 0),
+                    'active' => $category === $r->slug,
+                    'parent_id' => $r->parent_id ?? null,
+                    'depth' => $r->depth ?? 0,
+                ];
             })->values();
-        }
 
-        return [
-            'brands' => $brands,
-            'categories' => $categories,
-            'prices' => $prices,
-        ];
+            // Price buckets facet
+            $buckets = [
+                ['label' => 'Under ¥3,000', 'min' => 0, 'max' => 3000],
+                ['label' => '¥3,000 – ¥7,000', 'min' => 3000, 'max' => 7000],
+                ['label' => '¥7,000 – ¥15,000', 'min' => 7000, 'max' => 15000],
+                ['label' => '¥15,000+', 'min' => 15000, 'max' => null],
+            ];
+
+            $prices = collect($buckets)->map(function ($bucket) use ($brand, $category, $effectivePriceSubselect) {
+                $q = \App\Models\Product::query()
+                    ->from('products')
+                    ->where('products.is_active', 1)
+                    ->when($brand !== '', function ($qq) use ($brand) {
+                        $qq->whereHas('brand', function ($b) use ($brand) {
+                            $b->where('slug', $brand);
+                        });
+                    })
+                    ->when($category !== '', function ($qq) use ($category) {
+                        $qq->whereHas('category', function ($c) use ($category) {
+                            $c->where('slug', $category);
+                        });
+                    });
+                $min = $bucket['min'];
+                $max = $bucket['max'] ?? PHP_INT_MAX;
+                $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
+                $count = (clone $q)->count();
+                return [
+                    'label' => $bucket['label'],
+                    'min' => $bucket['min'],
+                    'max' => $bucket['max'],
+                    'count' => (int) $count,
+                    'active' => false,
+                ];
+            })->values();
+
+            // Mark active price bucket if current filter matches
+            if ($priceMin !== null || $priceMax !== null) {
+                $prices = $prices->map(function ($p) use ($priceMin, $priceMax) {
+                    $isActive = ($priceMin !== null && $p['min'] === $priceMin)
+                        && ((($p['max'] ?? null) === null && $priceMax === null) || ($p['max'] ?? null) === $priceMax);
+                    $p['active'] = $isActive;
+                    return $p;
+                })->values();
+            }
+
+            // Rating facets
+            $ratings = collect([5, 4, 3, 2, 1])->map(function ($rating) use ($brand, $category, $priceMin, $priceMax, $effectivePriceSubselect) {
+                $q = \App\Models\Product::query()
+                    ->from('products')
+                    ->where('products.is_active', 1)
+                    ->whereHas('reviews', function ($r) use ($rating) {
+                        $r->where('rating', '>=', $rating);
+                    })
+                    ->when($brand !== '', function ($qq) use ($brand) {
+                        $qq->whereHas('brand', function ($b) use ($brand) {
+                            $b->where('slug', $brand);
+                        });
+                    })
+                    ->when($category !== '', function ($qq) use ($category) {
+                        $qq->whereHas('category', function ($c) use ($category) {
+                            $c->where('slug', $category);
+                        });
+                    })
+                    ->when($priceMin !== null || $priceMax !== null, function ($q) use ($effectivePriceSubselect, $priceMin, $priceMax) {
+                        $min = $priceMin !== null ? $priceMin : 0;
+                        $max = $priceMax !== null ? $priceMax : PHP_INT_MAX;
+                        $q->whereRaw("{$effectivePriceSubselect} BETWEEN ? AND ?", [$min, $max]);
+                    });
+                
+                $count = (clone $q)->count();
+                
+                return [
+                    'rating' => $rating,
+                    'count' => (int) $count,
+                    'label' => str_repeat('★', $rating) . str_repeat('☆', 5 - $rating),
+                    'active' => false, // Will be set based on current filter
+                ];
+            })->filter(function ($r) {
+                return $r['count'] > 0; // Only show ratings that have products
+            })->values();
+
+            return [
+                'brands' => $brands,
+                'categories' => $categories,
+                'prices' => $prices,
+                'ratings' => $ratings,
+            ];
+        });
     }
 
     public function show(Product $product)
@@ -326,7 +455,7 @@ class ProductController extends Controller
                 $q->select(['id', 'product_id', 'path', 'alt', 'rank', 'is_hero'])->orderBy('is_hero', 'desc')->orderBy('rank');
             },
             'variants' => function ($q) {
-                $q->select(['id', 'product_id', 'sku', 'price_yen', 'sale_price_yen', 'is_active']);
+                $q->select(['id', 'product_id', 'sku', 'option_json', 'price_yen', 'sale_price_yen', 'is_active']);
             },
             'variants.inventory:id,product_variant_id,stock,safety_stock,managed',
             'category:id,name,slug',
@@ -344,6 +473,7 @@ class ProductController extends Controller
                 'stock' => $v->inventory?->stock,
                 'safety_stock' => $v->inventory?->safety_stock,
                 'managed' => (bool) ($v->inventory?->managed ?? false),
+                'options' => $v->option_json, // Include variant options
             ];
         })->values();
 
@@ -379,6 +509,7 @@ class ProductController extends Controller
             ->limit(8)
             ->get()
             ->map(function ($p) {
+                /** @var \App\Models\Product $p */
                 $imagePath = $p->heroImage?->path;
                 $imageUrl  = $imagePath ? (str_starts_with($imagePath, 'http') || str_starts_with($imagePath, '/') ? $imagePath : Storage::url($imagePath)) : null;
                 $minPriceYen = (int) ($p->min_price_yen ?? 0);
@@ -397,6 +528,7 @@ class ProductController extends Controller
             });
 
         return Inertia::render('Products/Show', [
+            /** @var \App\Models\Product $product */
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,

@@ -13,6 +13,10 @@ type Variant = {
     stock?: number | null;
     safety_stock?: number | null;
     managed?: boolean;
+    options?: { // Add options for gender and size
+        gender?: string;
+        size_ml?: number;
+    };
 };
 
 type Props = {
@@ -355,7 +359,7 @@ export default function Show({ product, gallery, related }: Props) {
 
                     <div className="space-y-4">
                         {/* VARIANT PICKER (inline for now; will extract later) */}
-                        {product.variants.length > 1 && (
+                                                    {product.variants.length > 1 && (
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">バリエーションを選択</label>
                                 <div className="space-y-2">
@@ -383,6 +387,27 @@ export default function Show({ product, gallery, related }: Props) {
                                                             <span className="text-sm text-neutral-500 line-through">{yen(v.compare_at_cents)}</span>
                                                         )}
                                                         <span className="text-xs text-neutral-500">SKU: {v.sku}</span>
+                                                        {/* Gender and Size Icons for Variants */}
+                                                        {v.options && (
+                                                            <div className="flex gap-1">
+                                                                {v.options.gender && (
+                                                                    <span 
+                                                                        className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                                        title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                                                    >
+                                                                        {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
+                                                                    </span>
+                                                                )}
+                                                                {v.options.size_ml && (
+                                                                    <span 
+                                                                        className="inline-flex items-center justify-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                                                                        title={`${v.options.size_ml}ml`}
+                                                                    >
+                                                                        {v.options.size_ml}ml
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                     <span
                                                         className={`rounded px-2 py-0.5 text-xs ${
@@ -415,6 +440,27 @@ export default function Show({ product, gallery, related }: Props) {
                                             <span className="text-sm text-neutral-500 line-through">{yen(v.compare_at_cents)}</span>
                                         )}
                                         <span className="ml-2 text-xs text-neutral-500">SKU: {v.sku}</span>
+                                        {/* Gender and Size Icons for Single Variant */}
+                                        {v.options && (
+                                            <div className="flex gap-1">
+                                                {v.options.gender && (
+                                                    <span 
+                                                        className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                        title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                                    >
+                                                        {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
+                                                    </span>
+                                                )}
+                                                {v.options.size_ml && (
+                                                    <span 
+                                                        className="inline-flex items-center justify-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                                                        title={`${v.options.size_ml}ml`}
+                                                    >
+                                                        {v.options.size_ml}ml
+                                                    </span>
+                                                )}
+                                            </div>
+                                        )}
                                         <span
                                             className={`ml-2 rounded px-2 py-0.5 text-xs ${
                                                 badge === '在庫切れ'

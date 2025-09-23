@@ -12,6 +12,8 @@ export type ProductCardData = {
     imageAlt?: string | null;
     averageRating?: number;
     reviewCount?: number;
+    genders?: string[]; // Add gender information
+    sizes?: number[];   // Add size information
 };
 
 function yen(n: number) {
@@ -40,6 +42,30 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                 <div className="mt-3 space-y-1">
                     {product.brand && <div className="line-clamp-1 text-xs text-gray-500 dark:text-gray-400">{product.brand}</div>}
                     <h3 className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-gray-100">{product.name}</h3>
+
+                    {/* Gender and Size Icons */}
+                    {(product.genders || product.sizes) && (
+                        <div className="flex flex-wrap gap-1">
+                            {product.genders && product.genders.map((gender) => (
+                                <span 
+                                    key={gender} 
+                                    className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                    title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                >
+                                    {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
+                                </span>
+                            ))}
+                            {product.sizes && product.sizes.map((size) => (
+                                <span 
+                                    key={size} 
+                                    className="inline-flex items-center justify-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                                    title={`${size}ml`}
+                                >
+                                    {size}ml
+                                </span>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="flex items-baseline gap-2">
                         <span className={`text-sm font-semibold ${hasSale ? 'text-rose-600' : 'text-gray-900 dark:text-gray-100'}`}>
