@@ -22,6 +22,10 @@ Route::get('/products', [ProductController::class, 'index'])
 Route::get('/products/{product}', [ProductController::class, 'show'])
     ->name('products.show');
 
+// Search autocomplete API
+Route::get('/api/search/autocomplete', [ProductController::class, 'autocomplete'])
+    ->name('search.autocomplete');
+
 Route::post('/e/pdp-view', [EventController::class, 'pdpView'])->name('events.pdp_view');
 Route::post('/e/add-to-cart', [EventController::class, 'addToCart'])->name('events.add_to_cart');
 Route::post('/e/wishlist-add', [EventController::class, 'wishlistAdd'])->name('events.wishlist_add');

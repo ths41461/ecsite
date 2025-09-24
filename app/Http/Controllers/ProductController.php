@@ -344,10 +344,11 @@ class ProductController extends Controller
                 })
                 ->groupBy('categories.slug', 'categories.name', 'categories.parent_id', 'categories.depth')
                 ->orderBy('categories.name')
-                ->selectRaw('categories.slug as slug, categories.name as name, categories.parent_id as parent_id, categories.depth as depth, COUNT(products.id) as count');
+                ->selectRaw('categories.id as id, categories.slug as slug, categories.name as name, categories.parent_id as parent_id, categories.depth as depth, COUNT(products.id) as count');
 
             $categories = $categoryQuery->get()->map(function ($r) use ($category) {
                 return [
+                    'id' => $r->id,
                     'slug' => $r->slug,
                     'name' => $r->name,
                     'count' => (int) ($r->count ?? 0),
@@ -445,6 +446,65 @@ class ProductController extends Controller
                 'ratings' => $ratings,
             ];
         });
+    }
+
+    public function autocomplete(\Illuminate\Http\Request $request)
+    {
+        $q = trim((string) $request->string('q'));
+        
+        if (empty($q)) {
+            return response()->json(['suggestions' => []]);
+        }
+
+        // Get suggestions using Scout if available, fallback to database search
+        $suggestions = [];
+        
+        try {
+            if (config('scout.driver')) {
+                // Use Scout search for autocomplete
+                $suggestions = Product::search($q)
+                    ->take(8) // Limit to 8 suggestions
+                    ->get()
+                    ->map(function ($product) {
+                        return [
+                            'id' => $product->id,
+                            'name' => $product->name,
+                            'slug' => $product->slug,
+                            'brand' => $product->brand ? ['name' => $product->brand->name] : null,
+                            'category' => $product->category ? ['name' => $product->category->name] : null,
+                        ];
+                    })
+                    ->toArray();
+            }
+        } catch (\Throwable $e) {
+            // If Scout fails, fall back to database search
+            \Log::warning('Scout search failed, using fallback', ['error' => $e->getMessage()]);
+        }
+
+        // If no suggestions from Scout or Scout failed, use database fallback
+        if (empty($suggestions)) {
+            $suggestions = Product::where('is_active', 1)
+                ->where(function ($query) use ($q) {
+                    $query->where('name', 'like', "%{$q}%")
+                        ->orWhere('short_desc', 'like', "%{$q}%")
+                        ->orWhere('long_desc', 'like', "%{$q}%");
+                })
+                ->with(['brand', 'category'])
+                ->limit(8)
+                ->get()
+                ->map(function ($product) {
+                    return [
+                        'id' => $product->id,
+                        'name' => $product->name,
+                        'slug' => $product->slug,
+                        'brand' => $product->brand ? ['name' => $product->brand->name] : null,
+                        'category' => $product->category ? ['name' => $product->category->name] : null,
+                    ];
+                })
+                ->toArray();
+        }
+
+        return response()->json(['suggestions' => $suggestions]);
     }
 
     public function show(Product $product)
