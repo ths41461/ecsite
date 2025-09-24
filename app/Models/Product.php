@@ -88,6 +88,7 @@ class Product extends Model
             'gender'    => $genders, // Array of genders from variants
             'size_ml'   => $sizes,   // Array of sizes from variants
             'rating'    => round($averageRating, 2),
+            'review_count' => $this->reviews()->where('approved', true)->count(),
         ];
     }
 

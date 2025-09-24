@@ -133,7 +133,7 @@ class ProductController extends Controller
                         // Apply sort: keep relevance only when sort is empty
                         $this->applyOrder($query, $sort, $ids);
 
-                        $products = Cache::remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
+                        $products = Cache::tags(['product_listings'])->remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
                             return $query->paginate($perPage)->through($mapProduct)->toArray();
                         });
                         $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
@@ -170,7 +170,7 @@ class ProductController extends Controller
             });
             $applyFilters($query);
             $this->applyOrder($query, $sort, null);
-            $products = Cache::remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
+            $products = Cache::tags(['product_listings'])->remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
                 return $query->paginate($perPage)->through($mapProduct)->toArray();
             });
             $facets = $this->buildFacets((clone $query), $brand, $category, $priceMin, $priceMax);
@@ -199,7 +199,7 @@ class ProductController extends Controller
         $query = (clone $base);
         $applyFilters($query);
         $this->applyOrder($query, $sort, null);
-        $products = Cache::remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
+        $products = Cache::tags(['product_listings'])->remember($this->makeCacheKey($request), 30, function () use ($query, $perPage, $mapProduct) {
             return $query->paginate($perPage)->through($mapProduct)->toArray();
         });
 

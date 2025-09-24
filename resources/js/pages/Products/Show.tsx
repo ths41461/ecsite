@@ -1,7 +1,7 @@
 import RatingStars from '@/components/RatingStars';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
 
@@ -68,7 +68,7 @@ export default function Show({ product, gallery, related }: Props) {
         rating: number;
         body: string | null;
         created_at: string;
-        user: { name: string };
+        user: { name: string } | null;
     }[]>([]);
     const [loadingReviews, setLoadingReviews] = useState(true);
 
@@ -595,18 +595,25 @@ export default function Show({ product, gallery, related }: Props) {
                                 ]);
 
                                 // Update the product ratings state
-                                setProductRatings((prev) => ({
-                                    averageRating: (prev.averageRating * prev.reviewCount + rating) / (prev.reviewCount + 1),
-                                    reviewCount: prev.reviewCount + 1,
-                                }));
+                                const newRatingData = {
+                                    averageRating: (productRatings.averageRating * productRatings.reviewCount + rating) / (productRatings.reviewCount + 1),
+                                    reviewCount: productRatings.reviewCount + 1,
+                                };
+                                
+                                setProductRatings(newRatingData);
 
-                                // Show success message
-                                alert('レビューを送信しました！');
+                                // Store the updated ratings in the fresh review cache
+                                import('@/lib/review-cache').then(({ updateProductReviewData }) => {
+                                    updateProductReviewData(product.id, productRatings.averageRating, productRatings.reviewCount, rating);
+                                });
+
+                                // Show success toast notification
+                                showToast('レビューを送信しました！', 'success');
 
                                 return reviewData;
                             } catch (error: any) {
                                 console.error('Error submitting review:', error);
-                                alert(error.message || 'レビューの送信に失敗しました。');
+                                showToast(error.message || 'レビューの送信に失敗しました。', 'error');
                                 throw error;
                             }
                         }}

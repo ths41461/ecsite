@@ -1,5 +1,6 @@
 import { Link } from '@inertiajs/react';
 import RatingStars from '@/components/RatingStars';
+import { getFreshReviewDataForProduct } from '@/lib/review-cache';
 
 export type ProductCardData = {
     id: number;
@@ -75,16 +76,23 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                     </div>
 
                     {/* Ratings */}
-                    {(product.averageRating !== undefined && product.averageRating > 0) && (
-                        <div className="flex items-center pt-1">
-                            <RatingStars rating={product.averageRating} size="sm" />
-                            {product.reviewCount !== undefined && product.reviewCount > 0 && (
-                                <span className="ml-1 text-xs text-gray-500">
-                                    ({product.reviewCount})
-                                </span>
-                            )}
-                        </div>
-                    )}
+                    {(() => {
+                        // Check if we have fresh review data for this product
+                        const freshData = getFreshReviewDataForProduct(product.id);
+                        const displayRating = freshData?.averageRating ?? product.averageRating;
+                        const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
+
+                        return (displayRating !== undefined && displayRating > 0) && (
+                            <div className="flex items-center pt-1">
+                                <RatingStars rating={displayRating} size="sm" />
+                                {displayReviewCount !== undefined && displayReviewCount > 0 && (
+                                    <span className="ml-1 text-xs text-gray-500">
+                                        ({displayReviewCount})
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })()}
                 </div>
             </Link>
 

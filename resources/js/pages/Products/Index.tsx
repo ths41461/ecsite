@@ -257,7 +257,14 @@ function SearchWithAutocomplete({
 export default function Index({ products, filters, facets }: Props) {
     const isLoading = useInertiaLoading();
     const isInitialMount = useRef(true);
-    const [isFilterSidebarOpen, setFilterSidebarOpen] = useState(false);
+    const [isFilterSidebarOpen, setFilterSidebarOpen] = useState(() => {
+        const savedState = localStorage.getItem('productFilterSidebarOpen');
+        return savedState ? JSON.parse(savedState) : false;
+    });
+
+    useEffect(() => {
+        localStorage.setItem('productFilterSidebarOpen', JSON.stringify(isFilterSidebarOpen));
+    }, [isFilterSidebarOpen]);
 
     const { filters: stateFilters, updateFilter, clearFilter, clearAllFilters: clearStateFilters } = useFilterState({
         initialFilters: {

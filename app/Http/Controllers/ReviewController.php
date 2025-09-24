@@ -7,6 +7,7 @@ use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class ReviewController extends Controller
 {
@@ -50,8 +51,11 @@ class ReviewController extends Controller
         if (Auth::check()) {
             $review->user_id = Auth::id();
         }
-        
         $review->save();
+        $product->touch();
+
+        // Clear cache for product listings so average ratings update
+        Cache::tags(['product_listings'])->flush();
 
         return response()->json($review, 201);
     }
@@ -81,6 +85,7 @@ class ReviewController extends Controller
         $review->body = $request->body;
         // Keep the existing approval status when updating
         $review->save();
+        $review->product->touch();
 
         return response()->json($review);
     }
@@ -96,6 +101,7 @@ class ReviewController extends Controller
         }
 
         $review->delete();
+        $review->product->touch();
 
         return response()->json(['message' => 'Review deleted successfully']);
     }
