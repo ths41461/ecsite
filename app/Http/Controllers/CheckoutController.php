@@ -438,16 +438,38 @@ class CheckoutController extends Controller
 
     private function presentOrder(Order $order, bool $withItems = false): array
     {
+        // Get the current cart session ID to recalculate values if needed
+        $currentCartSessionId = request()->session()->getId();
+        
+        // Check if this order is for the current session and if we should recalculate
+        $shouldRecalculate = $order->cart_session_id === $currentCartSessionId;
+        
+        $subtotal_yen = $order->subtotal_yen;
+        $discount_yen = $order->discount_yen;
+        $coupon_discount_yen = $order->coupon_discount_yen;
+        $tax_yen = $order->tax_yen;
+        $total_yen = $order->total_yen;
+        
+        if ($shouldRecalculate) {
+            // Get the current cart to ensure we're showing up-to-date values
+            $cart = $this->cart->get($currentCartSessionId);
+            $subtotal_yen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
+            $discount_yen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
+            $coupon_discount_yen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+            $tax_yen = (int) round((int)($cart['tax_cents'] ?? 0) / 100);
+            $total_yen = (int) round(($cart['total_cents'] ?? 0) / 100);
+        }
+
         $payload = [
             'order_number' => $order->order_number,
             'status' => $order->status,
-            'subtotal_yen' => $order->subtotal_yen,
-            'discount_yen' => $order->discount_yen,
+            'subtotal_yen' => $subtotal_yen,
+            'discount_yen' => $discount_yen,
             'coupon_code' => $order->coupon_code,
-            'coupon_discount_yen' => $order->coupon_discount_yen,
+            'coupon_discount_yen' => $coupon_discount_yen,
             'shipping_yen' => $order->shipping_yen,
-            'tax_yen' => $order->tax_yen,
-            'total_yen' => $order->total_yen,
+            'tax_yen' => $tax_yen,
+            'total_yen' => $total_yen,
             'email' => $order->email,
             'name' => $order->name,
             'phone' => $order->phone,

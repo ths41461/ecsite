@@ -388,7 +388,7 @@ class CartService
             $this->saveMeta($sessionId, $meta);
         }
 
-        $taxableBase = max(0, $subtotal - $couponDiscount);
+        $taxableBase = max(0, $subtotal - $couponDiscount - $savings);
         $taxCents = (int) round($taxableBase * max($this->taxRate, 0) / 100);
         $total = max(0, $taxableBase + $taxCents);
 

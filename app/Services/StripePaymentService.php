@@ -28,39 +28,38 @@ class StripePaymentService
         $cancelUrl  = url('/checkout/cancel/' . $order->order_number) . '?session_id={CHECKOUT_SESSION_ID}';
         $returnUrl  = $successUrl; // Embedded Checkout uses return_url after completion
 
-        $lineItems = [];
-        foreach ($order->items as $item) {
-            $lineItems[] = [
-                'price_data' => [
-                    'currency' => 'jpy',
-                    'product_data' => [
-                        'name' => $item->name_snapshot,
-                    ],
-                    // JPY is zero-decimal currency; Stripe expects amounts in yen
-                    'unit_amount' => (int)$item->unit_price_yen,
-                ],
-                'quantity' => (int)$item->qty,
-            ];
-        }
+        // Update order with current cart calculations to ensure we have the exact same values as checkout
+        $cart = $this->cart->get($cartSessionId);
 
-        if ($order->tax_yen > 0) {
-            $lineItems[] = [
+        // Get the exact values as calculated in checkout
+        $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
+        $saleSavingsYen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
+        $couponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+        $taxYen = (int) round((int)($cart['tax_cents'] ?? 0) / 100);
+        $totalYen = (int) round(($cart['total_cents'] ?? 0) / 100);
+
+        // Update the order with the current calculated values
+        $order->update([
+            'subtotal_yen' => $subtotalYen,
+            'discount_yen' => $saleSavingsYen,
+            'coupon_discount_yen' => $couponDiscountYen,
+            'tax_yen' => $taxYen,
+            'total_yen' => $totalYen,
+        ]);
+
+        $lineItems = [
+            [
                 'price_data' => [
                     'currency' => 'jpy',
                     'product_data' => [
-                        'name' => 'Tax',
+                        'name' => 'Order ' . $order->order_number,
+                        'description' => 'Total amount for order ' . $order->order_number,
                     ],
-                    'unit_amount' => (int) $order->tax_yen,
+                    'unit_amount' => $totalYen,
                 ],
                 'quantity' => 1,
-            ];
-        }
-
-        // We currently do not add separate shipping/tax lines; totals should still match order->total_yen.
-        // Determine applied in-app coupon (if any)
-        $cart = $this->cart->get($cartSessionId);
-        $appliedCouponCode = $cart['coupon_code'] ?? null;
-        $appliedCouponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+            ],
+        ];
 
         $params = [
             'mode' => 'payment',
@@ -89,27 +88,7 @@ class StripePaymentService
             ],
         ];
 
-        // Allow Stripe promo codes only when no in-app coupon applied (avoid stacking)
-        if ($appliedCouponDiscountYen <= 0) {
-            $params['allow_promotion_codes'] = true;
-        }
 
-        // If in-app coupon applied, create a one-time Stripe coupon and attach to session discounts
-        if ($appliedCouponDiscountYen > 0) {
-            $coupon = $this->stripe->coupons->create([
-                'amount_off' => $appliedCouponDiscountYen,
-                'currency'   => 'jpy',
-                'duration'   => 'once',
-                'name'       => 'Order ' . $order->order_number . ' discount',
-                'metadata'   => [
-                    'order_number' => (string)$order->order_number,
-                    'local_coupon_code' => (string)$appliedCouponCode,
-                ],
-            ], [
-                'idempotency_key' => 'coupon:' . $order->order_number . ':' . $appliedCouponDiscountYen,
-            ]);
-            $params['discounts'] = [['coupon' => $coupon->id]];
-        }
 
         // Add idempotency key to guard against network retries on this attempt
         $idempotency = [

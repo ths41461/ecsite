@@ -177,11 +177,8 @@ class OrderService
 
         if (!$candidate) return null;
 
-        // Must match digest and totals to reuse
-        $totalsMatch = (
-            (int) $candidate->total_yen === (int) round(((int)($cart['total_cents'] ?? 0))/100)
-        );
-        if ($candidate->cart_digest !== $digest || !$totalsMatch) {
+        // Check if digest matches to reuse
+        if ($candidate->cart_digest !== $digest) {
             return null;
         }
 
@@ -191,6 +188,23 @@ class OrderService
             return null;
         }
 
+        // Update the order's calculations with the newly calculated values to ensure correctness
+        // This addresses the issue where orders created before the calculation fix would retain incorrect totals
+        $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
+        $saleSavingsYen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
+        $couponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+        $taxYen = (int) round((int)($cart['tax_cents'] ?? 0) / 100);
+        $totalYen = (int) round(($cart['total_cents'] ?? 0) / 100);
+
+        $candidate->update([
+            'subtotal_yen' => $subtotalYen,
+            'discount_yen' => $saleSavingsYen,
+            'coupon_discount_yen' => $couponDiscountYen,
+            'tax_yen' => $taxYen,
+            'total_yen' => $totalYen,
+        ]);
+
+        // Return a fresh instance of the order to ensure all properties reflect the updated values
         return $candidate->fresh(['items','payments']);
     }
 
@@ -217,25 +231,40 @@ class OrderService
         }
 
         $expired = $candidate->pending_expires_at && now()->greaterThanOrEqualTo($candidate->pending_expires_at);
-        $totalsMismatch = (
-            (int) $candidate->total_yen !== (int) round(((int)($cart['total_cents'] ?? 0))/100)
-        );
         $digestMismatch = $candidate->cart_digest !== $digest;
 
-        if (!($expired || $totalsMismatch || $digestMismatch)) {
-            return null; // nothing to do
+        if ($expired || $digestMismatch) {
+            DB::transaction(function () use ($candidate) {
+                // Modern status transition + legacy field/timestamp for visibility
+                try { $candidate->transitionTo('cancelled'); } catch (\Throwable $e) {}
+                $candidate->forceFill([
+                    'status' => 'canceled',
+                    'canceled_at' => now(),
+                ])->save();
+            });
+
+            return $expired ? 'timeout' : 'changed';
         }
 
-        DB::transaction(function () use ($candidate) {
-            // Modern status transition + legacy field/timestamp for visibility
-            try { $candidate->transitionTo('cancelled'); } catch (\Throwable $e) {}
-            $candidate->forceFill([
-                'status' => 'canceled',
-                'canceled_at' => now(),
-            ])->save();
-        });
+        // If digest matches but totals don't match, update the order's calculations with the correct values
+        $currentTotalYen = (int) round(((int)($cart['total_cents'] ?? 0))/100);
+        if ((int) $candidate->total_yen !== $currentTotalYen) {
+            $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
+            $saleSavingsYen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
+            $couponDiscountYen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
+            $taxYen = (int) round((int)($cart['tax_cents'] ?? 0) / 100);
+            $totalYen = (int) round(($cart['total_cents'] ?? 0) / 100);
 
-        return $expired ? 'timeout' : 'changed';
+            $candidate->update([
+                'subtotal_yen' => $subtotalYen,
+                'discount_yen' => $saleSavingsYen,
+                'coupon_discount_yen' => $couponDiscountYen,
+                'tax_yen' => $taxYen,
+                'total_yen' => $totalYen,
+            ]);
+        }
+
+        return null; // nothing to do - order is up to date
     }
 
     /**
