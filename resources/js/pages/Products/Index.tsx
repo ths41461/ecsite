@@ -28,7 +28,7 @@ type Paginated<T> = {
     meta: { current_page: number; last_page: number; total: number };
 };
 type FacetBrand = { slug: string; name: string; count: number; active?: boolean };
-type FacetCategory = { slug: string; name: string; count: number; active?: boolean; parent_id?: number | null; depth?: number };
+type FacetCategory = { id: number; slug: string; name: string; count: number; active?: boolean; parent_id?: number | null; depth?: number };
 type FacetPrice = { label: string; min: number; max: number | null; count: number; active?: boolean };
 type FacetRating = { rating: number; label: string; count: number; active?: boolean };
 
@@ -46,7 +46,6 @@ type SearchSuggestion = {
     category: { name?: string | null };
 };
 
-// Search component with autocomplete functionality
 function SearchWithAutocomplete({ 
     initialQuery, 
     currentFilters, 
@@ -64,25 +63,20 @@ function SearchWithAutocomplete({
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     const inputRef = useRef<HTMLInputElement>(null);
 
-    // Fetch search suggestions
     const fetchSuggestions = async (searchQuery: string) => {
         if (!searchQuery.trim()) {
             setSuggestions([]);
             setShowSuggestions(false);
             return;
         }
-
         setLoading(true);
-        
         try {
-            // Fetch from backend API - adjust endpoint as needed
             const response = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(searchQuery)}`, {
                 headers: {
                     'Accept': 'application/json',
                     'Content-Type': 'application/json',
                 },
             });
-
             if (response.ok) {
                 const data = await response.json();
                 setSuggestions(data.suggestions || []);
@@ -98,33 +92,23 @@ function SearchWithAutocomplete({
         }
     };
 
-    // Handle input change with debounce
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
         setQuery(value);
-        
-        // Update the filter state
         updateFilter('q', value);
-        
-        // Clear previous timeout
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
-
-        // Set new timeout for debounced search
         searchTimeoutRef.current = setTimeout(() => {
             fetchSuggestions(value);
-            setSelectedIndex(-1); // Reset selection when typing
-        }, 300); // 300ms debounce
+            setSelectedIndex(-1);
+        }, 300);
     };
 
-    // Handle suggestion selection
     const handleSuggestionClick = (suggestion: SearchSuggestion) => {
         setQuery(suggestion.name);
         updateFilter('q', suggestion.name);
         setShowSuggestions(false);
-        
-        // Update URL with all current filters and the new search query
         const params = new URLSearchParams();
         params.set('q', suggestion.name);
         if (currentFilters.brand) params.set('brand', currentFilters.brand);
@@ -135,11 +119,9 @@ function SearchWithAutocomplete({
         if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
         if (currentFilters.gender) params.set('gender', currentFilters.gender);
         if (currentFilters.size) params.set('size', String(currentFilters.size));
-        
         router.get(`/products?${params.toString()}`);
     };
 
-    // Handle keyboard navigation
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'ArrowDown') {
             e.preventDefault();
@@ -152,7 +134,6 @@ function SearchWithAutocomplete({
             if (selectedIndex >= 0 && suggestions[selectedIndex]) {
                 handleSuggestionClick(suggestions[selectedIndex]);
             } else if (query.trim()) {
-                // Update URL with all current filters and the new search query
                 const params = new URLSearchParams();
                 params.set('q', query.trim());
                 if (currentFilters.brand) params.set('brand', currentFilters.brand);
@@ -163,7 +144,6 @@ function SearchWithAutocomplete({
                 if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
                 if (currentFilters.gender) params.set('gender', currentFilters.gender);
                 if (currentFilters.size) params.set('size', String(currentFilters.size));
-                
                 router.get(`/products?${params.toString()}`);
                 setShowSuggestions(false);
             }
@@ -173,21 +153,17 @@ function SearchWithAutocomplete({
         }
     };
 
-    // Handle input focus
     const handleInputFocus = () => {
         if (query && suggestions.length > 0) {
             setShowSuggestions(true);
         }
     };
 
-    // Clear search
     const clearSearch = () => {
         setQuery('');
         updateFilter('q', '');
         setSuggestions([]);
         setShowSuggestions(false);
-        
-        // Update URL preserving other filters
         const params = new URLSearchParams();
         if (currentFilters.brand) params.set('brand', currentFilters.brand);
         if (currentFilters.category) params.set('category', currentFilters.category);
@@ -197,20 +173,17 @@ function SearchWithAutocomplete({
         if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
         if (currentFilters.gender) params.set('gender', currentFilters.gender);
         if (currentFilters.size) params.set('size', String(currentFilters.size));
-        
         const url = params.toString() ? `/products?${params.toString()}` : '/products';
         router.get(url);
         inputRef.current?.focus();
     };
 
-    // Update local state when currentFilters.q changes from outside
     useEffect(() => {
         if (currentFilters.q !== query) {
             setQuery(currentFilters.q || '');
         }
     }, [currentFilters.q]);
 
-    // Cleanup on unmount
     useEffect(() => {
         return () => {
             if (searchTimeoutRef.current) {
@@ -229,6 +202,7 @@ function SearchWithAutocomplete({
                     onChange={handleInputChange}
                     onKeyDown={handleKeyDown}
                     onFocus={handleInputFocus}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                     placeholder="商品を検索..."
                     className="w-full rounded-lg border border-gray-300 px-4 py-3 pl-12 pr-10 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
                 />
@@ -248,18 +222,14 @@ function SearchWithAutocomplete({
                     </button>
                 )}
             </div>
-
-            {/* Autocomplete suggestions dropdown */}
             {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800">
                     <ul>
                         {suggestions.map((suggestion, index) => (
                             <li
                                 key={suggestion.id}
-                                className={`cursor-pointer px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                                    index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/50' : ''
-                                }`}
-                                onClick={() => handleSuggestionClick(suggestion)}
+                                className={`cursor-pointer px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/50' : ''}`}
+                                onMouseDown={() => handleSuggestionClick(suggestion)}
                             >
                                 <div className="font-medium">{suggestion.name}</div>
                                 <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -270,15 +240,11 @@ function SearchWithAutocomplete({
                     </ul>
                 </div>
             )}
-
-            {/* Loading indicator */}
             {loading && (
                 <div className="absolute right-10 top-1/2 -translate-y-1/2">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
                 </div>
             )}
-
-            {/* No results message */}
             {showSuggestions && suggestions.length === 0 && query && !loading && (
                 <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
                     検索結果が見つかりません
@@ -290,9 +256,10 @@ function SearchWithAutocomplete({
 
 export default function Index({ products, filters, facets }: Props) {
     const isLoading = useInertiaLoading();
-    
-    // Initialize filter state with server-provided filters
-    const { filters: stateFilters, updateFilter, clearAllFilters: clearStateFilters } = useFilterState({ 
+    const isInitialMount = useRef(true);
+    const [isFilterSidebarOpen, setFilterSidebarOpen] = useState(false);
+
+    const { filters: stateFilters, updateFilter, clearFilter, clearAllFilters: clearStateFilters } = useFilterState({
         initialFilters: {
             q: filters.q || undefined,
             brand: filters.brand || undefined,
@@ -305,27 +272,47 @@ export default function Index({ products, filters, facets }: Props) {
             sort: filters.sort || undefined,
         }
     });
-    
-    const allowedSort = new Set(['', 'newest', 'price_asc', 'price_desc']);
-    const safeSort = (stateFilters.sort ?? '') as string;
-    const sortParam = allowedSort.has(safeSort) && safeSort !== '' ? safeSort : undefined;
-    
+
+    useEffect(() => {
+        if (isInitialMount.current) {
+            isInitialMount.current = false;
+            return;
+        }
+        const params = new URLSearchParams();
+        if (stateFilters.brand) params.set('brand', stateFilters.brand);
+        if (stateFilters.category) params.set('category', stateFilters.category);
+        if (stateFilters.priceMin != null) params.set('price_min', String(stateFilters.priceMin));
+        if (stateFilters.priceMax != null) params.set('price_max', String(stateFilters.priceMax));
+        if (stateFilters.rating) params.set('rating', String(stateFilters.rating));
+        if (stateFilters.gender) params.set('gender', stateFilters.gender);
+        if (stateFilters.size) params.set('size', String(stateFilters.size));
+        if (stateFilters.sort) params.set('sort', stateFilters.sort);
+        if (stateFilters.q) params.set('q', stateFilters.q);
+
+        router.get(`/products?${params.toString()}`, {}, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
+    }, [stateFilters.brand, stateFilters.category, stateFilters.priceMin, stateFilters.priceMax, stateFilters.rating, stateFilters.gender, stateFilters.size, stateFilters.sort]);
+
     const handleClearAllFilters = () => {
         clearStateFilters();
         router.get('/products');
     };
     
-    // Check if any filters are active
-    const hasActiveFilters = stateFilters.brand || stateFilters.category || stateFilters.priceMin !== undefined || 
-                            stateFilters.priceMax !== undefined || stateFilters.rating || stateFilters.gender || stateFilters.size;
-    
-    
-    
+    const handleClearPrice = () => {
+        updateFilter('priceMin', undefined);
+        updateFilter('priceMax', undefined);
+    };
+
+    const hasActiveFilters = stateFilters.brand || stateFilters.category || stateFilters.priceMin !== undefined ||
+        stateFilters.priceMax !== undefined || stateFilters.rating || stateFilters.gender || stateFilters.size;
+
     return (
         <div className="mx-auto max-w-[1408px] px-4 py-6">
             <Head title="商品" />
 
-            {/* Hero Banner - 1408px × 300px */}
             <div className="mb-8 w-full">
                 <div className="mx-auto w-full max-w-[1408px]">
                     <div className="flex h-[300px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20">
@@ -339,19 +326,19 @@ export default function Index({ products, filters, facets }: Props) {
 
             <h1 className="mb-4 text-2xl font-bold">商品</h1>
 
-            {/* Search Bar */}
             <div className="mb-6 relative">
-                <SearchWithAutocomplete 
-                    initialQuery={stateFilters.q || ''} 
+                <SearchWithAutocomplete
+                    initialQuery={stateFilters.q || ''}
                     currentFilters={stateFilters}
                     updateFilter={updateFilter}
                 />
             </div>
 
-            {/* Filter Container */}
             <div className="mb-6 flex items-center justify-between">
-                {/* Filter Toggle Button */}
-                <button className="flex items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-neutral-100">
+                <button 
+                    onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
+                    className="flex items-center gap-2 rounded border px-3 py-2 text-sm hover:bg-neutral-100"
+                >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path
                             strokeLinecap="round"
@@ -363,22 +350,20 @@ export default function Index({ products, filters, facets }: Props) {
                     <span>絞り込み</span>
                 </button>
 
-                {/* Sort Dropdown */}
                 <div className="flex items-center gap-2 text-sm">
                     <span className="text-neutral-500">並び替え:</span>
-                    <select className="rounded border px-2 py-1 text-sm">
-                        <option>新着</option>
-                        <option>ベストセラー</option>
-                        <option>アルファベット順</option>
-                        <option>A–Z</option>
-                        <option>価格の安い順</option>
-                        <option>価格の高い順</option>
-                        <option>古い商品順</option>
+                    <select 
+                        className="rounded border px-2 py-1 text-sm"
+                        value={stateFilters.sort || ''}
+                        onChange={(e) => updateFilter('sort', e.target.value)}
+                    >
+                        <option value="">新着</option>
+                        <option value="price_asc">価格の安い順</option>
+                        <option value="price_desc">価格の高い順</option>
                     </select>
                 </div>
             </div>
 
-            {/* Active Filters Bar */}
             {hasActiveFilters && (
                 <div className="mb-4 flex items-center gap-2">
                     <span className="text-sm text-neutral-600 dark:text-neutral-400">選択中のフィルター:</span>
@@ -423,111 +408,35 @@ export default function Index({ products, filters, facets }: Props) {
                 </div>
             )}
 
-            {/* Filter Sidebar and Results */}
             <div className="flex flex-col lg:flex-row gap-6">
-                {/* Filter Sidebar */}
-                <div className="lg:w-1/4">
-                    <div className="sticky top-4 rounded-lg border p-4">
-                        <h2 className="mb-4 text-lg font-semibold">フィルター</h2>
-                        
-                        {/* Brand Filter */}
-                        <BrandFilter brands={facets.brands} currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                        }} />
-                        
-                        {/* Category Filter */}
-                        <HierarchicalCategoryFilter categories={facets.categories} currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                        }} />
-                        
-                        {/* Price Filter */}
-                        <PriceFilter prices={facets.prices} currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                        }} />
-                        
-                        {/* Rating Filter */}
-                        <RatingFilter ratings={facets.ratings} currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                            rating: stateFilters.rating,
-                        }} />
-                        
-                        {/* Gender Filter */}
-                        <GenderFilter currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                            gender: stateFilters.gender,
-                        }} />
-                        
-                        {/* Size Filter */}
-                        <SizeFilter currentFilters={{
-                            q: stateFilters.q,
-                            brand: stateFilters.brand,
-                            category: stateFilters.category,
-                            sort: stateFilters.sort,
-                            price_min: stateFilters.priceMin,
-                            price_max: stateFilters.priceMax,
-                            size: stateFilters.size,
-                        }} />
+                {isFilterSidebarOpen && (
+                    <div className="lg:w-1/4">
+                        <div className="sticky top-4 rounded-lg border p-4">
+                            <div className="flex justify-between items-center mb-4">
+                                <h2 className="text-lg font-semibold">フィルター</h2>
+                                <button onClick={() => setFilterSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
+                                    <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            
+                            <BrandFilter brands={facets.brands} currentFilters={stateFilters} onFilterChange={updateFilter} />
+                            
+                            <HierarchicalCategoryFilter categories={facets.categories} currentFilters={stateFilters} onFilterChange={updateFilter} />
+                            
+                            <PriceFilter prices={facets.prices} currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={handleClearPrice} />
+                            
+                            <RatingFilter ratings={facets.ratings} currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('rating')} />
+                            
+                            <GenderFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
+                            
+                            <SizeFilter currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('size')} />
+                        </div>
                     </div>
-                </div>
+                )}
 
-                {/* Results Area */}
-                <div className="lg:w-3/4">
-                    {/* Sort */}
-                    <div className="mb-4 flex items-center gap-2 text-sm">
-                        <span className="text-neutral-500">並び替え:</span>
-                        {[
-                            { key: '', label: '関連性/新着' },
-                            { key: 'newest', label: '新着' },
-                            { key: 'price_asc', label: '価格 ↑' },
-                            { key: 'price_desc', label: '価格 ↓' },
-                        ].map((s) => (
-                            <Link
-                                key={s.key || 'relevance'}
-                                href={`?${new URLSearchParams({
-                                    ...(stateFilters.q ? { q: String(stateFilters.q) } : {}),
-                                    ...(stateFilters.brand ? { brand: String(stateFilters.brand) } : {}),
-                                    ...(stateFilters.category ? { category: String(stateFilters.category) } : {}),
-                                    ...(stateFilters.priceMin != null ? { price_min: String(stateFilters.priceMin) } : {}),
-                                    ...(stateFilters.priceMax != null ? { price_max: String(stateFilters.priceMax) } : {}),
-                                    ...(stateFilters.rating ? { rating: String(stateFilters.rating) } : {}),
-                                    ...(stateFilters.gender ? { gender: String(stateFilters.gender) } : {}),
-                                    ...(stateFilters.size ? { size: String(stateFilters.size) } : {}),
-                                    ...(s.key && s.key !== '' ? { sort: s.key } : {}),
-                                }).toString()}`}
-                                className={`rounded border px-2 py-1 ${(stateFilters.sort || '') === s.key ? 'bg-black text-white' : 'hover:bg-neutral-100'}`}
-                                preserveScroll
-                            >
-                                {s.label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    {/* Grid */}
+                <div className={isFilterSidebarOpen ? "lg:w-3/4" : "lg:w-full"}>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                         {products.data.length === 0 && (
                             <div className="col-span-full rounded-lg border p-8 text-center text-sm text-neutral-600 dark:text-neutral-300">
@@ -556,8 +465,6 @@ export default function Index({ products, filters, facets }: Props) {
                                         imageAlt: p.name,
                                         averageRating: p.average_rating,
                                         reviewCount: p.review_count,
-                                        genders: p.genders, // Add gender information
-                                        sizes: p.sizes,     // Add size information
                                     }}
                                 />
                             );
@@ -571,7 +478,6 @@ export default function Index({ products, filters, facets }: Props) {
                         )}
                     </div>
 
-                    {/* Pagination */}
                     <nav className="mt-8 flex items-center gap-2">
                         {products.links.map((l, i) => {
                             const href = l.url
@@ -598,8 +504,8 @@ export default function Index({ products, filters, facets }: Props) {
                                 <Link
                                     key={i}
                                     href={href}
-                                    className={`rounded border px-3 py-1 text-sm ${l.active ? 'bg-black text-white' : 'hover:bg-neutral-100'}`}
-                                    preserveScroll
+                                    className={`rounded border px-3 py-1 text-sm ${l.active ? 'bg-black text-white' : 'hover:bg-neutral-100'} ${!l.url ? 'cursor-not-allowed text-neutral-400' : ''}`}
+                                    disabled={!l.url || l.active}
                                 >
                                     <span dangerouslySetInnerHTML={{ __html: l.label }} />
                                 </Link>

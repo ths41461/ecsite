@@ -1,4 +1,3 @@
-import { Link } from '@inertiajs/react';
 import { useState } from 'react';
 
 type Category = {
@@ -13,16 +12,12 @@ type Category = {
 type HierarchicalCategoryFilterProps = {
   categories: Category[];
   currentFilters: {
-    q?: string;
     category?: string;
-    brand?: string;
-    sort?: string;
-    price_min?: number;
-    price_max?: number | null;
   };
+  onFilterChange: (key: string, value: any) => void;
 };
 
-export default function HierarchicalCategoryFilter({ categories, currentFilters }: HierarchicalCategoryFilterProps) {
+export default function HierarchicalCategoryFilter({ categories, currentFilters, onFilterChange }: HierarchicalCategoryFilterProps) {
   // Convert flat list to hierarchical structure
   const buildHierarchy = (categories: Category[]): Category[] => {
     const categoryMap = new Map<number, Category>();
@@ -52,22 +47,14 @@ export default function HierarchicalCategoryFilter({ categories, currentFilters 
   
   const hierarchicalCategories = buildHierarchy(categories);
   
-  const buildUrl = (categorySlug: string) => {
-    const params = new URLSearchParams();
-    
-    // Preserve existing filters
-    if (currentFilters.q) params.set('q', currentFilters.q);
-    if (currentFilters.brand) params.set('brand', currentFilters.brand);
-    if (currentFilters.sort) params.set('sort', currentFilters.sort);
-    if (currentFilters.price_min != null) params.set('price_min', String(currentFilters.price_min));
-    if (currentFilters.price_max != null) params.set('price_max', String(currentFilters.price_max));
-    
-    // Toggle category filter
-    if (currentFilters.category !== categorySlug) {
-      params.set('category', categorySlug);
+  const handleCategoryClick = (categorySlug: string) => {
+    if (currentFilters.category === categorySlug) {
+      // If the category is already selected, remove it
+      onFilterChange('category', undefined);
+    } else {
+      // Otherwise, select the new category
+      onFilterChange('category', categorySlug);
     }
-    
-    return `?${params.toString()}`;
   };
   
   const CategoryItem = ({ category, level = 0 }: { category: Category; level?: number }) => {
@@ -89,17 +76,16 @@ export default function HierarchicalCategoryFilter({ categories, currentFilters 
             </button>
           )}
           {!hasChildren && <span className="mr-2 w-4"></span>}
-          <Link
-            href={buildUrl(category.slug)}
+          <button
+            onClick={() => handleCategoryClick(category.slug)}
             className={`rounded px-2 py-1 text-sm transition-colors ${
               currentFilters.category === category.slug
                 ? 'bg-blue-600 text-white'
                 : 'text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
             }`}
-            preserveScroll
           >
             {category.name}
-          </Link>
+          </button>
         </div>
         
         {hasChildren && isExpanded && (
