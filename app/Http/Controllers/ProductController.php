@@ -69,6 +69,7 @@ class ProductController extends Controller
             ->with([
                 'brand:id,name,slug',
                 'heroImage:id,product_id,path,alt,rank',
+                'variants:id,product_id,option_json,is_active',
             ])
             ->addSelect([
                 'min_price_yen' => ProductVariant::query()

@@ -26,7 +26,10 @@ class ProductVariantSeeder extends Seeder
                         'sku' => 'SKU-' . strtoupper(fake()->bothify('##########')),
                         'price_yen' => $basePrice,
                         'sale_price_yen' => $hasSale ? fake()->numberBetween($basePrice * 0.7, $basePrice * 0.9) : null,
-                        'option_json' => $i === 0 ? null : ['size' => fake()->randomElement(['50ml', '100ml', '150ml'])],
+                        'option_json' => [
+                            'gender' => fake()->randomElement(['men', 'women', 'unisex']),
+                            'size_ml' => fake()->randomElement([50, 100, 150]),
+                        ],
                         'is_active' => true,
                     ]);
                 }

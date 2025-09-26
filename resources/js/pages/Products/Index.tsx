@@ -21,6 +21,8 @@ type ProductItem = {
     compare_at_cents: number | null;
     average_rating?: number;
     review_count?: number;
+    genders?: string[];
+    sizes?: number[];
 };
 type Paginated<T> = {
     data: T[];
@@ -484,6 +486,8 @@ export default function Index({ products, filters, facets }: Props) {
                                         imageAlt: p.name,
                                         averageRating: p.average_rating,
                                         reviewCount: p.review_count,
+                                        genders: p.genders,
+                                        sizes: p.sizes,
                                     }}
                                 />
                             );
