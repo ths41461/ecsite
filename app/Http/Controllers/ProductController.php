@@ -466,12 +466,25 @@ class ProductController extends Controller
                     ->take(8) // Limit to 8 suggestions
                     ->get()
                     ->map(function ($product) {
+                        // Get the lowest price from product variants
+                        $minPrice = $product->variants()->min('price_yen');
+                        $minSalePrice = $product->variants()->whereNotNull('sale_price_yen')->min('sale_price_yen');
+                        
+                        // Prefer sale price if available, otherwise use regular price
+                        $price = $minSalePrice ?? $minPrice;
+                        
+                        // Get the hero image if available
+                        $image = $product->heroImage ? $product->heroImage->path : 
+                                ($product->images->first() ? $product->images->first()->path : null);
+                        
                         return [
                             'id' => $product->id,
                             'name' => $product->name,
                             'slug' => $product->slug,
                             'brand' => $product->brand ? ['name' => $product->brand->name] : null,
                             'category' => $product->category ? ['name' => $product->category->name] : null,
+                            'price' => $price,
+                            'image' => $image,
                         ];
                     })
                     ->toArray();
@@ -489,16 +502,29 @@ class ProductController extends Controller
                         ->orWhere('short_desc', 'like', "%{$q}%")
                         ->orWhere('long_desc', 'like', "%{$q}%");
                 })
-                ->with(['brand', 'category'])
+                ->with(['brand', 'category', 'heroImage', 'images'])
                 ->limit(8)
                 ->get()
                 ->map(function ($product) {
+                    // Get the lowest price from product variants
+                    $minPrice = $product->variants()->min('price_yen');
+                    $minSalePrice = $product->variants()->whereNotNull('sale_price_yen')->min('sale_price_yen');
+                    
+                    // Prefer sale price if available, otherwise use regular price
+                    $price = $minSalePrice ?? $minPrice;
+                    
+                    // Get the hero image if available
+                    $image = $product->heroImage ? $product->heroImage->path : 
+                            ($product->images->first() ? $product->images->first()->path : null);
+                    
                     return [
                         'id' => $product->id,
                         'name' => $product->name,
                         'slug' => $product->slug,
                         'brand' => $product->brand ? ['name' => $product->brand->name] : null,
                         'category' => $product->category ? ['name' => $product->category->name] : null,
+                        'price' => $price,
+                        'image' => $image,
                     ];
                 })
                 ->toArray();

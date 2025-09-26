@@ -44,6 +44,8 @@ type SearchSuggestion = {
     slug: string;
     brand: { name?: string | null };
     category: { name?: string | null };
+    price?: number | null;
+    image?: string | null;
 };
 
 function SearchWithAutocomplete({ 
@@ -104,22 +106,12 @@ function SearchWithAutocomplete({
             setSelectedIndex(-1);
         }, 300);
     };
-
     const handleSuggestionClick = (suggestion: SearchSuggestion) => {
         setQuery(suggestion.name);
         updateFilter('q', suggestion.name);
         setShowSuggestions(false);
-        const params = new URLSearchParams();
-        params.set('q', suggestion.name);
-        if (currentFilters.brand) params.set('brand', currentFilters.brand);
-        if (currentFilters.category) params.set('category', currentFilters.category);
-        if (currentFilters.sort) params.set('sort', currentFilters.sort);
-        if (currentFilters.priceMin != null) params.set('price_min', String(currentFilters.priceMin));
-        if (currentFilters.priceMax != null) params.set('price_max', String(currentFilters.priceMax));
-        if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
-        if (currentFilters.gender) params.set('gender', currentFilters.gender);
-        if (currentFilters.size) params.set('size', String(currentFilters.size));
-        router.get(`/products?${params.toString()}`);
+        // Navigate directly to the specific product page using the slug
+        router.get(`/products/${suggestion.slug}`);
     };
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -132,7 +124,8 @@ function SearchWithAutocomplete({
         } else if (e.key === 'Enter') {
             e.preventDefault();
             if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-                handleSuggestionClick(suggestions[selectedIndex]);
+                // Navigate directly to the specific product page using the slug
+                router.get(`/products/${suggestions[selectedIndex].slug}`);
             } else if (query.trim()) {
                 const params = new URLSearchParams();
                 params.set('q', query.trim());
@@ -231,9 +224,28 @@ function SearchWithAutocomplete({
                                 className={`cursor-pointer px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/50' : ''}`}
                                 onMouseDown={() => handleSuggestionClick(suggestion)}
                             >
-                                <div className="font-medium">{suggestion.name}</div>
-                                <div className="text-sm text-gray-500 dark:text-gray-400">
-                                    {suggestion.brand?.name} • {suggestion.category?.name}
+                                <div className="flex items-center gap-3">
+                                    {suggestion.image && (
+                                        <div className="flex-shrink-0 w-12 h-12">
+                                            <img 
+                                                src={suggestion.image} 
+                                                alt={suggestion.name} 
+                                                className="w-full h-full object-cover rounded-md"
+                                                loading="lazy"
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="flex-1 min-w-0">
+                                        <div className="font-medium truncate">{suggestion.name}</div>
+                                        <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                                            {suggestion.brand?.name} • {suggestion.category?.name}
+                                        </div>
+                                        {suggestion.price && (
+                                            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                                ¥{suggestion.price.toLocaleString()}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </li>
                         ))}
