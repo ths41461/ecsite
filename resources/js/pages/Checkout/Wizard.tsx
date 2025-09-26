@@ -242,7 +242,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                             {cartLines.map((line) => (
                                 <tr key={line.line_id} className="border-t">
                                     <td className="px-4 py-2">
-                                        <div className="font-medium text-neutral-800">{line.product.name}</div>
+                                        <div className="font-medium text-neutral-400">{line.product.name}</div>
                                         <div className="text-xs text-neutral-500">#{line.product.slug}</div>
                                         {couponLineIdSet.has(line.line_id) && (
                                             <div className="text-xs font-medium text-emerald-600">クーポン適用</div>
@@ -256,7 +256,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                         </tbody>
                     </table>
                 </div>
-                <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
+                <div className="rounded-lg border border-neutral-200 px-4 py-3 text-sm">
                     <div className="flex justify-between">
                         <span>小計</span>
                         <span>{formatYen((cartSnapshot.subtotal_cents ?? 0) / 100)}</span>
@@ -292,9 +292,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                         <span>合計</span>
                         <span>{formatYen((cartSnapshot.total_cents ?? 0) / 100)}</span>
                     </div>
-                    {couponError && (
-                        <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
-                    )}
+                    {couponError && <div className="mt-2 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>}
                     {couponNotice && !couponError && (
                         <div className="mt-2 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
                     )}
@@ -383,7 +381,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                     </div>
 
                     {renderOrderItems(order?.items)}
-                    <div className="rounded-lg border border-neutral-200 bg-neutral-100 px-4 py-3 text-sm">
+                    <div className="rounded-lg border border-neutral-200 px-4 py-3 text-sm">
                         <div className="flex justify-between">
                             <span>小計</span>
                             <span>{formatYen(order?.subtotal_yen ?? 0)}</span>
@@ -395,7 +393,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                             </div>
                         )}
                         {order?.coupon_code && (order?.coupon_discount_yen ?? 0) > 0 && (
-                            <div className="flex justify-between text-rose-600 text-xs">
+                            <div className="flex justify-between text-xs text-rose-600">
                                 <span>クーポン ({order.coupon_code})</span>
                                 <span>-{formatYen(order.coupon_discount_yen ?? 0)}</span>
                             </div>
@@ -414,114 +412,124 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                         </div>
                     </div>
 
-          <p className="text-sm text-neutral-600">この情報は注文の確認と更新通知に使用されます。</p>
-          <form onSubmit={submitDetails} className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">
-                  メールアドレス <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  required
-                  autoComplete="email"
-                  aria-required="true"
-                />
-                {validationErrors.email && <p className="mt-1 text-xs text-rose-600">{validationErrors.email[0]}</p>}
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">
-                  お名前 <span className="text-rose-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={form.name}
-                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  required
-                  autoComplete="name"
-                  aria-required="true"
-                />
-                {validationErrors.name && <p className="mt-1 text-xs text-rose-600">{validationErrors.name[0]}</p>}
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">電話番号 <span className="text-neutral-400">(任意)</span></label>
-                <input
-                  type="tel"
-                  value={form.phone ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  autoComplete="tel"
-                />
-                {validationErrors.phone && <p className="mt-1 text-xs text-rose-600">{validationErrors.phone[0]}</p>}
-              </div>
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-neutral-500 uppercase">
-                住所1 <span className="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={form.address_line1}
-                onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                required
-                autoComplete="address-line1"
-                aria-required="true"
-              />
-              {validationErrors.address_line1 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line1[0]}</p>}
-            </div>
-            <div>
-              <label className="text-xs font-semibold text-neutral-500 uppercase">住所2 <span className="text-neutral-400">(任意)</span></label>
-              <input
-                type="text"
-                value={form.address_line2 ?? ''}
-                onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
-                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                autoComplete="address-line2"
-              />
-              {validationErrors.address_line2 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line2[0]}</p>}
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">市区町村 <span className="text-neutral-400">(任意)</span></label>
-                <input
-                  type="text"
-                  value={form.city ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  autoComplete="address-level2"
-                />
-                {validationErrors.city && <p className="mt-1 text-xs text-rose-600">{validationErrors.city[0]}</p>}
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">都道府県 <span className="text-neutral-400">(任意)</span></label>
-                <input
-                  type="text"
-                  value={form.state ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  autoComplete="address-level1"
-                />
-                {validationErrors.state && <p className="mt-1 text-xs text-rose-600">{validationErrors.state[0]}</p>}
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-neutral-500 uppercase">郵便番号 <span className="text-neutral-400">(任意)</span></label>
-                <input
-                  type="text"
-                  value={form.zip ?? ''}
-                  onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
-                  className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
-                  autoComplete="postal-code"
-                />
-                {validationErrors.zip && <p className="mt-1 text-xs text-rose-600">{validationErrors.zip[0]}</p>}
-              </div>
-            </div>
+                    <p className="text-sm text-neutral-600">この情報は注文の確認と更新通知に使用されます。</p>
+                    <form onSubmit={submitDetails} className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    メールアドレス <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="email"
+                                    value={form.email}
+                                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    required
+                                    autoComplete="email"
+                                    aria-required="true"
+                                />
+                                {validationErrors.email && <p className="mt-1 text-xs text-rose-600">{validationErrors.email[0]}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    お名前 <span className="text-rose-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.name}
+                                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    required
+                                    autoComplete="name"
+                                    aria-required="true"
+                                />
+                                {validationErrors.name && <p className="mt-1 text-xs text-rose-600">{validationErrors.name[0]}</p>}
+                            </div>
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    電話番号 <span className="text-neutral-400">(任意)</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={form.phone ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    autoComplete="tel"
+                                />
+                                {validationErrors.phone && <p className="mt-1 text-xs text-rose-600">{validationErrors.phone[0]}</p>}
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                住所1 <span className="text-rose-500">*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={form.address_line1}
+                                onChange={(e) => setForm((f) => ({ ...f, address_line1: e.target.value }))}
+                                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                required
+                                autoComplete="address-line1"
+                                aria-required="true"
+                            />
+                            {validationErrors.address_line1 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line1[0]}</p>}
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                住所2 <span className="text-neutral-400">(任意)</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={form.address_line2 ?? ''}
+                                onChange={(e) => setForm((f) => ({ ...f, address_line2: e.target.value }))}
+                                className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                autoComplete="address-line2"
+                            />
+                            {validationErrors.address_line2 && <p className="mt-1 text-xs text-rose-600">{validationErrors.address_line2[0]}</p>}
+                        </div>
+                        <div className="grid gap-4 md:grid-cols-3">
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    市区町村 <span className="text-neutral-400">(任意)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.city ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    autoComplete="address-level2"
+                                />
+                                {validationErrors.city && <p className="mt-1 text-xs text-rose-600">{validationErrors.city[0]}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    都道府県 <span className="text-neutral-400">(任意)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.state ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    autoComplete="address-level1"
+                                />
+                                {validationErrors.state && <p className="mt-1 text-xs text-rose-600">{validationErrors.state[0]}</p>}
+                            </div>
+                            <div>
+                                <label className="text-xs font-semibold text-neutral-500 uppercase">
+                                    郵便番号 <span className="text-neutral-400">(任意)</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={form.zip ?? ''}
+                                    onChange={(e) => setForm((f) => ({ ...f, zip: e.target.value }))}
+                                    className="mt-1 w-full rounded-md border border-neutral-300 px-3 py-2 text-sm focus:border-rose-500 focus:outline-none"
+                                    autoComplete="postal-code"
+                                />
+                                {validationErrors.zip && <p className="mt-1 text-xs text-rose-600">{validationErrors.zip[0]}</p>}
+                            </div>
+                        </div>
 
                         <div className="flex items-center justify-between">
                             <a href="/checkout" className="text-sm text-neutral-600 hover:underline">
