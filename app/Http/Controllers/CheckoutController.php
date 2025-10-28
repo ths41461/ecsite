@@ -57,7 +57,7 @@ class CheckoutController extends Controller
     {
         $sessionId = $request->session()->getId();
         $customer = [
-            // 'user_id' => $request->user()->id, // Associate order with authenticated user
+            'user_id' => $request->user()->id, // Associate order with authenticated user
             'email' => $request->string('email')->toString() ?: 'guest@example.com',
             'name' => $request->string('name')->toString() ?: 'ゲスト',
             'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
@@ -155,6 +155,7 @@ class CheckoutController extends Controller
             $order = $this->findOrderForSession($orderNumber, $request)->loadMissing('items');
         } else {
             $customer = [
+                'user_id' => $request->user()->id, // Associate order with authenticated user
                 'email' => $request->string('email')->toString() ?: 'guest@example.com',
                 'name'  => $request->string('name')->toString() ?: 'ゲスト',
                 'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',

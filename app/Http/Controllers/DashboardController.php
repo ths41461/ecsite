@@ -38,12 +38,20 @@ class DashboardController extends Controller
                     'status' => $order->status,
                     'created_at' => $order->created_at ? (is_string($order->created_at) ? $order->created_at : $order->created_at->format('Y-m-d H:i:s')) : null,
                     'items_count' => $order->items->count(),
+                    'subtotal_yen' => $order->subtotal_yen,
+                    'discount_yen' => $order->discount_yen,
+                    'coupon_code' => $order->coupon_code,
+                    'coupon_discount_yen' => $order->coupon_discount_yen,
+                    'shipping_yen' => $order->shipping_yen,
+                    'tax_yen' => $order->tax_yen,
                     'items' => $order->items->map(function ($item) {
                         return [
                             'id' => $item->id,
-                            'product_name' => $item->product->name,
-                            'quantity' => $item->quantity,
-                            'price_yen' => $item->price_yen,
+                            'product_name' => $item->name_snapshot,
+                            'product_sku' => $item->sku_snapshot,
+                            'quantity' => $item->qty,
+                            'price_yen' => $item->unit_price_yen,
+                            'line_total_yen' => $item->line_total_yen,
                         ];
                     }),
                 ];
