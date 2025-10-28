@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\CartService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -13,6 +14,10 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     /**
      * Show the login page.
      */
@@ -31,7 +36,19 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Get the guest session ID that was stored before authentication
+        $guestSessionId = $request->session()->get('guest_session_before_login');
+        $currentSessionId = $request->session()->getId();
+
         $request->session()->regenerate();
+
+        // After session regeneration, merge the guest cart to the new session
+        if ($guestSessionId && $guestSessionId !== $currentSessionId) {
+            $this->cartService->mergeSessions($guestSessionId, $request->session()->getId());
+        }
+
+        // Clean up the session variable
+        $request->session()->forget('guest_session_before_login');
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

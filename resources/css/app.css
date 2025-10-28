@@ -139,3 +139,17 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer utilities {
+    .font-playfair {
+        font-family: 'Playfair Display', serif;
+    }
+    
+    .font-noto-sans-jp {
+        font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .font-hiragino-mincho {
+        font-family: 'Hiragino Mincho ProN', serif;
+    }
+}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,10 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     /**
      * Show the registration page.
      */
@@ -36,6 +41,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Capture the guest session ID before user creation/login
+        $guestSessionId = $request->session()->getId();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -45,6 +53,12 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        // After login, merge the guest cart to the authenticated user's session
+        $currentSessionId = $request->session()->getId();
+        if ($guestSessionId && $guestSessionId !== $currentSessionId) {
+            $this->cartService->mergeSessions($guestSessionId, $currentSessionId);
+        }
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

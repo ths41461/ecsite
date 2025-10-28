@@ -6,10 +6,16 @@ use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
+use App\Services\CartService;
 
 class LoginRequest extends FormRequest
 {
+    public function __construct(private CartService $cartService)
+    {
+    }
+
     /**
      * Determine if the user is authorized to make this request.
      */
@@ -40,6 +46,9 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
+        // Store the current session ID before authentication for cart merging
+        $guestSessionId = $this->session()->getId();
+
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
@@ -47,6 +56,9 @@ class LoginRequest extends FormRequest
                 'email' => __('auth.failed'),
             ]);
         }
+
+        // Store the guest session ID in the session for later cart merging
+        $this->session()->put('guest_session_before_login', $guestSessionId);
 
         RateLimiter::clear($this->throttleKey());
     }

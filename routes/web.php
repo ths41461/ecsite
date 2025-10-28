@@ -52,27 +52,27 @@ Route::middleware('throttle:cart-mutations')->group(function () {
 
 
 
+use App\Http\Controllers\DashboardController;
+
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    
+    // Checkout routes that require authentication
+    Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index');
+    Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    Route::post('checkout/order', [CheckoutController::class, 'createOrder'])->name('checkout.order');
+    Route::get('checkout/{orderNumber}/details', [CheckoutController::class, 'details'])->name('checkout.details');
+    Route::post('checkout/{orderNumber}/details', [CheckoutController::class, 'updateDetails'])->name('checkout.details.update');
+    // Spec parity aliases
+    Route::post('checkout/create', [CheckoutController::class, 'store'])->name('checkout.create');
+    Route::get('checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
+    Route::get('checkout/thanks/{orderNumber}', [CheckoutController::class, 'thanks'])->name('checkout.thanks');
+    Route::get('checkout/cancel/{orderNumber}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
+    Route::get('checkout/pay/{orderNumber}', [CheckoutController::class, 'pay'])->name('checkout.pay');
 });
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
-
-// CHECKOUT
-Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
-Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-Route::post('/checkout/order', [CheckoutController::class, 'createOrder'])->name('checkout.order');
-Route::get('/checkout/{orderNumber}/details', [CheckoutController::class, 'details'])->name('checkout.details');
-Route::post('/checkout/{orderNumber}/details', [CheckoutController::class, 'updateDetails'])->name('checkout.details.update');
-// Spec parity aliases
-Route::post('/checkout/create', [CheckoutController::class, 'store'])->name('checkout.create');
-Route::get('/checkout/success', [CheckoutController::class, 'success'])->name('checkout.success');
-Route::get('/checkout/thanks/{orderNumber}', [CheckoutController::class, 'thanks'])->name('checkout.thanks');
-Route::get('/checkout/cancel/{orderNumber}', [CheckoutController::class, 'cancel'])->name('checkout.cancel');
-Route::get('/checkout/pay/{orderNumber}', [CheckoutController::class, 'pay'])->name('checkout.pay');
 
 // Orders API (for Success page polling)
 Route::get('/orders/{orderNumber}', [OrdersController::class, 'show'])->name('orders.show');

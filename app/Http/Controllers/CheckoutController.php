@@ -57,6 +57,7 @@ class CheckoutController extends Controller
     {
         $sessionId = $request->session()->getId();
         $customer = [
+            // 'user_id' => $request->user()->id, // Associate order with authenticated user
             'email' => $request->string('email')->toString() ?: 'guest@example.com',
             'name' => $request->string('name')->toString() ?: 'ゲスト',
             'address_line1' => $request->string('address_line1')->toString() ?: 'N/A',
@@ -347,7 +348,10 @@ class CheckoutController extends Controller
                     } catch (\Throwable $e) {
                     }
                 }
-                try { $order->transitionTo('cancelled'); } catch (\Throwable $e) {}
+                try {
+                    $order->transitionTo('cancelled');
+                } catch (\Throwable $e) {
+                }
                 $order->forceFill([
                     'status' => 'canceled',
                     'canceled_at' => now(),
@@ -440,16 +444,16 @@ class CheckoutController extends Controller
     {
         // Get the current cart session ID to recalculate values if needed
         $currentCartSessionId = request()->session()->getId();
-        
+
         // Check if this order is for the current session and if we should recalculate
         $shouldRecalculate = $order->cart_session_id === $currentCartSessionId;
-        
+
         $subtotal_yen = $order->subtotal_yen;
         $discount_yen = $order->discount_yen;
         $coupon_discount_yen = $order->coupon_discount_yen;
         $tax_yen = $order->tax_yen;
         $total_yen = $order->total_yen;
-        
+
         if ($shouldRecalculate) {
             // Get the current cart to ensure we're showing up-to-date values
             $cart = $this->cart->get($currentCartSessionId);
