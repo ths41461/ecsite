@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    return Inertia::render('welcome');
+    return Inertia::render('homepage');
 })->name('home');
 
 Route::get('/products', [ProductController::class, 'index'])
