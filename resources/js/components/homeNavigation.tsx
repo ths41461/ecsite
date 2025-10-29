@@ -38,43 +38,36 @@ type Cart = {
   coupon_line_names?: string[];
 };
 
-// Simple event bus to communicate cart updates across components
-class CartEventBus {
-  private listeners: { [event: string]: Array<(data: any) => void> } = {};
-
-  on(event: string, callback: (data: any) => void) {
-    if (!this.listeners[event]) {
-      this.listeners[event] = [];
+// Safe localStorage utility functions
+const setCartToStorage = (cart: Cart | null) => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem('cart-state', JSON.stringify(cart));
     }
-    this.listeners[event].push(callback);
+  } catch (error) {
+    console.error('Error saving cart to localStorage:', error);
   }
+};
 
-  off(event: string, callback: (data: any) => void) {
-    if (this.listeners[event]) {
-      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+const getCartFromStorage = (): Cart | null => {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const stored = localStorage.getItem('cart-state');
+      return stored ? JSON.parse(stored) : null;
     }
+    return null;
+  } catch (error) {
+    console.error('Error reading cart from localStorage:', error);
+    return null;
   }
-
-  emit(event: string, data?: any) {
-    if (this.listeners[event]) {
-      this.listeners[event].forEach(callback => callback(data));
-    }
-  }
-}
-
-// Create a singleton event bus for cart updates
-const cartEventBus = new CartEventBus();
-
-// Add a global reference so other parts of the app can easily access it
-if (typeof window !== 'undefined') {
-  (window as any).__cartEventBus = cartEventBus;
-}
+};
 
 export function HomeNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const hasFetchedInitialCart = useRef(false);
+  const isUpdatingFromStorage = useRef(false);
 
   // Fetch cart data and update count
   useEffect(() => {
@@ -93,6 +86,9 @@ export function HomeNavigation() {
           const cartData: Cart = await response.json();
           const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
           setCartCount(totalItems);
+          
+          // Update localStorage to notify other tabs/windows
+          setCartToStorage(cartData);
         }
       } catch (error) {
         console.error('Failed to fetch cart count:', error);
@@ -108,45 +104,27 @@ export function HomeNavigation() {
     }
   }, []);
 
-  // Listen for cart update events from other parts of the app
+  // Listen for storage events to sync cart across tabs/windows
   useEffect(() => {
-    const handleCartUpdate = (cartData: Cart) => {
-      if (cartData && cartData.lines) {
-        const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
-        setCartCount(totalItems);
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cart-state' && e.newValue) {
+        try {
+          // This only executes in OTHER tabs, not the one that made the change
+          const cartData: Cart = JSON.parse(e.newValue);
+          const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+          setCartCount(totalItems);
+        } catch (error) {
+          console.error('Failed to parse cart data from storage event:', error);
+        }
       }
     };
 
-    cartEventBus.on('cartUpdated', handleCartUpdate);
-
+    window.addEventListener('storage', handleStorageChange);
+    
     return () => {
-      cartEventBus.off('cartUpdated', handleCartUpdate);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
-
-  // Function to refresh cart count
-  const refreshCartCount = async () => {
-    try {
-      const response = await fetch('/cart', {
-        headers: { 
-          Accept: 'application/json',
-          'Content-Type': 'application/json',
-        },
-        credentials: 'same-origin',
-      });
-      
-      if (response.ok) {
-        const cartData: Cart = await response.json();
-        const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
-        setCartCount(totalItems);
-        
-        // Also emit an event so other listeners are aware of the update
-        cartEventBus.emit('cartUpdated', cartData);
-      }
-    } catch (error) {
-      console.error('Failed to refresh cart count:', error);
-    }
-  };
 
   // Function to handle cart click and navigate to cart page
   const handleCartClick = () => {
@@ -349,5 +327,5 @@ function CustomNavButton({ children, className }: CustomNavButtonProps) {
   );
 }
 
-// Export the event bus so other components can use it to update the cart count
-export { cartEventBus, Cart as CartType, CartLine as CartLineType };
+// Export types for other components to use
+export { Cart as CartType, CartLine as CartLineType };

@@ -1,6 +1,5 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
-import { cartEventBus } from '../../components/homeNavigation';
 
 type ProductRef = { id: number; name: string; slug: string };
 type LineNotice = { code: 'qty_clamped_to_available'; requested: number; available: number };
@@ -75,8 +74,14 @@ export default function CartIndex({ initialCart }: PageProps) {
             });
             const data: Cart = await res.json();
             setCart(data);
-            // Emit cart update event to notify navigation component
-            cartEventBus.emit('cartUpdated', data);
+            // Update localStorage to notify other tabs/components
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('cart-state', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('Failed to update cart in localStorage:', error);
+            }
         } finally {
             setLoading(false);
         }
@@ -93,8 +98,14 @@ export default function CartIndex({ initialCart }: PageProps) {
             });
             const data: Cart = await res.json();
             setCart(data);
-            // Emit cart update event to notify navigation component
-            cartEventBus.emit('cartUpdated', data);
+            // Update localStorage to notify other tabs/components
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('cart-state', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('Failed to update cart in localStorage:', error);
+            }
         } finally {
             setBusyLine(null);
         }
@@ -110,8 +121,14 @@ export default function CartIndex({ initialCart }: PageProps) {
             });
             const data: Cart = await res.json();
             setCart(data);
-            // Emit cart update event to notify navigation component
-            cartEventBus.emit('cartUpdated', data);
+            // Update localStorage to notify other tabs/components
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('cart-state', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('Failed to update cart in localStorage:', error);
+            }
         } finally {
             setBusyLine(null);
         }
@@ -143,8 +160,14 @@ export default function CartIndex({ initialCart }: PageProps) {
             }
             const nextCart = data as Cart;
             setCart(nextCart);
-            // Emit cart update event to notify navigation component
-            cartEventBus.emit('cartUpdated', nextCart);
+            // Update localStorage to notify other tabs/components
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('cart-state', JSON.stringify(nextCart));
+                }
+            } catch (error) {
+                console.error('Failed to update cart in localStorage:', error);
+            }
             setCouponNotice('クーポンを適用しました');
             setCouponInput(nextCart.coupon_code ?? '');
         } catch (e: any) {
@@ -174,8 +197,14 @@ export default function CartIndex({ initialCart }: PageProps) {
             }
             const data: Cart = await res.json();
             setCart(data);
-            // Emit cart update event to notify navigation component
-            cartEventBus.emit('cartUpdated', data);
+            // Update localStorage to notify other tabs/components
+            try {
+                if (typeof window !== 'undefined' && window.localStorage) {
+                    localStorage.setItem('cart-state', JSON.stringify(data));
+                }
+            } catch (error) {
+                console.error('Failed to update cart in localStorage:', error);
+            }
             setCouponNotice('クーポンを削除しました');
         } catch (e: any) {
             setCouponError(e?.message || 'クーポンの削除に失敗しました');
