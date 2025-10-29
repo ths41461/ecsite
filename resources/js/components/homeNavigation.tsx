@@ -66,6 +66,7 @@ export function HomeNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const hasFetchedInitialCart = useRef(false);
   const isUpdatingFromStorage = useRef(false);
 
@@ -136,7 +137,7 @@ export function HomeNavigation() {
       {/* Desktop Layout */}
       <div className="hidden lg:flex flex-row items-center max-w-[1440px] mx-auto">
         {/* Logo Area */}
-        <div className="flex items-center justify-center gap-2.5 p-8 w-[200px] h-[100px] border border-[#888888]">
+        <div className="flex items-center justify-center gap-2.5 p-8 w-[200px] h-[100px] border border-[#888888] cursor-pointer" onClick={() => router.get('/')}>
           <div className="w-[200px] h-[65.19px] bg-gray-100 rounded flex items-center justify-center">
             <span className="text-lg font-bold">LOGO</span>
           </div>
@@ -147,7 +148,7 @@ export function HomeNavigation() {
           {/* Top Section - Search and User Options */}
           <div className="flex flex-row items-center justify-between">
             {/* Search Bar */}
-            <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
+            <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888] cursor-pointer" onClick={() => router.get('/search')}>
               <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
               <span className="text-[#0D0D0D] text-base truncate max-w-[800px]">検索</span>
             </div>
@@ -155,13 +156,13 @@ export function HomeNavigation() {
             {/* Top Navigation Bar */}
             <div className="flex flex-row items-center justify-center gap-3 p-3 w-[194px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
               {/* Login Button */}
-              <div className="flex flex-row items-center justify-center gap-2">
+              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer">
                 <User className="w-4.5 h-4.5 text-gray-700" />
                 <span className="text-xs font-medium text-[#444444] whitespace-nowrap">ログイン</span>
               </div>
 
               {/* Favourite Button */}
-              <div className="flex flex-row items-center justify-center gap-2">
+              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer">
                 <Heart className="w-4.5 h-4.5 text-gray-700" />
                 <span className="text-xs font-medium text-[#444444] whitespace-nowrap">お気に入り</span>
               </div>
@@ -181,7 +182,7 @@ export function HomeNavigation() {
 
         {/* Cart Section - Updated to show dynamic count and be clickable */}
         <button 
-          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-[#888888]"
+          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-[#888888] cursor-pointer"
           onClick={handleCartClick}
         >
           <ShoppingCart className="w-3.75 h-3.75 text-gray-700" />
@@ -196,7 +197,7 @@ export function HomeNavigation() {
         {/* Top Bar - Logo, Menu Button, Login, Wishlist, and Cart */}
         <div className="flex items-center justify-between py-3 px-4">
           {/* Left side - Logo */}
-          <div className="flex items-center justify-center p-2 border border-[#888888]">
+          <div className="flex items-center justify-center p-2 border border-[#888888] cursor-pointer" onClick={() => router.get('/')}>
             <div className="w-12 h-10 bg-gray-100 rounded flex items-center justify-center">
               <span className="text-xs font-bold">LOGO</span>
             </div>
@@ -205,20 +206,20 @@ export function HomeNavigation() {
           {/* Right side - Menu, Login, Wishlist, and Cart */}
           <div className="flex items-center space-x-3">
             {/* Login Button */}
-            <button className="flex flex-col items-center">
+            <button className="flex flex-col items-center cursor-pointer">
               <User className="w-5 h-5 text-gray-700" />
               <span className="text-[0.6rem] text-[#444444] mt-1">ログイン</span>
             </button>
 
             {/* Wishlist Button */}
-            <button className="flex flex-col items-center">
+            <button className="flex flex-col items-center cursor-pointer">
               <Heart className="w-5 h-5 text-gray-700" />
               <span className="text-[0.6rem] text-[#444444] mt-1">お気に入り</span>
             </button>
 
             {/* Cart - Updated to show dynamic count and be clickable */}
             <button 
-              className="flex flex-col items-center"
+              className="flex flex-col items-center cursor-pointer"
               onClick={handleCartClick}
             >
               <ShoppingCart className="w-5 h-5 text-gray-700" />
@@ -230,7 +231,7 @@ export function HomeNavigation() {
             {/* Hamburger Menu Button */}
             <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="ml-2 p-1"
+              className="ml-2 p-1 cursor-pointer"
             >
               <Menu className="w-6 h-6 text-gray-700" />
             </button>
@@ -246,14 +247,17 @@ export function HomeNavigation() {
             >
               {/* Menu Header */}
               <div className="flex justify-between items-center mb-6 p-2">
-                <div className="flex items-center justify-center p-2 border border-[#888888]">
+                <div className="flex items-center justify-center p-2 border border-[#888888] cursor-pointer" onClick={() => {
+                  router.get('/');
+                  setIsMobileMenuOpen(false);
+                }}>
                   <div className="w-12 h-10 bg-gray-100 rounded flex items-center justify-center">
                     <span className="text-xs font-bold">LOGO</span>
                   </div>
                 </div>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-2"
+                  className="p-2 cursor-pointer"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -262,7 +266,10 @@ export function HomeNavigation() {
               </div>
 
               {/* Search Bar in Menu */}
-              <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-[#888888] w-full">
+              <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-[#888888] w-full cursor-pointer" onClick={() => {
+                router.get('/search');
+                setIsMobileMenuOpen(false);
+              }}>
                 <Search className="w-4 h-4 text-[#0D0D0D] opacity-50" />
                 <span className="text-[#0D0D0D] text-sm whitespace-nowrap">検索</span>
               </div>
@@ -278,17 +285,17 @@ export function HomeNavigation() {
               {/* Additional Menu Options */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-around">
-                  <button className="flex flex-col items-center">
+                  <button className="flex flex-col items-center cursor-pointer">
                     <User className="w-6 h-6 text-gray-700" />
                     <span className="text-xs text-[#444444] mt-1">ログイン</span>
                   </button>
-                  <button className="flex flex-col items-center">
+                  <button className="flex flex-col items-center cursor-pointer">
                     <Heart className="w-6 h-6 text-gray-700" />
                     <span className="text-xs text-[#444444] mt-1">お気に入り</span>
                   </button>
                   {/* Cart in mobile menu - Updated to show dynamic count and be clickable */}
                   <button 
-                    className="flex flex-col items-center"
+                    className="flex flex-col items-center cursor-pointer"
                     onClick={() => {
                       handleCartClick();
                       setIsMobileMenuOpen(false);
@@ -318,7 +325,7 @@ function CustomNavButton({ children, className }: CustomNavButtonProps) {
   return (
     <button
       className={cn(
-        "flex flex-row items-center justify-center gap-2 h-10 border-2 border-[#888888] text-sm font-medium text-[#444444] px-4 py-2.5",
+        "flex flex-row items-center justify-center gap-2 h-10 border-2 border-[#888888] text-sm font-medium text-[#444444] px-4 py-2.5 cursor-pointer",
         className
       )}
     >
