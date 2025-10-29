@@ -4,6 +4,7 @@ import ReviewList from '@/components/ReviewList';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
+import { cartEventBus } from '../../components/homeNavigation';
 
 type Variant = {
     id?: number; // Prefer sending this from backend (needed for 4.3)
@@ -205,12 +206,16 @@ export default function Show({ product, gallery, related }: Props) {
             if (cart) {
                 setDrawerCart(cart);
                 setDrawerOpen(true);
+                // Emit cart update event to notify navigation component
+                cartEventBus.emit('cartUpdated', cart);
             } else {
                 try {
                     const fres = await fetch('/cart', { headers: { Accept: 'application/json' } });
                     const fdata = (await fres.json()) as DrawerCart;
                     setDrawerCart(fdata);
                     setDrawerOpen(true);
+                    // Emit cart update event to notify navigation component
+                    cartEventBus.emit('cartUpdated', fdata);
                 } catch {
                     // swallow; drawer just won't open if something went wrong
                 }
@@ -263,6 +268,8 @@ export default function Show({ product, gallery, related }: Props) {
             });
             const data = (await res.json()) as DrawerCart;
             setDrawerCart(data);
+            // Emit cart update event to notify navigation component
+            cartEventBus.emit('cartUpdated', data);
         } finally {
             setBusyLineId(null);
         }
@@ -278,6 +285,8 @@ export default function Show({ product, gallery, related }: Props) {
             });
             const data = (await res.json()) as DrawerCart;
             setDrawerCart(data);
+            // Emit cart update event to notify navigation component
+            cartEventBus.emit('cartUpdated', data);
         } finally {
             setBusyLineId(null);
         }
@@ -298,6 +307,8 @@ export default function Show({ product, gallery, related }: Props) {
             }
             const data = (await res.json()) as DrawerCart;
             setDrawerCart(data);
+            // Emit cart update event to notify navigation component
+            cartEventBus.emit('cartUpdated', data);
             showToast('クーポンを削除しました。', 'success');
         } catch (error: any) {
             showToast(error?.message || 'クーポンの削除に失敗しました。もう一度お試しください。', 'error');

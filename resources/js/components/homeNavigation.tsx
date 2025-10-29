@@ -1,9 +1,157 @@
 import { Search, User, Heart, ShoppingCart, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { router } from '@inertiajs/react';
+
+// Define cart related types
+type CartLine = {
+  line_id: string;
+  variant_id: number;
+  sku: string;
+  product: { id: number; name: string; slug: string };
+  price_cents: number;
+  compare_at_cents: number | null;
+  qty: number;
+  managed: boolean;
+  available_qty: number | null;
+  line_total_cents: number;
+  savings_cents: number;
+  stock_badge: string;
+  notice?: {
+    code: string;
+    requested: number;
+    available: number;
+  };
+};
+
+type Cart = {
+  lines: CartLine[];
+  subtotal_cents: number;
+  savings_cents: number;
+  tax_cents?: number;
+  total_cents: number;
+  currency: string;
+  coupon_code?: string | null;
+  coupon_discount_cents?: number;
+  coupon_summary?: string;
+  coupon_line_ids?: string[];
+  coupon_line_names?: string[];
+};
+
+// Simple event bus to communicate cart updates across components
+class CartEventBus {
+  private listeners: { [event: string]: Array<(data: any) => void> } = {};
+
+  on(event: string, callback: (data: any) => void) {
+    if (!this.listeners[event]) {
+      this.listeners[event] = [];
+    }
+    this.listeners[event].push(callback);
+  }
+
+  off(event: string, callback: (data: any) => void) {
+    if (this.listeners[event]) {
+      this.listeners[event] = this.listeners[event].filter(cb => cb !== callback);
+    }
+  }
+
+  emit(event: string, data?: any) {
+    if (this.listeners[event]) {
+      this.listeners[event].forEach(callback => callback(data));
+    }
+  }
+}
+
+// Create a singleton event bus for cart updates
+const cartEventBus = new CartEventBus();
+
+// Add a global reference so other parts of the app can easily access it
+if (typeof window !== 'undefined') {
+  (window as any).__cartEventBus = cartEventBus;
+}
 
 export function HomeNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const hasFetchedInitialCart = useRef(false);
+
+  // Fetch cart data and update count
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      setIsLoading(true);
+      try {
+        const response = await fetch('/cart', {
+          headers: { 
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+          credentials: 'same-origin',
+        });
+        
+        if (response.ok) {
+          const cartData: Cart = await response.json();
+          const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+          setCartCount(totalItems);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cart count:', error);
+      } finally {
+        setIsLoading(false);
+        hasFetchedInitialCart.current = true;
+      }
+    };
+
+    // Only fetch cart count if document is available (client-side)
+    if (typeof window !== 'undefined' && !hasFetchedInitialCart.current) {
+      fetchCartCount();
+    }
+  }, []);
+
+  // Listen for cart update events from other parts of the app
+  useEffect(() => {
+    const handleCartUpdate = (cartData: Cart) => {
+      if (cartData && cartData.lines) {
+        const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+        setCartCount(totalItems);
+      }
+    };
+
+    cartEventBus.on('cartUpdated', handleCartUpdate);
+
+    return () => {
+      cartEventBus.off('cartUpdated', handleCartUpdate);
+    };
+  }, []);
+
+  // Function to refresh cart count
+  const refreshCartCount = async () => {
+    try {
+      const response = await fetch('/cart', {
+        headers: { 
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+      });
+      
+      if (response.ok) {
+        const cartData: Cart = await response.json();
+        const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+        setCartCount(totalItems);
+        
+        // Also emit an event so other listeners are aware of the update
+        cartEventBus.emit('cartUpdated', cartData);
+      }
+    } catch (error) {
+      console.error('Failed to refresh cart count:', error);
+    }
+  };
+
+  // Function to handle cart click and navigate to cart page
+  const handleCartClick = () => {
+    router.get('/cart');
+  };
 
   return (
     <div className="w-full bg-white px-4 py-2">
@@ -53,11 +201,16 @@ export function HomeNavigation() {
           </div>
         </div>
 
-        {/* Cart Section */}
-        <div className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-[#888888]">
+        {/* Cart Section - Updated to show dynamic count and be clickable */}
+        <button 
+          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-[#888888]"
+          onClick={handleCartClick}
+        >
           <ShoppingCart className="w-3.75 h-3.75 text-gray-700" />
-          <span className="text-xs font-semibold text-black whitespace-nowrap">(0)</span>
-        </div>
+          <span className="text-xs font-semibold text-black whitespace-nowrap">
+            ({isLoading ? '...' : cartCount})
+          </span>
+        </button>
       </div>
 
       {/* Mobile/Tablet Layout */}
@@ -85,10 +238,15 @@ export function HomeNavigation() {
               <span className="text-[0.6rem] text-[#444444] mt-1">お気に入り</span>
             </button>
 
-            {/* Cart */}
-            <button className="flex flex-col items-center">
+            {/* Cart - Updated to show dynamic count and be clickable */}
+            <button 
+              className="flex flex-col items-center"
+              onClick={handleCartClick}
+            >
               <ShoppingCart className="w-5 h-5 text-gray-700" />
-              <span className="text-[0.6rem] text-black mt-1">(0)</span>
+              <span className="text-[0.6rem] text-black mt-1">
+                ({isLoading ? '...' : cartCount})
+              </span>
             </button>
 
             {/* Hamburger Menu Button */}
@@ -150,9 +308,18 @@ export function HomeNavigation() {
                     <Heart className="w-6 h-6 text-gray-700" />
                     <span className="text-xs text-[#444444] mt-1">お気に入り</span>
                   </button>
-                  <button className="flex flex-col items-center">
+                  {/* Cart in mobile menu - Updated to show dynamic count and be clickable */}
+                  <button 
+                    className="flex flex-col items-center"
+                    onClick={() => {
+                      handleCartClick();
+                      setIsMobileMenuOpen(false);
+                    }}
+                  >
                     <ShoppingCart className="w-6 h-6 text-gray-700" />
-                    <span className="text-xs text-black mt-1">(0)</span>
+                    <span className="text-xs text-black mt-1">
+                      ({isLoading ? '...' : cartCount})
+                    </span>
                   </button>
                 </div>
               </div>
@@ -181,3 +348,6 @@ function CustomNavButton({ children, className }: CustomNavButtonProps) {
     </button>
   );
 }
+
+// Export the event bus so other components can use it to update the cart count
+export { cartEventBus, Cart as CartType, CartLine as CartLineType };
