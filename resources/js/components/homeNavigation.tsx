@@ -90,12 +90,32 @@ export function HomeNavigation() {
   const hasFetchedInitialCart = useRef(false);
   const isUpdatingFromStorage = useRef(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const cartCacheRef = useRef<{ data: Cart | null; timestamp: number } | null>(null);
+  const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
   // Fetch cart data and update count
   useEffect(() => {
     const fetchCartCount = async () => {
+      if (isLoading) return; // Prevent concurrent requests
+      
       setIsLoading(true);
       try {
+        // Check if we have cached data that's still valid
+        if (cartCacheRef.current) {
+          const { data, timestamp } = cartCacheRef.current;
+          const now = Date.now();
+          
+          if (now - timestamp < CACHE_DURATION) {
+            // Use cached data
+            const totalItems = data.lines.reduce((sum, line) => sum + line.qty, 0);
+            setCartCount(totalItems);
+            setCartToStorage(data);
+            setIsLoading(false);
+            hasFetchedInitialCart.current = true;
+            return;
+          }
+        }
+
         const response = await fetch('/cart', {
           headers: { 
             Accept: 'application/json',
@@ -106,21 +126,41 @@ export function HomeNavigation() {
         
         if (response.ok) {
           const cartData: Cart = await response.json();
+          
+          // Cache the successful response
+          cartCacheRef.current = {
+            data: cartData,
+            timestamp: Date.now()
+          };
+          
           const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
           setCartCount(totalItems);
           
           // Update localStorage to notify other tabs/windows
           setCartToStorage(cartData);
+        } else {
+          // If cart API fails, try to use localStorage as fallback
+          const storedCart = getCartFromStorage();
+          if (storedCart) {
+            const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
+            setCartCount(totalItems);
+          }
         }
       } catch (error) {
         console.error('Failed to fetch cart count:', error);
+        // Fallback to localStorage if API fails
+        const storedCart = getCartFromStorage();
+        if (storedCart) {
+          const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
+          setCartCount(totalItems);
+        }
       } finally {
         setIsLoading(false);
         hasFetchedInitialCart.current = true;
       }
     };
 
-    // Only fetch cart count if document is available (client-side)
+    // Only fetch cart count if document is available (client-side) and not already fetched
     if (typeof window !== 'undefined' && !hasFetchedInitialCart.current) {
       fetchCartCount();
     }
@@ -151,8 +191,10 @@ export function HomeNavigation() {
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
+      // Clear the timeout on unmount to prevent memory leaks
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
+        searchTimeoutRef.current = null; // Clean up reference
       }
     };
   }, []);
@@ -201,17 +243,19 @@ export function HomeNavigation() {
     const value = e.target.value;
     setSearchQuery(value);
 
-    // Clear previous timeout
+    // Clear previous timeout IMMEDIATELY when new input occurs
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
+      searchTimeoutRef.current = null; // Reset reference
     }
 
-    // Set new timeout for debouncing
+    // Set new timeout for debouncing only if there's a query
     if (value.trim()) {
       searchTimeoutRef.current = setTimeout(() => {
         fetchSuggestions(value);
       }, 300); // 300ms debounce
     } else {
+      // If query is empty, clear suggestions immediately
       setSuggestions([]);
       setShowSuggestions(false);
     }
