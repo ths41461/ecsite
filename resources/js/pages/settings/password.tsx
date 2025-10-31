@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { edit } from '@/routes/password';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -25,10 +26,12 @@ export default function Password() {
     const currentPasswordInput = useRef<HTMLInputElement>(null);
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="パスワード設定" />
+        <>
+            <HomeNavigation />
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="パスワード設定" />
 
-            <SettingsLayout>
+                <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="パスワードを更新" description="アカウントの安全性を保つため、長くてランダムなパスワードを使用してください" />
 
@@ -118,5 +121,6 @@ export default function Password() {
                 </div>
             </SettingsLayout>
         </AppLayout>
+        </>
     );
 }

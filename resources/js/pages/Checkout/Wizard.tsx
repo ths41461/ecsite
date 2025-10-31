@@ -1,6 +1,7 @@
 import CheckoutTimeline, { TimelineStep } from '@/components/CheckoutTimeline';
 import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type CartLine = {
     line_id: string;
@@ -337,9 +338,11 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
     }
 
     return (
-        <div className="mx-auto max-w-3xl px-4 py-8">
-            <Head title="チェックアウト" />
-            <CheckoutTimeline steps={timeline} />
+        <div className="min-h-screen bg-white">
+            <HomeNavigation />
+            <div className="mx-auto max-w-3xl px-4 py-8">
+                <Head title="チェックアウト" />
+                <CheckoutTimeline steps={timeline} />
 
             {previousCancelledReason && step === 'review' && (
                 <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
@@ -546,6 +549,7 @@ export default function CheckoutWizard({ step, previousCancelledReason, cart, or
                     </form>
                 </div>
             )}
+        </div>
         </div>
     );
 }

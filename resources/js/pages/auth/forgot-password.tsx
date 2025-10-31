@@ -10,16 +10,19 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 export default function ForgotPassword({ status }: { status?: string }) {
     return (
-        <AuthLayout title="パスワードをお忘れですか" description="パスワードリセットリンクを受け取るにはメールアドレスを入力してください">
-            <Head title="パスワードリセット" />
+        <>
+            <HomeNavigation />
+            <AuthLayout title="パスワードをお忘れですか" description="パスワードリセットリンクを受け取るにはメールアドレスを入力してください">
+                <Head title="パスワードリセット" />
 
-            {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+                {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
 
-            <div className="space-y-6">
-                <Form {...PasswordResetLinkController.store.form()}>
+                <div className="space-y-6">
+                    <Form {...PasswordResetLinkController.store.form()}>
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
@@ -46,5 +49,6 @@ export default function ForgotPassword({ status }: { status?: string }) {
                 </div>
             </div>
         </AuthLayout>
+        </>
     );
 }

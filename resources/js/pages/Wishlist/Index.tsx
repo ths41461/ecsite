@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type Item = { id: number; name: string; slug: string; image?: string | null };
 type Props = { items: Item[]; count: number };
@@ -30,9 +31,11 @@ export default function Index({ items: initialItems, count }: Props) {
     }
 
     return (
-        <div className="mx-auto max-w-5xl px-4 py-6">
-            <Head title="お気に入り" />
-            <h1 className="mb-4 text-2xl font-semibold">お気に入り</h1>
+        <div className="min-h-screen bg-white">
+            <HomeNavigation />
+            <div className="mx-auto max-w-5xl px-4 py-6">
+                <Head title="お気に入り" />
+                <h1 className="mb-4 text-2xl font-semibold">お気に入り</h1>
 
             {items.length === 0 ? (
                 <div className="rounded-lg border p-6 text-sm text-neutral-600">
@@ -64,6 +67,7 @@ export default function Index({ items: initialItems, count }: Props) {
                     ))}
                 </div>
             )}
+        </div>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import ReviewList from '@/components/ReviewList';
 import { Head, router } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type Variant = {
     id?: number; // Prefer sending this from backend (needed for 4.3)
@@ -356,9 +357,11 @@ export default function Show({ product, gallery, related }: Props) {
     };
 
     return (
-        <div className="mx-auto max-w-5xl px-4 py-6">
-            <Head title={product.name} />
-            <div className="grid gap-6 md:grid-cols-2">
+        <div className="min-h-screen bg-white">
+            <HomeNavigation />
+            <div className="mx-auto max-w-5xl px-4 py-6">
+                <Head title={product.name} />
+                <div className="grid gap-6 md:grid-cols-2">
                 {/* GALLERY */}
                 <div>
                     <div className="aspect-square overflow-hidden rounded-xl bg-neutral-100">
@@ -705,6 +708,7 @@ export default function Show({ product, gallery, related }: Props) {
                 couponBusy={couponBusy}
                 busyLineId={busyLineId}
             />
+        </div>
         </div>
     );
 }

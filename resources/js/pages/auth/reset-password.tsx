@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 interface ResetPasswordProps {
     token: string;
@@ -15,10 +16,12 @@ interface ResetPasswordProps {
 
 export default function ResetPassword({ token, email }: ResetPasswordProps) {
     return (
-        <AuthLayout title="パスワードをリセット" description="以下に新しいパスワードを入力してください">
-            <Head title="パスワードリセット" />
+        <>
+            <HomeNavigation />
+            <AuthLayout title="パスワードをリセット" description="以下に新しいパスワードを入力してください">
+                <Head title="パスワードリセット" />
 
-            <Form
+                <Form
                 {...NewPasswordController.store.form()}
                 transform={(data) => ({ ...data, token, email })}
                 resetOnSuccess={['password', 'password_confirmation']}
@@ -66,5 +69,6 @@ export default function ResetPassword({ token, email }: ResetPasswordProps) {
                 )}
             </Form>
         </AuthLayout>
+        </>
     );
 }

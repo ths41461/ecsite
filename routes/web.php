@@ -22,6 +22,19 @@ Route::get('/products', [ProductController::class, 'index'])
 Route::get('/products/{product}', [ProductController::class, 'show'])
     ->name('products.show');
 
+// Additional pages
+Route::get('/fragrance-diagnosis', function () {
+    return Inertia::render('FragranceDiagnosis');
+})->name('fragrance.diagnosis');
+
+Route::get('/brand-introduction', function () {
+    return Inertia::render('BrandIntroduction');
+})->name('brand.introduction');
+
+Route::get('/contact', function () {
+    return Inertia::render('Contact');
+})->name('contact');
+
 // Search autocomplete API
 Route::get('/api/search/autocomplete', [ProductController::class, 'autocomplete'])
     ->name('search.autocomplete');

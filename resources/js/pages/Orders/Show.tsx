@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react'
 import OrderSummary, { type OrderDTO as SummaryOrderDTO } from '@/components/OrderSummary'
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type TimelineEntry = { status: string; changed_at: string }
 type Payment = { id: number; status_id: number | null; processed_at: string | null }
@@ -45,9 +46,11 @@ const translateOrderStatusBadge = (status: string | null | undefined): string =>
 
 export default function OrdersShow({ order }: PageProps) {
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <Head title={`注文 ${order.order_number}`} />
-      <div className="mb-1 flex items-center gap-3">
+    <div className="min-h-screen bg-white">
+      <HomeNavigation />
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <Head title={`注文 ${order.order_number}`} />
+        <div className="mb-1 flex items-center gap-3">
         <h1 className="text-2xl font-semibold">注文 #{order.order_number}</h1>
         {(() => {
           const isCanceled = order.status === 'canceled'
@@ -82,5 +85,6 @@ export default function OrdersShow({ order }: PageProps) {
         <a href="/products" className="text-sm text-neutral-700 hover:underline">買い物を続ける</a>
         <a href="/" className="text-sm text-neutral-700 hover:underline">ホーム</a>
       </div>
+    </div>
     </div>
   )}

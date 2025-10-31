@@ -7,6 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { appearance } from '@/routes';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -17,15 +18,18 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Appearance() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="外観設定" />
+        <>
+            <HomeNavigation />
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="外観設定" />
 
-            <SettingsLayout>
+                <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="外観設定" description="アカウントの外観設定を更新してください" />
                     <AppearanceTabs />
                 </div>
             </SettingsLayout>
         </AppLayout>
+        </>
     );
 }

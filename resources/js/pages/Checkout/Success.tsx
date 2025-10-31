@@ -1,6 +1,7 @@
 import { Head } from '@inertiajs/react'
 import { useEffect, useMemo, useState } from 'react'
 import OrderSummary, { type OrderDTO as SummaryOrderDTO } from '@/components/OrderSummary'
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type Item = { name: string; sku: string; qty: number; unit_price_yen: number; line_total_yen: number }
 type Payment = { id: number; status_id: number | null; processed_at: string | null }
@@ -62,9 +63,11 @@ export default function CheckoutSuccess({ order: initialOrder, session_id }: Pag
   }, [])
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
-      <Head title="注文成功" />
-      <div
+    <div className="min-h-screen bg-white">
+      <HomeNavigation />
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <Head title="注文成功" />
+        <div
         className={`mb-6 rounded-xl border px-4 py-3 text-sm ${
           order.status === 'canceled'
             ? 'border-rose-200 bg-rose-50 text-rose-700'
@@ -153,6 +156,7 @@ export default function CheckoutSuccess({ order: initialOrder, session_id }: Pag
         <a href="/" className="text-sm text-neutral-700 hover:underline">ホーム</a>
         <a href={`/orders/${encodeURIComponent(order.order_number)}/view`} className="text-sm text-neutral-700 hover:underline" target="_blank" rel="noreferrer">注文を表示</a>
       </div>
+    </div>
     </div>
   )
 }

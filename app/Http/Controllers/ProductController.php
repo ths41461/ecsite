@@ -474,6 +474,34 @@ class ProductController extends Controller
                         // Prefer sale price if available, otherwise use regular price
                         $price = $minSalePrice ?? $minPrice;
                         
+                        // Calculate discount percentage if applicable
+                        $discountPercentage = null;
+                        if ($minSalePrice && $minPrice && $minPrice > 0) {
+                            $discountPercentage = round((($minPrice - $minSalePrice) / $minPrice) * 100);
+                        }
+                        
+                        // Get availability status based on inventory
+                        $availabilityStatus = null;
+                        $totalStock = $product->variants->sum(function ($variant) {
+                            return $variant->inventory ? $variant->inventory->stock : 0;
+                        });
+                        
+                        if ($totalStock > 10) {
+                            $availabilityStatus = 'In Stock';
+                        } elseif ($totalStock > 0) {
+                            $availabilityStatus = 'Low Stock';
+                        } else {
+                            $availabilityStatus = 'Out of Stock';
+                        }
+                        
+                        // Get rating and review count (assuming methods exist or need to be created)
+                        $rating = method_exists($product, 'averageRating') ? round($product->averageRating() ?? 0, 1) : null;
+                        $reviewCount = method_exists($product, 'reviewCount') ? $product->reviewCount() : null;
+                        
+                        // Determine if bestseller or top rated
+                        $isBestseller = $product->featured ?? false; // Assuming featured products are bestsellers
+                        $isTopRated = $rating !== null && $rating >= 4.0; // Assuming 4.0+ ratings are top rated
+                        
                         // Get the hero image if available
                         $image = $product->heroImage ? $product->heroImage->path : 
                                 ($product->images->first() ? $product->images->first()->path : null);
@@ -486,6 +514,12 @@ class ProductController extends Controller
                             'category' => $product->category ? ['name' => $product->category->name] : null,
                             'price' => $price,
                             'image' => $image,
+                            'availability_status' => $availabilityStatus,
+                            'discount_percentage' => $discountPercentage,
+                            'is_bestseller' => $isBestseller,
+                            'is_top_rated' => $isTopRated,
+                            'rating' => $rating,
+                            'review_count' => $reviewCount,
                         ];
                     })
                     ->toArray();
@@ -503,7 +537,7 @@ class ProductController extends Controller
                         ->orWhere('short_desc', 'like', "%{$q}%")
                         ->orWhere('long_desc', 'like', "%{$q}%");
                 })
-                ->with(['brand', 'category', 'heroImage', 'images'])
+                ->with(['brand', 'category', 'heroImage', 'images', 'variants.inventory', 'reviews'])
                 ->limit(8)
                 ->get()
                 ->map(function ($product) {
@@ -513,6 +547,34 @@ class ProductController extends Controller
                     
                     // Prefer sale price if available, otherwise use regular price
                     $price = $minSalePrice ?? $minPrice;
+                    
+                    // Calculate discount percentage if applicable
+                    $discountPercentage = null;
+                    if ($minSalePrice && $minPrice && $minPrice > 0) {
+                        $discountPercentage = round((($minPrice - $minSalePrice) / $minPrice) * 100);
+                    }
+                    
+                    // Get availability status based on inventory
+                    $availabilityStatus = null;
+                    $totalStock = $product->variants->sum(function ($variant) {
+                        return $variant->inventory ? $variant->inventory->stock : 0;
+                    });
+                    
+                    if ($totalStock > 10) {
+                        $availabilityStatus = 'In Stock';
+                    } elseif ($totalStock > 0) {
+                        $availabilityStatus = 'Low Stock';
+                    } else {
+                        $availabilityStatus = 'Out of Stock';
+                    }
+                    
+                    // Get rating and review count
+                    $rating = method_exists($product, 'averageRating') ? round($product->averageRating() ?? 0, 1) : null;
+                    $reviewCount = method_exists($product, 'reviewCount') ? $product->reviewCount() : null;
+                    
+                    // Determine if bestseller or top rated
+                    $isBestseller = $product->featured ?? false; // Assuming featured products are bestsellers
+                    $isTopRated = $rating !== null && $rating >= 4.0; // Assuming 4.0+ ratings are top rated
                     
                     // Get the hero image if available
                     $image = $product->heroImage ? $product->heroImage->path : 
@@ -526,6 +588,12 @@ class ProductController extends Controller
                         'category' => $product->category ? ['name' => $product->category->name] : null,
                         'price' => $price,
                         'image' => $image,
+                        'availability_status' => $availabilityStatus,
+                        'discount_percentage' => $discountPercentage,
+                        'is_bestseller' => $isBestseller,
+                        'is_top_rated' => $isTopRated,
+                        'rating' => $rating,
+                        'review_count' => $reviewCount,
                     ];
                 })
                 ->toArray();

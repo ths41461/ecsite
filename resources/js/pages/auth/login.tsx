@@ -10,6 +10,7 @@ import { register } from '@/routes';
 import { request } from '@/routes/password';
 import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 interface LoginProps {
     status?: string;
@@ -18,10 +19,12 @@ interface LoginProps {
 
 export default function Login({ status, canResetPassword }: LoginProps) {
     return (
-        <AuthLayout title="アカウントにログイン" description="以下にメールアドレスとパスワードを入力してログインしてください">
-            <Head title="ログイン" />
+        <>
+            <HomeNavigation />
+            <AuthLayout title="アカウントにログイン" description="以下にメールアドレスとパスワードを入力してログインしてください">
+                <Head title="ログイン" />
 
-            <Form {...AuthenticatedSessionController.store.form()} resetOnSuccess={['password']} className="flex flex-col gap-6">
+                <Form {...AuthenticatedSessionController.store.form()} resetOnSuccess={['password']} className="flex flex-col gap-6">
                 {({ processing, errors }) => (
                     <>
                         <div className="grid gap-6">
@@ -84,5 +87,6 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
         </AuthLayout>
+        </>
     );
 }

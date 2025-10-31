@@ -27,6 +27,7 @@ import {
   Trash2,
   Edit3
 } from 'lucide-react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 // Define TypeScript interfaces for dashboard data
 
@@ -884,11 +885,14 @@ export default function Dashboard() {
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="ダッシュボード" />
-            <div className="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-4 max-w-7xl mx-auto w-full">
-                {renderActiveTab()}
-            </div>
-        </AppLayout>
+        <>
+            <HomeNavigation />
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="ダッシュボード" />
+                <div className="flex h-full flex-1 flex-col gap-8 overflow-x-auto p-4 max-w-7xl mx-auto w-full">
+                    {renderActiveTab()}
+                </div>
+            </AppLayout>
+        </>
     );
 }

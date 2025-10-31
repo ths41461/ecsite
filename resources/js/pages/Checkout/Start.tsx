@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react'
 import { useState } from 'react'
+import { HomeNavigation } from '@/components/homeNavigation';
 
 function getCookie(name: string) {
   const parts = document.cookie.split('; ').map((c) => c.split('='))
@@ -56,9 +57,11 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
   // We do not expose a manual "cancel attempt" in UI anymore.
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10">
-      <Head title="チェックアウト" />
-      <h1 className="mb-2 text-2xl font-semibold">チェックアウト</h1>
+    <div className="min-h-screen bg-white">
+      <HomeNavigation />
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <Head title="チェックアウト" />
+        <h1 className="mb-2 text-2xl font-semibold">チェックアウト</h1>
       <p className="mb-6 text-sm text-neutral-600">支払いを完了するためにStripeにリダイレクトされます。</p>
       {previousCancelledReason && (
         (() => {
@@ -122,6 +125,7 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
       <div className="mt-4">
         <a href="/cart" className="text-sm text-neutral-600 hover:underline">カートに戻る</a>
       </div>
+    </div>
     </div>
   )
 }

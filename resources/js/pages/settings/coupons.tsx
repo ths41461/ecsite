@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { destroy as destroyCouponRoute, store as storeCouponRoute, update as updateCouponRoute } from '@/routes/coupons';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type Coupon = {
     id: number;
@@ -925,10 +926,12 @@ export default function CouponsSettings({ coupons, productOptions }: Props) {
     };
 
     return (
-        <AppLayout>
-            <Head title="クーポン設定" />
+        <>
+            <HomeNavigation />
+            <AppLayout>
+                <Head title="クーポン設定" />
 
-            <SettingsLayout fullWidth>
+                <SettingsLayout fullWidth>
                 <div className="mx-auto max-w-6xl space-y-10 px-4 py-10">
                     <header className="rounded-3xl border border-neutral-200/80 bg-gradient-to-br from-neutral-50 via-neutral-100 to-neutral-50 p-6 shadow-lg">
                         <div className="flex flex-wrap items-start justify-between gap-4">
@@ -1008,5 +1011,6 @@ export default function CouponsSettings({ coupons, productOptions }: Props) {
                 </div>
             </SettingsLayout>
         </AppLayout>
+        </>
     );
 }

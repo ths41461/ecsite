@@ -6,16 +6,19 @@ import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
 import { Form, Head } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 export default function ConfirmPassword() {
     return (
-        <AuthLayout
-            title="パスワードの確認"
-            description="これはアプリケーションのセキュアなエリアです。続行する前にパスワードを確認してください。"
-        >
-            <Head title="パスワード確認" />
+        <>
+            <HomeNavigation />
+            <AuthLayout
+                title="パスワードの確認"
+                description="これはアプリケーションのセキュアなエリアです。続行する前にパスワードを確認してください。"
+            >
+                <Head title="パスワード確認" />
 
-            <Form {...ConfirmablePasswordController.store.form()} resetOnSuccess={['password']}>
+                <Form {...ConfirmablePasswordController.store.form()} resetOnSuccess={['password']}>
                 {({ processing, errors }) => (
                     <div className="space-y-6">
                         <div className="grid gap-2">
@@ -35,5 +38,6 @@ export default function ConfirmPassword() {
                 )}
             </Form>
         </AuthLayout>
+        </>
     );
 }

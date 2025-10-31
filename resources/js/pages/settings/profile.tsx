@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/app-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import { edit } from '@/routes/profile';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -25,10 +26,12 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     const { auth } = usePage<SharedData>().props;
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="プロフィール設定" />
+        <>
+            <HomeNavigation />
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="プロフィール設定" />
 
-            <SettingsLayout>
+                <SettingsLayout>
                 <div className="space-y-6">
                     <HeadingSmall title="プロフィール情報" description="お名前とメールアドレスを更新してください" />
 
@@ -116,5 +119,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
                 <DeleteUser />
             </SettingsLayout>
         </AppLayout>
+        </>
     );
 }

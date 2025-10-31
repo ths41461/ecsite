@@ -10,6 +10,7 @@ import SizeFilter from '@/components/search-filters/SizeFilter';
 import HierarchicalCategoryFilter from '@/components/search-filters/HierarchicalCategoryFilter';
 import { useState, useEffect, useRef } from 'react';
 import { useFilterState } from '@/hooks/use-filter-state';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type ProductItem = {
     id: number;
@@ -331,10 +332,12 @@ export default function Index({ products, filters, facets }: Props) {
         stateFilters.priceMax !== undefined || stateFilters.rating || stateFilters.gender || stateFilters.size;
 
     return (
-        <div className="mx-auto max-w-[1408px] px-4 py-6">
-            <Head title="商品" />
+        <div className="min-h-screen bg-white">
+            <HomeNavigation />
+            <div className="mx-auto max-w-[1408px] px-4 py-6">
+                <Head title="商品" />
 
-            <div className="mb-8 w-full">
+                <div className="mb-8 w-full">
                 <div className="mx-auto w-full max-w-[1408px]">
                     <div className="flex h-[300px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20">
                         <div className="text-center">
@@ -537,6 +540,7 @@ export default function Index({ products, filters, facets }: Props) {
                     </nav>
                 </div>
             </div>
+        </div>
         </div>
     );
 }

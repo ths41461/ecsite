@@ -3,6 +3,7 @@ import { EmbeddedCheckout, EmbeddedCheckoutProvider } from '@stripe/react-stripe
 import { loadStripe, Stripe } from '@stripe/stripe-js'
 import { useEffect, useMemo, useState } from 'react'
 import CheckoutTimeline, { TimelineStep } from '@/components/CheckoutTimeline'
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type PageProps = {
   order_number: string
@@ -35,9 +36,11 @@ export default function CheckoutPay({ order_number, client_secret, stripe_pk, fa
   }, [stripePromise])
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8">
-      <Head title="安全な支払い" />
-      <CheckoutTimeline steps={timeline} />
+    <div className="min-h-screen bg-white">
+      <HomeNavigation />
+      <div className="mx-auto max-w-3xl px-4 py-8">
+        <Head title="安全な支払い" />
+        <CheckoutTimeline steps={timeline} />
 
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
@@ -102,6 +105,7 @@ export default function CheckoutPay({ order_number, client_secret, stripe_pk, fa
           。
         </div>
       </div>
+    </div>
     </div>
   )
 }

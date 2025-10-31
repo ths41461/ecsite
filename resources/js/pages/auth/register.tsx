@@ -9,12 +9,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/auth-layout';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 export default function Register() {
     return (
-        <AuthLayout title="アカウントを作成" description="以下に詳細情報を入力してアカウントを作成してください">
-            <Head title="新規登録" />
-            <Form
+        <>
+            <HomeNavigation />
+            <AuthLayout title="アカウントを作成" description="以下に詳細情報を入力してアカウントを作成してください">
+                <Head title="新規登録" />
+                <Form
                 {...RegisteredUserController.store.form()}
                 resetOnSuccess={['password', 'password_confirmation']}
                 disableWhileProcessing
@@ -96,5 +99,6 @@ export default function Register() {
                 )}
             </Form>
         </AuthLayout>
+        </>
     );
 }

@@ -7,19 +7,22 @@ import { LoaderCircle } from 'lucide-react';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import AuthLayout from '@/layouts/auth-layout';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 export default function VerifyEmail({ status }: { status?: string }) {
     return (
-        <AuthLayout title="メールアドレスの確認" description="ご登録時にご提供いただいたメールアドレスに送信したリンクをクリックして、メールアドレスをご確認ください。">
-            <Head title="メールアドレスの確認" />
+        <>
+            <HomeNavigation />
+            <AuthLayout title="メールアドレスの確認" description="ご登録時にご提供いただいたメールアドレスに送信したリンクをクリックして、メールアドレスをご確認ください。">
+                <Head title="メールアドレスの確認" />
 
-            {status === 'verification-link-sent' && (
-                <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    新しい確認リンクが、ご登録時にご提供いただいたメールアドレスに送信されました。
-                </div>
-            )}
+                {status === 'verification-link-sent' && (
+                    <div className="mb-4 text-center text-sm font-medium text-green-600">
+                        新しい確認リンクが、ご登録時にご提供いただいたメールアドレスに送信されました。
+                    </div>
+                )}
 
-            <Form {...EmailVerificationNotificationController.store.form()} className="space-y-6 text-center">
+                <Form {...EmailVerificationNotificationController.store.form()} className="space-y-6 text-center">
                 {({ processing }) => (
                     <>
                         <Button disabled={processing} variant="secondary">
@@ -34,5 +37,6 @@ export default function VerifyEmail({ status }: { status?: string }) {
                 )}
             </Form>
         </AuthLayout>
+        </>
     );
 }

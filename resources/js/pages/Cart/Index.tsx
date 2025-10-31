@@ -1,5 +1,6 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
+import { HomeNavigation } from '@/components/homeNavigation';
 
 type ProductRef = { id: number; name: string; slug: string };
 type LineNotice = { code: 'qty_clamped_to_available'; requested: number; available: number };
@@ -218,10 +219,12 @@ export default function CartIndex({ initialCart }: PageProps) {
     const couponLineIdSet = useMemo(() => new Set(cart.coupon_line_ids ?? []), [cart.coupon_line_ids]);
 
     return (
-        <div className="mx-auto max-w-5xl px-4 py-6">
-            <Head title="ショッピングカート" />
+        <div className="min-h-screen bg-white">
+            <HomeNavigation />
+            <div className="mx-auto max-w-5xl px-4 py-6">
+                <Head title="ショッピングカート" />
 
-            <div className="mb-6 flex items-end justify-between">
+                <div className="mb-6 flex items-end justify-between">
                 <div>
                     <h1 className="text-2xl font-semibold">ショッピングカート</h1>
                     <p className="text-sm text-neutral-500">{hasItems ? `${cart.lines.length} 個の商品` : '商品がありません'}</p>
@@ -441,6 +444,7 @@ export default function CartIndex({ initialCart }: PageProps) {
                     </aside>
                 </div>
             )}
+        </div>
         </div>
     );
 }

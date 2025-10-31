@@ -33,6 +33,12 @@ type SearchSuggestion = {
   category: { name?: string | null };
   price?: number | null;
   image?: string | null;
+  availability_status?: string | null;
+  discount_percentage?: number | null;
+  is_bestseller?: boolean;
+  is_top_rated?: boolean;
+  rating?: number | null;
+  review_count?: number | null;
 };
 
 type Cart = {
@@ -305,27 +311,66 @@ export function HomeNavigation() {
                       <li 
                         key={suggestion.id}
                         onClick={() => handleSuggestionClick(suggestion)}
-                        className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3"
+                        className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors duration-150"
                       >
-                        <div className="flex items-center gap-3">
-                          {suggestion.image && (
-                            <div className="flex-shrink-0 w-12 h-12">
-                              <img 
-                                src={suggestion.image} 
-                                alt={suggestion.name} 
-                                className="w-full h-full object-cover"
-                                loading="lazy"
-                              />
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-start gap-3 flex-1 min-w-0">
+                            {suggestion.image && (
+                              <div className="flex-shrink-0 w-12 h-12">
+                                <img 
+                                  src={suggestion.image} 
+                                  alt={suggestion.name} 
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-semibold text-[#0D0D0D] text-sm truncate">{suggestion.name}</div>
+                              <div className="text-xs text-[#444444] truncate">
+                                {suggestion.brand?.name} • {suggestion.category?.name}
+                              </div>
                             </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-[#0D0D0D] text-sm truncate">{suggestion.name}</div>
-                            <div className="text-xs text-[#444444] truncate">
-                              {suggestion.brand?.name} • {suggestion.category?.name}
-                            </div>
+                          </div>
+                          <div className="ml-4 flex flex-col items-end justify-start flex-shrink-0">
                             {suggestion.price && (
-                              <div className="text-xs font-semibold text-[#0D0D0D]">
+                              <div className="text-xs font-bold text-[#0D0D0D] mb-1">
                                 ¥{suggestion.price.toLocaleString()}
+                              </div>
+                            )}
+                            {suggestion.availability_status && (
+                              <div className={`text-xs mb-1 ${
+                                suggestion.availability_status === 'In Stock' ? 'text-[#0D0D0D]' : 
+                                suggestion.availability_status === 'Low Stock' ? 'text-[#886600]' : 
+                                'text-[#880000]'
+                              }`}>
+                                {suggestion.availability_status}
+                              </div>
+                            )}
+                            {(suggestion.discount_percentage || suggestion.is_bestseller || suggestion.is_top_rated) && (
+                              <div className="flex gap-1 flex-wrap justify-end">
+                                {suggestion.discount_percentage && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-red-50 text-red-700 border border-red-200">
+                                    {suggestion.discount_percentage}% 割引
+                                  </span>
+                                )}
+                                {suggestion.is_bestseller && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                    人気商品
+                                  </span>
+                                )}
+                                {suggestion.is_top_rated && (
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                    高評価
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {suggestion.rating !== undefined && suggestion.rating !== null && (
+                              <div className="flex items-center text-[0.7rem] text-[#444444] mt-1">
+                                <span className="mr-1">⭐</span>
+                                <span className="font-medium">{suggestion.rating}</span>
+                                {suggestion.review_count && <span className="ml-1">({suggestion.review_count})</span>}
                               </div>
                             )}
                           </div>
@@ -363,10 +408,10 @@ export function HomeNavigation() {
           {/* Bottom Section - Main Navigation Menu */}
           <div className="flex flex-col items-center gap-2.5 px-[312px] py-[5px]">
             <div className="flex flex-row items-center justify-center gap-8 w-full">
-              <CustomNavButton className="whitespace-nowrap">商品一覧</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap">香り診断</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap">ブランド紹介</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap">お問い合わせ</CustomNavButton>
+              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/products'); }}>商品一覧</CustomNavButton>
+              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/fragrance-diagnosis'); }}>香り診断</CustomNavButton>
+              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/brand-introduction'); }}>ブランド紹介</CustomNavButton>
+              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/contact'); }}>お問い合わせ</CustomNavButton>
             </div>
           </div>
         </div>
@@ -518,27 +563,66 @@ export function HomeNavigation() {
                             handleSuggestionClick(suggestion);
                             setIsMobileMenuOpen(false);
                           }}
-                          className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3"
+                          className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors duration-150"
                         >
-                          <div className="flex items-center gap-3">
-                            {suggestion.image && (
-                              <div className="flex-shrink-0 w-10 h-10">
-                                <img 
-                                  src={suggestion.image} 
-                                  alt={suggestion.name} 
-                                  className="w-full h-full object-cover"
-                                  loading="lazy"
-                                />
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start gap-2 flex-1 min-w-0">
+                              {suggestion.image && (
+                                <div className="flex-shrink-0 w-10 h-10">
+                                  <img 
+                                    src={suggestion.image} 
+                                    alt={suggestion.name} 
+                                    className="w-full h-full object-cover"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <div className="font-semibold text-[#0D0D0D] text-xs truncate">{suggestion.name}</div>
+                                <div className="text-[0.6rem] text-[#444444] truncate">
+                                  {suggestion.brand?.name} • {suggestion.category?.name}
+                                </div>
                               </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-[#0D0D0D] text-xs truncate">{suggestion.name}</div>
-                              <div className="text-xs text-[#444444] truncate">
-                                {suggestion.brand?.name} • {suggestion.category?.name}
-                              </div>
+                            </div>
+                            <div className="ml-2 flex flex-col items-end justify-start flex-shrink-0">
                               {suggestion.price && (
-                                <div className="text-xs font-semibold text-[#0D0D0D]">
+                                <div className="text-[0.6rem] font-bold text-[#0D0D0D] mb-1">
                                   ¥{suggestion.price.toLocaleString()}
+                                </div>
+                              )}
+                              {suggestion.availability_status && (
+                                <div className={`text-[0.6rem] mb-1 ${
+                                  suggestion.availability_status === 'In Stock' ? 'text-[#0D0D0D]' : 
+                                  suggestion.availability_status === 'Low Stock' ? 'text-[#886600]' : 
+                                  'text-[#880000]'
+                                }`}>
+                                  {suggestion.availability_status}
+                                </div>
+                              )}
+                              {(suggestion.discount_percentage || suggestion.is_bestseller || suggestion.is_top_rated) && (
+                                <div className="flex gap-1 flex-wrap justify-end">
+                                  {suggestion.discount_percentage && (
+                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-red-50 text-red-700 border border-red-200">
+                                      {suggestion.discount_percentage}% 割引
+                                    </span>
+                                  )}
+                                  {suggestion.is_bestseller && (
+                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                      人気商品
+                                    </span>
+                                  )}
+                                  {suggestion.is_top_rated && (
+                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                      高評価
+                                    </span>
+                                  )}
+                                </div>
+                              )}
+                              {suggestion.rating !== undefined && suggestion.rating !== null && (
+                                <div className="flex items-center text-[0.6rem] text-[#444444] mt-1">
+                                  <span className="mr-1">⭐</span>
+                                  <span className="font-medium">{suggestion.rating}</span>
+                                  {suggestion.review_count && <span className="ml-1">({suggestion.review_count})</span>}
                                 </div>
                               )}
                             </div>
@@ -559,10 +643,10 @@ export function HomeNavigation() {
 
               {/* Main Navigation Menu */}
               <div className="flex flex-col items-center gap-4 py-4 flex-1">
-                <CustomNavButton className="w-full text-center whitespace-nowrap">商品一覧</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap">香り診断</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap">ブランド紹介</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap">お問い合わせ</CustomNavButton>
+                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/products'); setIsMobileMenuOpen(false); }}>商品一覧</CustomNavButton>
+                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/fragrance-diagnosis'); setIsMobileMenuOpen(false); }}>香り診断</CustomNavButton>
+                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/brand-introduction'); setIsMobileMenuOpen(false); }}>ブランド紹介</CustomNavButton>
+                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/contact'); setIsMobileMenuOpen(false); }}>お問い合わせ</CustomNavButton>
               </div>
 
               {/* Additional Menu Options */}
@@ -611,14 +695,14 @@ interface CustomNavButtonProps {
   className?: string;
 }
 
-function CustomNavButton({ children, className }: CustomNavButtonProps) {
+function CustomNavButton({ children, className, onClick }: CustomNavButtonProps & { onClick?: () => void }) {
   return (
     <button
       className={cn(
         "flex flex-row items-center justify-center gap-2 h-10 border-2 border-[#888888] text-sm font-medium text-[#444444] px-4 py-2.5 cursor-pointer",
         className
       )}
-      onClick={() => setSearchQuery('')}
+      onClick={onClick}
     >
       {children}
     </button>
