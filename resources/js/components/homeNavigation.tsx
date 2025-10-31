@@ -24,6 +24,17 @@ type CartLine = {
   };
 };
 
+// Define search suggestion type
+type SearchSuggestion = {
+  id: number;
+  name: string;
+  slug: string;
+  brand: { name?: string | null };
+  category: { name?: string | null };
+  price?: number | null;
+  image?: string | null;
+};
+
 type Cart = {
   lines: CartLine[];
   subtotal_cents: number;
@@ -67,8 +78,12 @@ export function HomeNavigation() {
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const hasFetchedInitialCart = useRef(false);
   const isUpdatingFromStorage = useRef(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch cart data and update count
   useEffect(() => {
@@ -127,9 +142,112 @@ export function HomeNavigation() {
     };
   }, []);
 
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
   // Function to handle cart click and navigate to cart page
   const handleCartClick = () => {
     router.get('/cart');
+  };
+
+  // Fetch search suggestions
+  const fetchSuggestions = async (query: string) => {
+    if (!query.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    setLoadingSuggestions(true);
+    try {
+      const response = await fetch(`/api/search/autocomplete?q=${encodeURIComponent(query)}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setSuggestions(data.suggestions || []);
+        setShowSuggestions(true);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    } catch (error) {
+      console.error('Error fetching search suggestions:', error);
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  // Handle search input change with debounce
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout for debouncing
+    if (value.trim()) {
+      searchTimeoutRef.current = setTimeout(() => {
+        fetchSuggestions(value);
+      }, 300); // 300ms debounce
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    // Navigate directly to the specific product page using the slug
+    router.get(`/products/${suggestion.slug}`);
+    // Clear search and hide suggestions
+    setSearchQuery('');
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
+  // Handle Enter key press
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && searchQuery.trim()) {
+      if (suggestions.length > 0 && showSuggestions) {
+        // If suggestions are visible, use the first one
+        handleSuggestionClick(suggestions[0]);
+      } else {
+        // Otherwise, just navigate to search results
+        router.get(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }
+  };
+
+  // Handle input blur to hide suggestions after a delay
+  const handleInputBlur = () => {
+    setTimeout(() => {
+      setShowSuggestions(false);
+    }, 200); // Small delay to allow for clicking on suggestions
+  };
+
+  // Handle input focus to show suggestions if there are any
+  const handleInputFocus = () => {
+    if (searchQuery && suggestions.length > 0) {
+      setShowSuggestions(true);
+    }
   };
 
   return (
@@ -148,33 +266,81 @@ export function HomeNavigation() {
           {/* Top Section - Search and User Options */}
           <div className="flex flex-row items-center justify-between">
             {/* Search Bar */}
-            <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
-              <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchQuery.trim()) {
-                    router.get(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
-                  }
-                }}
-                placeholder="検索"
-                className="w-full bg-transparent border-none focus:outline-none text-[#0D0D0D] text-base"
-              />
-              {searchQuery && (
-                <button 
-                  type="button" 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSearchQuery('');
-                  }}
-                  className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+            <div className="relative">
+              <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
+                <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleKeyDown}
+                  onFocus={handleInputFocus}
+                  onBlur={handleInputBlur}
+                  placeholder="検索"
+                  className="w-full bg-transparent border-none focus:outline-none text-[#0D0D0D] text-base"
+                />
+                {searchQuery && (
+                  <button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSearchQuery('');
+                      setSuggestions([]);
+                      setShowSuggestions(false);
+                    }}
+                    className="flex items-center justify-center w-6 h-6 rounded-full hover:bg-gray-200"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+              
+              {/* Autocomplete Dropdown */}
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-[#888888] shadow-lg max-h-96 overflow-y-auto">
+                  <ul>
+                    {suggestions.map((suggestion, index) => (
+                      <li 
+                        key={suggestion.id}
+                        onClick={() => handleSuggestionClick(suggestion)}
+                        className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          {suggestion.image && (
+                            <div className="flex-shrink-0 w-12 h-12">
+                              <img 
+                                src={suggestion.image} 
+                                alt={suggestion.name} 
+                                className="w-full h-full object-cover"
+                                loading="lazy"
+                              />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-[#0D0D0D] text-sm truncate">{suggestion.name}</div>
+                            <div className="text-xs text-[#444444] truncate">
+                              {suggestion.brand?.name} • {suggestion.category?.name}
+                            </div>
+                            {suggestion.price && (
+                              <div className="text-xs font-semibold text-[#0D0D0D]">
+                                ¥{suggestion.price.toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              
+              {/* Loading indicator */}
+              {loadingSuggestions && (
+                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-[#888888] shadow-lg py-4 flex justify-center">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
+                </div>
               )}
             </div>
 
@@ -300,34 +466,94 @@ export function HomeNavigation() {
               </div>
 
               {/* Search Bar in Menu */}
-              <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-[#888888] w-full">
-                <Search className="w-4 h-4 text-[#0D0D0D] opacity-50" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && searchQuery.trim()) {
-                      router.get(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
-                      setIsMobileMenuOpen(false);
-                    }
-                  }}
-                  placeholder="検索"
-                  className="w-full bg-transparent border-none focus:outline-none text-[#0D0D0D] text-sm"
-                />
-                {searchQuery && (
-                  <button 
-                    type="button" 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSearchQuery('');
+              <div className="relative w-full">
+                <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-[#888888] w-full">
+                  <Search className="w-4 h-4 text-[#0D0D0D] opacity-50" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        if (suggestions.length > 0 && showSuggestions) {
+                          handleSuggestionClick(suggestions[0]);
+                          setIsMobileMenuOpen(false);
+                        } else {
+                          router.get(`/products?q=${encodeURIComponent(searchQuery.trim())}`);
+                          setIsMobileMenuOpen(false);
+                        }
+                      }
                     }}
-                    className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-200"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
+                    onFocus={handleInputFocus}
+                    onBlur={handleInputBlur}
+                    placeholder="検索"
+                    className="w-full bg-transparent border-none focus:outline-none text-[#0D0D0D] text-sm"
+                  />
+                  {searchQuery && (
+                    <button 
+                      type="button" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSearchQuery('');
+                        setSuggestions([]);
+                        setShowSuggestions(false);
+                      }}
+                      className="flex items-center justify-center w-5 h-5 rounded-full hover:bg-gray-200"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                
+                {/* Mobile Autocomplete Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-[#888888] shadow-lg max-h-64 overflow-y-auto">
+                    <ul>
+                      {suggestions.map((suggestion, index) => (
+                        <li 
+                          key={suggestion.id}
+                          onClick={() => {
+                            handleSuggestionClick(suggestion);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className="border-b border-gray-200 last:border-b-0 cursor-pointer px-4 py-3"
+                        >
+                          <div className="flex items-center gap-3">
+                            {suggestion.image && (
+                              <div className="flex-shrink-0 w-10 h-10">
+                                <img 
+                                  src={suggestion.image} 
+                                  alt={suggestion.name} 
+                                  className="w-full h-full object-cover"
+                                  loading="lazy"
+                                />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-[#0D0D0D] text-xs truncate">{suggestion.name}</div>
+                              <div className="text-xs text-[#444444] truncate">
+                                {suggestion.brand?.name} • {suggestion.category?.name}
+                              </div>
+                              {suggestion.price && (
+                                <div className="text-xs font-semibold text-[#0D0D0D]">
+                                  ¥{suggestion.price.toLocaleString()}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                {/* Mobile Loading indicator */}
+                {loadingSuggestions && (
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-[#888888] shadow-lg py-4 flex justify-center">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
+                  </div>
                 )}
               </div>
 
