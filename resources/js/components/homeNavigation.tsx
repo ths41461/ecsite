@@ -93,12 +93,15 @@ export function HomeNavigation() {
   const cartCacheRef = useRef<{ data: Cart | null; timestamp: number } | null>(null);
   const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+
   // Fetch cart data and update count
   useEffect(() => {
     const fetchCartCount = async () => {
-      if (isLoading) return; // Prevent concurrent requests
+      if (hasFetchedInitialCart.current) return; // Prevent multiple fetch attempts
       
       setIsLoading(true);
+      hasFetchedInitialCart.current = true; // Mark as fetching to prevent re-entrancy
+      
       try {
         // Check if we have cached data that's still valid
         if (cartCacheRef.current) {
@@ -111,18 +114,25 @@ export function HomeNavigation() {
             setCartCount(totalItems);
             setCartToStorage(data);
             setIsLoading(false);
-            hasFetchedInitialCart.current = true;
             return;
           }
         }
 
-        const response = await fetch('/cart', {
+        // Create a timeout promise to prevent hanging requests
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Cart fetch timeout')), 5000); // 5 second timeout
+        });
+
+        const fetchPromise = fetch('/cart', {
           headers: { 
             Accept: 'application/json',
             'Content-Type': 'application/json',
           },
           credentials: 'same-origin',
         });
+
+        // Race between the fetch and the timeout
+        const response = await Promise.race([fetchPromise, timeoutPromise]);
         
         if (response.ok) {
           const cartData: Cart = await response.json();
@@ -138,12 +148,19 @@ export function HomeNavigation() {
           
           // Update localStorage to notify other tabs/windows
           setCartToStorage(cartData);
+          
+          // Dispatch cart update to other components
+          if ((window as any).dispatchCartUpdate) {
+            (window as any).dispatchCartUpdate(cartData);
+          }
         } else {
           // If cart API fails, try to use localStorage as fallback
           const storedCart = getCartFromStorage();
           if (storedCart) {
             const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
             setCartCount(totalItems);
+          } else {
+            setCartCount(0); // Ensure cart count is set to 0 if no data available
           }
         }
       } catch (error) {
@@ -153,10 +170,11 @@ export function HomeNavigation() {
         if (storedCart) {
           const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
           setCartCount(totalItems);
+        } else {
+          setCartCount(0); // Ensure cart count is set to 0 if no fallback available
         }
       } finally {
         setIsLoading(false);
-        hasFetchedInitialCart.current = true;
       }
     };
 
@@ -171,7 +189,7 @@ export function HomeNavigation() {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'cart-state' && e.newValue) {
         try {
-          // This only executes in OTHER tabs, not the one that made the change
+          // This executes in OTHER tabs, not the one that made the change
           const cartData: Cart = JSON.parse(e.newValue);
           const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
           setCartCount(totalItems);
@@ -188,6 +206,57 @@ export function HomeNavigation() {
     };
   }, []);
 
+  // Function to update cart count and broadcast changes
+  const updateCartCountAndBroadcast = (cartData: Cart | null) => {
+    if (cartData && Array.isArray(cartData.lines)) {
+      const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+      setCartCount(totalItems);
+      // Also update localStorage for cross-tab sync
+      setCartToStorage(cartData);
+    } else {
+      setCartCount(0);
+      setCartToStorage(null);
+    }
+  };
+
+  // Listen for storage events to sync cart across tabs/windows
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'cart-state' && e.newValue) {
+        try {
+          // This executes in OTHER tabs, not the one that made the change
+          const cartData: Cart = JSON.parse(e.newValue);
+          updateCartCountAndBroadcast(cartData);
+        } catch (error) {
+          console.error('Failed to parse cart data from storage event:', error);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Listen for custom cart update events from other components in the same tab
+  useEffect(() => {
+    const handleCustomCartUpdate = (e: CustomEvent) => {
+      if (e.detail?.cart) {
+        updateCartCountAndBroadcast(e.detail.cart);
+      }
+    };
+
+    window.addEventListener('cart-updated', handleCustomCartUpdate as EventListener);
+
+    return () => {
+      window.removeEventListener('cart-updated', handleCustomCartUpdate as EventListener);
+    };
+  }, []);
+
+
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -199,8 +268,97 @@ export function HomeNavigation() {
     };
   }, []);
 
+  // Function to force refresh cart count from server
+  const refreshCartCount = async () => {
+    if (isLoading) return; // Prevent concurrent requests
+    
+    setIsLoading(true);
+    
+    try {
+      // Check if we have cached data that's still valid
+      if (cartCacheRef.current) {
+        const { data, timestamp } = cartCacheRef.current;
+        const now = Date.now();
+        
+        if (now - timestamp < CACHE_DURATION) {
+          // Use cached data
+          const totalItems = data.lines.reduce((sum, line) => sum + line.qty, 0);
+          setCartCount(totalItems);
+          setCartToStorage(data);
+          
+          // Dispatch cart update to other components
+          if ((window as any).dispatchCartUpdate) {
+            (window as any).dispatchCartUpdate(data);
+          }
+          
+          return;
+        }
+      }
+
+      // Create a timeout promise to prevent hanging requests
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Cart fetch timeout')), 5000); // 5 second timeout
+      });
+
+      const fetchPromise = fetch('/cart', {
+        headers: { 
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        credentials: 'same-origin',
+      });
+
+      // Race between the fetch and the timeout
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      if (response.ok) {
+        const cartData: Cart = await response.json();
+        
+        // Cache the successful response
+        cartCacheRef.current = {
+          data: cartData,
+          timestamp: Date.now()
+        };
+        
+        const totalItems = cartData.lines.reduce((sum, line) => sum + line.qty, 0);
+        setCartCount(totalItems);
+        
+        // Update localStorage to notify other tabs/windows
+        setCartToStorage(cartData);
+        
+        // Dispatch cart update to other components
+        if ((window as any).dispatchCartUpdate) {
+          (window as any).dispatchCartUpdate(cartData);
+        }
+      } else {
+        // If cart API fails, try to use localStorage as fallback
+        const storedCart = getCartFromStorage();
+        if (storedCart) {
+          const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
+          setCartCount(totalItems);
+        } else {
+          setCartCount(0); // Ensure cart count is set to 0 if no data available
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch cart count:', error);
+      // Fallback to localStorage if API fails
+      const storedCart = getCartFromStorage();
+      if (storedCart) {
+        const totalItems = storedCart.lines.reduce((sum, line) => sum + line.qty, 0);
+        setCartCount(totalItems);
+      } else {
+        setCartCount(0); // Ensure cart count is set to 0 if no fallback available
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Function to handle cart click and navigate to cart page
-  const handleCartClick = () => {
+  const handleCartClick = async () => {
+    // Refresh cart count before navigating to ensure latest data
+    await refreshCartCount();
     router.get('/cart');
   };
 

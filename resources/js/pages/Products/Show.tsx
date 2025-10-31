@@ -211,6 +211,9 @@ export default function Show({ product, gallery, related }: Props) {
                     if (typeof window !== 'undefined' && window.localStorage) {
                         localStorage.setItem('cart-state', JSON.stringify(cart));
                     }
+                    
+                    // Dispatch custom event to notify same-tab components
+                    window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart } }));
                 } catch (error) {
                     console.error('Failed to update cart in localStorage:', error);
                 }
@@ -225,6 +228,9 @@ export default function Show({ product, gallery, related }: Props) {
                         if (typeof window !== 'undefined' && window.localStorage) {
                             localStorage.setItem('cart-state', JSON.stringify(fdata));
                         }
+                        
+                        // Dispatch custom event to notify same-tab components
+                        window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: fdata } }));
                     } catch (error) {
                         console.error('Failed to update cart in localStorage:', error);
                     }
@@ -285,6 +291,9 @@ export default function Show({ product, gallery, related }: Props) {
                 if (typeof window !== 'undefined' && window.localStorage) {
                     localStorage.setItem('cart-state', JSON.stringify(data));
                 }
+                
+                // Dispatch custom event to notify same-tab components
+                window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data } }));
             } catch (error) {
                 console.error('Failed to update cart in localStorage:', error);
             }
@@ -308,6 +317,9 @@ export default function Show({ product, gallery, related }: Props) {
                 if (typeof window !== 'undefined' && window.localStorage) {
                     localStorage.setItem('cart-state', JSON.stringify(data));
                 }
+                
+                // Dispatch custom event to notify same-tab components
+                window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data } }));
             } catch (error) {
                 console.error('Failed to update cart in localStorage:', error);
             }
@@ -336,6 +348,9 @@ export default function Show({ product, gallery, related }: Props) {
                 if (typeof window !== 'undefined' && window.localStorage) {
                     localStorage.setItem('cart-state', JSON.stringify(data));
                 }
+                
+                // Dispatch custom event to notify same-tab components
+                window.dispatchEvent(new CustomEvent('cart-updated', { detail: { cart: data } }));
             } catch (error) {
                 console.error('Failed to update cart in localStorage:', error);
             }
