@@ -22,7 +22,8 @@ class CartController extends Controller
     public function index(Request $request)
     {
         $sessionId = $request->session()->getId();
-        $cart = $this->cart->get($sessionId);
+        $userId = $request->user()?->id;
+        $cart = $this->cart->get($sessionId, $userId);
 
         if ($request->wantsJson()) {
             return response()->json($cart);
@@ -42,11 +43,13 @@ class CartController extends Controller
     public function store(StoreCartRequest $request)
     {
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
         $data = $request->validated();
         $cart = $this->cart->add(
             $sessionId,
             (int) $data['variant_id'],
-            (int) $data['qty']
+            (int) $data['qty'],
+            $userId
         );
 
         return response()->json($cart);
@@ -60,11 +63,13 @@ class CartController extends Controller
     public function update(UpdateCartRequest $request, string $line)
     {
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
 
         $cart = $this->cart->update(
             $sessionId,
             $line,
-            $request->integer('qty')
+            $request->integer('qty'),
+            $userId
         );
 
         return response()->json($cart);
@@ -77,7 +82,8 @@ class CartController extends Controller
     public function destroy(Request $request, string $line)
     {
         $sessionId = $request->session()->getId();
-        $cart = $this->cart->remove($sessionId, $line);
+        $userId = $request->user()?->id;
+        $cart = $this->cart->remove($sessionId, $line, $userId);
 
         return response()->json($cart);
     }
@@ -90,9 +96,10 @@ class CartController extends Controller
     public function applyCoupon(Request $request)
     {
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
         $code = (string) $request->string('code')->toString();
         try {
-            $cart = $this->cart->applyCoupon($sessionId, $code, optional($request->user())->id);
+            $cart = $this->cart->applyCoupon($sessionId, $code, $userId);
             return response()->json($cart);
         } catch (\Illuminate\Validation\ValidationException $ve) {
             return response()->json(['message' => $ve->getMessage(), 'errors' => $ve->errors()], 422);
@@ -106,8 +113,9 @@ class CartController extends Controller
     public function removeCoupon(Request $request)
     {
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
 
-        $cart = $this->cart->removeCoupon($sessionId);
+        $cart = $this->cart->removeCoupon($sessionId, $userId);
 
         return response()->json($cart);
     }
@@ -129,13 +137,14 @@ class CartController extends Controller
         ]);
 
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
         $lines = $validated['lines'] ?? null;
 
         $result = $this->cart->previewCoupon(
             $sessionId,
             $validated['code'],
             $lines,
-            optional($request->user())->id,
+            $userId,
         );
 
         return response()->json($result, $result['valid'] ? 200 : 422);

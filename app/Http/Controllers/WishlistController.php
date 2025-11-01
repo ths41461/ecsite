@@ -16,7 +16,8 @@ class WishlistController extends Controller
     public function index(Request $request)
     {
         $sessionId = $request->session()->getId();
-        $data = $this->wishlist->items($sessionId);
+        $userId = $request->user()?->id;
+        $data = $this->wishlist->items($sessionId, $userId);
 
         if ($request->wantsJson()) {
             return response()->json($data);
@@ -32,7 +33,8 @@ class WishlistController extends Controller
         ]);
 
         $sessionId = $request->session()->getId();
-        $this->wishlist->add($sessionId, (int)$validated['product_id']);
+        $userId = $request->user()?->id;
+        $this->wishlist->add($sessionId, (int)$validated['product_id'], $userId);
 
         // Frontend only checks res.ok; No body required.
         return response()->noContent(Response::HTTP_NO_CONTENT);
@@ -42,8 +44,9 @@ class WishlistController extends Controller
     public function destroy(Request $request, $product)
     {
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
         $productId = (int) $product;
-        $this->wishlist->remove($sessionId, $productId);
+        $this->wishlist->remove($sessionId, $productId, $userId);
 
         return response()->noContent(Response::HTTP_NO_CONTENT);
     }

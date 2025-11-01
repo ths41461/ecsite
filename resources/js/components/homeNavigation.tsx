@@ -654,7 +654,10 @@ export function HomeNavigation() {
               )}
 
               {/* Favourite Button */}
-              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => setSearchQuery('')}>
+              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => {
+                setSearchQuery('');
+                router.visit('/wishlist');
+              }}>
                 <Heart className="w-4.5 h-4.5 text-gray-700" />
                 <span className="text-xs font-medium text-[#444444] whitespace-nowrap">お気に入り</span>
               </div>
@@ -754,7 +757,10 @@ export function HomeNavigation() {
             )}
 
             {/* Wishlist Button */}
-            <button className="flex flex-col items-center cursor-pointer" onClick={() => setSearchQuery('')}>
+            <button className="flex flex-col items-center cursor-pointer" onClick={() => {
+              setSearchQuery('');
+              router.visit('/wishlist');
+            }}>
               <Heart className="w-5 h-5 text-gray-700" />
               <span className="text-[0.6rem] text-[#444444] mt-1">お気に入り</span>
             </button>
@@ -1025,6 +1031,7 @@ export function HomeNavigation() {
                   )}
                   <button className="flex flex-col items-center cursor-pointer" onClick={() => {
                     setSearchQuery('');
+                    router.visit('/wishlist');
                     setIsMobileMenuOpen(false);
                   }}>
                     <Heart className="w-6 h-6 text-gray-700" />

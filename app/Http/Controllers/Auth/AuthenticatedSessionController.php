@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Services\CartService;
+use App\Services\WishlistService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +15,7 @@ use Inertia\Response;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function __construct(private CartService $cartService)
+    public function __construct(private CartService $cartService, private WishlistService $wishlistService)
     {
     }
 
@@ -52,6 +53,14 @@ class AuthenticatedSessionController extends Controller
             $this->cartService->mergeSessions($guestSessionId, $request->session()->getId());
         }
 
+        // Merge guest wishlist to authenticated user's wishlist
+        if ($guestSessionId) {
+            $userId = Auth::id();
+            if ($userId) {
+                $this->wishlistService->merge($guestSessionId, $userId);
+            }
+        }
+
         // Clean up the session variable
         $request->session()->forget('guest_session_before_login');
 
@@ -63,10 +72,18 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Get the session ID before logout to clear guest session data
+        $sessionId = $request->session()->getId();
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        // After logout, clear any guest session data that might exist
+        // This ensures that when the user returns as a guest, they start with a clean session
+        $this->cartService->clear($sessionId);
+        $this->wishlistService->clearGuestSession($sessionId);
 
         return redirect('/');
     }

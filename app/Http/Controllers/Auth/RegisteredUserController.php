@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\CartService;
+use App\Services\WishlistService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -16,7 +17,7 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
-    public function __construct(private CartService $cartService)
+    public function __construct(private CartService $cartService, private WishlistService $wishlistService)
     {
     }
 
@@ -64,6 +65,9 @@ class RegisteredUserController extends Controller
         if ($guestSessionId && $guestSessionId !== $currentSessionId) {
             $this->cartService->mergeSessions($guestSessionId, $currentSessionId);
         }
+
+        // Merge guest wishlist to the new user's wishlist
+        $this->wishlistService->merge($guestSessionId, $user->id);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

@@ -20,12 +20,6 @@ class CartService
     /** @var float Tax rate percent (from config/cart.php) */
     private float $taxRate;
 
-    // Separate Redis key for cart metadata (e.g., coupon)
-    private function metaKey(string $sessionId): string
-    {
-        return "cartmeta:{$sessionId}";
-    }
-
     public function __construct(private CouponEligibilityService $couponEligibility)
     {
         // NEW: configurable TTL, max qty, currency
@@ -36,11 +30,25 @@ class CartService
     }
 
     /**
-     * Cart key format: cart:{sessionId}
+     * Get the appropriate cart key based on authentication status
      */
-    private function key(string $sessionId): string
+    private function key(string $sessionId, ?int $userId = null): string
     {
+        if ($userId) {
+            return "cart:user:{$userId}";
+        }
         return "cart:{$sessionId}";
+    }
+
+    /**
+     * Get the appropriate cart meta key based on authentication status
+     */
+    private function metaKey(string $sessionId, ?int $userId = null): string
+    {
+        if ($userId) {
+            return "cartmeta:user:{$userId}";
+        }
+        return "cartmeta:{$sessionId}";
     }
 
     /**
@@ -49,7 +57,7 @@ class CartService
      * @return array Computed cart
      * @throws ValidationException
      */
-    public function add(string $sessionId, int $variantId, int $qty): array
+    public function add(string $sessionId, int $variantId, int $qty, ?int $userId = null): array
     {
         // Only enforce minimum of 1 on add; upper bound is clamped, not rejected
         if ($qty < 1) {
@@ -62,7 +70,7 @@ class CartService
             throw ValidationException::withMessages(['variant_id' => '選択された商品が存在しません。']);
         }
 
-        $raw = $this->loadRaw($sessionId);
+        $raw = $this->loadRaw($sessionId, $userId);
 
         $lineId = $this->lineId($variantId);
         $prevQty = (int)($raw[$lineId]['qty'] ?? 0);
@@ -73,10 +81,10 @@ class CartService
             'qty'        => min($this->maxQty, $requestedTotal),
         ];
 
-        $this->saveRaw($sessionId, $raw);
+        $this->saveRaw($sessionId, $raw, $userId);
 
         // Recompute with server pricing/stock rules
-        $cart = $this->get($sessionId);
+        $cart = $this->get($sessionId, $userId);
 
         // If the requested total exceeded what was finally applied (due to stock or maxQty),
         // attach a notice to the relevant line so the UI can toast it.
@@ -105,32 +113,32 @@ class CartService
      * @return array Computed cart
      * @throws ValidationException
      */
-    public function update(string $sessionId, string $lineId, int $qty): array
+    public function update(string $sessionId, string $lineId, int $qty, ?int $userId = null): array
     {
         if ($qty < 0 || $qty > $this->maxQty) {
             throw ValidationException::withMessages(['qty' => "数量は0から{$this->maxQty}の間でなければなりません。"]);
         }
 
-        $raw = $this->loadRaw($sessionId);
+        $raw = $this->loadRaw($sessionId, $userId);
 
         if (!isset($raw[$lineId])) {
             // Treat update as upsert when qty > 0 and line is missing (e.g., new session)
             if ($qty === 0) {
-                return $this->get($sessionId);
+                return $this->get($sessionId, $userId);
             }
 
             $variantId = (int)$lineId;
             if ($variantId <= 0 || !DB::table('product_variants')->where('id', $variantId)->exists()) {
                 // Unknown line and invalid variant; return current cart
-                return $this->get($sessionId);
+                return $this->get($sessionId, $userId);
             }
 
             $raw[$lineId] = [
                 'variant_id' => $variantId,
                 'qty'        => $qty,
             ];
-            $this->saveRaw($sessionId, $raw);
-            return $this->get($sessionId);
+            $this->saveRaw($sessionId, $raw, $userId);
+            return $this->get($sessionId, $userId);
         }
 
         if ($qty === 0) {
@@ -139,9 +147,9 @@ class CartService
             $raw[$lineId]['qty'] = $qty;
         }
 
-        $this->saveRaw($sessionId, $raw);
+        $this->saveRaw($sessionId, $raw, $userId);
 
-        return $this->get($sessionId);
+        return $this->get($sessionId, $userId);
     }
 
     /**
@@ -149,13 +157,13 @@ class CartService
      *
      * @return array Computed cart
      */
-    public function remove(string $sessionId, string $lineId): array
+    public function remove(string $sessionId, string $lineId, ?int $userId = null): array
     {
-        $raw = $this->loadRaw($sessionId);
+        $raw = $this->loadRaw($sessionId, $userId);
         unset($raw[$lineId]);
-        $this->saveRaw($sessionId, $raw);
+        $this->saveRaw($sessionId, $raw, $userId);
 
-        return $this->get($sessionId);
+        return $this->get($sessionId, $userId);
     }
 
     /**
@@ -184,9 +192,9 @@ class CartService
      *   currency: string
      * }
      */
-    public function get(string $sessionId): array
+    public function get(string $sessionId, ?int $userId = null): array
     {
-        $raw = $this->loadRaw($sessionId);
+        $raw = $this->loadRaw($sessionId, $userId);
         if (empty($raw)) {
             return [
                 'lines' => [],
@@ -203,7 +211,7 @@ class CartService
         $variantIds = $byLine->pluck('variant_id')->filter()->map(fn($v) => (int)$v)->all();
         if (empty($variantIds)) {
             // corrupted cart; wipe
-            $this->saveRaw($sessionId, []);
+            $this->saveRaw($sessionId, [], $userId);
             return [
                 'lines' => [],
                 'subtotal_cents' => 0,
@@ -315,7 +323,7 @@ class CartService
         $lines = array_values(array_filter($lines, fn($l) => $l['qty'] > 0));
 
         // Coupon (from meta)
-        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId, $userId), $userId);
         $couponsMeta = $meta['coupons'] ?? [];
         $activeCoupons = [];
         $couponDiscount = 0;
@@ -381,11 +389,11 @@ class CartService
 
         if (!empty($couponsMeta) && empty($activeCoupons)) {
             $meta['coupons'] = [];
-            $this->saveMeta($sessionId, $meta);
+            $this->saveMeta($sessionId, $meta, $userId);
             $couponCode = null;
         } elseif ($couponDiscount > 0 && $activeCoupons !== $couponsMeta) {
             $meta['coupons'] = $activeCoupons;
-            $this->saveMeta($sessionId, $meta);
+            $this->saveMeta($sessionId, $meta, $userId);
         }
 
         $taxableBase = max(0, $subtotal - $couponDiscount - $savings);
@@ -410,28 +418,28 @@ class CartService
     /**
      * Clear cart (helper).
      */
-    public function clear(string $sessionId): void
+    public function clear(string $sessionId, ?int $userId = null): void
     {
-        Redis::del($this->key($sessionId));
-        Redis::del($this->metaKey($sessionId));
+        Redis::del($this->key($sessionId, $userId));
+        Redis::del($this->metaKey($sessionId, $userId));
     }
 
     /**
-     * NEW: Merge carts (guest -> current session).
+     * NEW: Merge carts (guest -> current session or user).
      * Useful when login arrives (or to merge multiple device sessions).
      */
-    public function mergeSessions(string $fromSessionId, string $toSessionId): void
+    public function mergeSessions(string $fromSessionId, string $toSessionId, ?int $toUserId = null): void
     {
-        if ($fromSessionId === $toSessionId) {
+        if ($fromSessionId === $toSessionId && !$toUserId) {
             return;
         }
 
-        $from = $this->loadRaw($fromSessionId);
+        $from = $this->loadRaw($fromSessionId, null);
         if (empty($from)) {
             return;
         }
 
-        $to = $this->loadRaw($toSessionId);
+        $to = $this->loadRaw($toSessionId, $toUserId);
 
         foreach ($from as $lineId => $line) {
             $vid = (int)($line['variant_id'] ?? 0);
@@ -445,16 +453,16 @@ class CartService
             ];
         }
 
-        $this->saveRaw($toSessionId, $to);
-        Redis::del($this->key($fromSessionId));
+        $this->saveRaw($toSessionId, $to, $toUserId);
+        Redis::del($this->key($fromSessionId, null));
 
-        $fromMeta = $this->normalizeCouponMeta($fromSessionId, $this->loadMeta($fromSessionId));
-        $toMeta = $this->normalizeCouponMeta($toSessionId, $this->loadMeta($toSessionId));
+        $fromMeta = $this->normalizeCouponMeta($fromSessionId, $this->loadMeta($fromSessionId, null), null);
+        $toMeta = $this->normalizeCouponMeta($toSessionId, $this->loadMeta($toSessionId, $toUserId), $toUserId);
         if (!empty($fromMeta) && empty($toMeta)) {
-            $this->saveMeta($toSessionId, $fromMeta);
+            $this->saveMeta($toSessionId, $fromMeta, $toUserId);
         }
         if (!empty($fromMeta)) {
-            Redis::del($this->metaKey($fromSessionId));
+            Redis::del($this->metaKey($fromSessionId, null));
         }
     }
 
@@ -462,15 +470,15 @@ class CartService
      * ===== Internals (unchanged behavior) =====
      */
 
-    private function loadRaw(string $sessionId): array
+    private function loadRaw(string $sessionId, ?int $userId = null): array
     {
-        $val = Redis::get($this->key($sessionId));
+        $val = Redis::get($this->key($sessionId, $userId));
         if (!$val) return [];
         $arr = json_decode($val, true);
         return is_array($arr) ? $arr : [];
     }
 
-    private function saveRaw(string $sessionId, array $raw): void
+    private function saveRaw(string $sessionId, array $raw, ?int $userId = null): void
     {
         // Normalize: strip invalid entries, clamp qty to [1, maxQty]
         $normalized = [];
@@ -486,11 +494,11 @@ class CartService
         }
 
         if (empty($normalized)) {
-            Redis::del($this->key($sessionId));
+            Redis::del($this->key($sessionId, $userId));
             return;
         }
 
-        Redis::setex($this->key($sessionId), $this->ttl, json_encode($normalized));
+        Redis::setex($this->key($sessionId, $userId), $this->ttl, json_encode($normalized));
     }
 
     private function lineId(int $variantId): string
@@ -519,7 +527,7 @@ class CartService
             throw ValidationException::withMessages(['code' => 'クーポンコードは必須です。']);
         }
 
-        $cart = $this->get($sessionId);
+        $cart = $this->get($sessionId, $userId);
         $evaluation = $this->couponEligibility->evaluate(
             $code,
             $cart['lines'] ?? [],
@@ -533,34 +541,34 @@ class CartService
             throw ValidationException::withMessages(['code' => $message]);
         }
 
-        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId, $userId), $userId);
         $meta['coupons'] = [['code' => $code]];
 
-        $this->saveMeta($sessionId, $meta);
+        $this->saveMeta($sessionId, $meta, $userId);
 
-        return $this->get($sessionId);
+        return $this->get($sessionId, $userId);
     }
 
     /**
      * Remove any applied coupon from the cart.
      */
-    public function removeCoupon(string $sessionId): array
+    public function removeCoupon(string $sessionId, ?int $userId = null): array
     {
-        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId));
+        $meta = $this->normalizeCouponMeta($sessionId, $this->loadMeta($sessionId, $userId), $userId);
         if (!empty($meta['coupons'])) {
             $meta['coupons'] = [];
-            $this->saveMeta($sessionId, $meta);
+            $this->saveMeta($sessionId, $meta, $userId);
         }
 
-        return $this->get($sessionId);
+        return $this->get($sessionId, $userId);
     }
 
     /**
      * Return applied coupon info (code and computed discount) for this session.
      */
-    public function getAppliedCoupon(string $sessionId): array
+    public function getAppliedCoupon(string $sessionId, ?int $userId = null): array
     {
-        $cart = $this->get($sessionId);
+        $cart = $this->get($sessionId, $userId);
         return [
             'code' => $cart['coupon_code'] ?? null,
             'discount_cents' => (int)($cart['coupon_discount_cents'] ?? 0),
@@ -584,7 +592,7 @@ class CartService
         }
 
         if ($lines === null) {
-            $cart = $this->get($sessionId);
+            $cart = $this->get($sessionId, $userId);
             $candidateLines = $cart['lines'] ?? [];
         } else {
             $candidateLines = $this->normalizePreviewLines($lines);
@@ -637,21 +645,21 @@ class CartService
         ];
     }
 
-    private function loadMeta(string $sessionId): array
+    private function loadMeta(string $sessionId, ?int $userId = null): array
     {
-        $val = Redis::get($this->metaKey($sessionId));
+        $val = Redis::get($this->metaKey($sessionId, $userId));
         if (!$val) return [];
         $arr = json_decode($val, true);
         return is_array($arr) ? $arr : [];
     }
 
-    private function saveMeta(string $sessionId, array $meta): void
+    private function saveMeta(string $sessionId, array $meta, ?int $userId = null): void
     {
         if (empty($meta)) {
-            Redis::del($this->metaKey($sessionId));
+            Redis::del($this->metaKey($sessionId, $userId));
             return;
         }
-        Redis::setex($this->metaKey($sessionId), $this->ttl, json_encode($meta));
+        Redis::setex($this->metaKey($sessionId, $userId), $this->ttl, json_encode($meta));
     }
 
     private function lineQualifiesForCoupon(array $line, CouponEvaluationResult $evaluation): bool
@@ -677,14 +685,14 @@ class CartService
         return true;
     }
 
-    private function normalizeCouponMeta(string $sessionId, array $meta): array
+    private function normalizeCouponMeta(string $sessionId, array $meta, ?int $userId = null): array
     {
         if (isset($meta['coupon_code'])) {
             $meta['coupons'] = [[
                 'code' => strtoupper((string) $meta['coupon_code']),
             ]];
             unset($meta['coupon_code'], $meta['coupon_locked_lines']);
-            $this->saveMeta($sessionId, $meta);
+            $this->saveMeta($sessionId, $meta, $userId);
         }
 
         return $meta;
