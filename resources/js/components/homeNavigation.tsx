@@ -470,7 +470,7 @@ export function HomeNavigation() {
       {/* Desktop Layout */}
       <div className="hidden lg:flex flex-row items-center max-w-[1440px] mx-auto">
         {/* Logo Area */}
-        <div className="flex items-center justify-center gap-2.5 p-8 w-[200px] h-[100px] border border-[#888888] cursor-pointer" onClick={() => router.get('/')}>
+        <div className="flex items-center justify-center gap-2.5 p-8 w-[200px] h-[100px] border border-gray-200 cursor-pointer" onClick={() => router.get('/')}>
           <div className="w-[200px] h-[65.19px] bg-gray-100 rounded flex items-center justify-center">
             <span className="text-lg font-bold">LOGO</span>
           </div>
@@ -482,7 +482,7 @@ export function HomeNavigation() {
           <div className="flex flex-row items-center justify-between">
             {/* Search Bar */}
             <div className="relative">
-              <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
+              <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
                 <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
                 <input
                   type="text"
@@ -514,7 +514,7 @@ export function HomeNavigation() {
               
               {/* Autocomplete Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-[#888888] shadow-lg max-h-96 overflow-y-auto">
+                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-gray-200 shadow-lg max-h-96 overflow-y-auto">
                   <ul>
                     {suggestions.map((suggestion, index) => (
                       <li 
@@ -592,14 +592,14 @@ export function HomeNavigation() {
               
               {/* Loading indicator */}
               {loadingSuggestions && (
-                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-[#888888] shadow-lg py-4 flex justify-center">
+                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-gray-200 shadow-lg py-4 flex justify-center">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
                 </div>
               )}
             </div>
 
             {/* Top Navigation Bar */}
-            <div className="flex flex-row items-center justify-center gap-3 p-3 w-[194px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
+            <div className="flex flex-row items-center justify-center gap-3 p-3 w-[194px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
               {/* User Profile Button - Conditionally renders based on auth state */}
               {isAuthenticated ? (
                 // If user is logged in, show profile dropdown with logout
@@ -677,7 +677,7 @@ export function HomeNavigation() {
 
         {/* Cart Section - Updated to show dynamic count and be clickable */}
         <button 
-          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-[#888888] cursor-pointer"
+          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-gray-200 cursor-pointer"
           onClick={handleCartClick}
         >
           <ShoppingCart className="w-3.75 h-3.75 text-gray-700" />
@@ -692,7 +692,7 @@ export function HomeNavigation() {
         {/* Top Bar - Logo, Menu Button, Login, Wishlist, and Cart */}
         <div className="flex items-center justify-between py-3 px-4">
           {/* Left side - Logo */}
-          <div className="flex items-center justify-center p-2 border border-[#888888] cursor-pointer" onClick={() => router.get('/')}>
+          <div className="flex items-center justify-center p-2 border border-gray-200 cursor-pointer" onClick={() => router.get('/')}>
             <div className="w-12 h-10 bg-gray-100 rounded flex items-center justify-center">
               <span className="text-xs font-bold">LOGO</span>
             </div>
@@ -801,7 +801,7 @@ export function HomeNavigation() {
             >
               {/* Menu Header */}
               <div className="flex justify-between items-center mb-6 p-2">
-                <div className="flex items-center justify-center p-2 border border-[#888888] cursor-pointer" onClick={() => {
+                <div className="flex items-center justify-center p-2 border border-gray-200 cursor-pointer" onClick={() => {
                   router.get('/');
                   setIsMobileMenuOpen(false);
                 }}>
@@ -824,7 +824,7 @@ export function HomeNavigation() {
 
               {/* Search Bar in Menu */}
               <div className="relative w-full">
-                <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-[#888888] w-full">
+                <div className="flex flex-row items-center gap-2 p-3 mb-4 bg-[#FCFCF7] border border-gray-200 w-full">
                   <Search className="w-4 h-4 text-[#0D0D0D] opacity-50" />
                   <input
                     type="text"
@@ -866,7 +866,7 @@ export function HomeNavigation() {
                 
                 {/* Mobile Autocomplete Dropdown */}
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-[#888888] shadow-lg max-h-64 overflow-y-auto">
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 shadow-lg max-h-64 overflow-y-auto">
                     <ul>
                       {suggestions.map((suggestion, index) => (
                         <li 
@@ -947,7 +947,7 @@ export function HomeNavigation() {
                 
                 {/* Mobile Loading indicator */}
                 {loadingSuggestions && (
-                  <div className="absolute z-50 mt-1 w-full bg-white border border-[#888888] shadow-lg py-4 flex justify-center">
+                  <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 shadow-lg py-4 flex justify-center">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
                   </div>
                 )}
@@ -1070,9 +1070,8 @@ function CustomNavButton({ children, className, onClick }: CustomNavButtonProps 
   return (
     <button
       className={cn(
-        "flex flex-row items-center justify-center gap-2 h-10 border-2 border-[#888888] text-sm font-medium text-[#444444] px-4 py-2.5 cursor-pointer",
-        className
-      )}
+              "flex flex-row items-center justify-center gap-2 h-10 border border-gray-200 text-sm font-medium text-[#444444] px-4 py-2.5 cursor-pointer",
+              className      )}
       onClick={onClick}
     >
       {children}
