@@ -599,69 +599,69 @@ export function HomeNavigation() {
             </div>
 
             {/* Top Navigation Bar */}
-            <div className="flex flex-row items-center justify-center gap-3 p-3 w-48 h-12 bg-[#FCFCF7] border border-l border-t border-gray-200 flex-shrink-0">
-              {/* User Profile Button - Conditionally renders based on auth state */}
-              {isAuthenticated ? (
-                // If user is logged in, show profile dropdown with logout
-                <div className="relative">
-                  <div 
-                    className="flex flex-row items-center justify-center gap-2 cursor-pointer" 
-                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
-                  >
-<CircleUserRound className="w-4.5 h-4.5 text-gray-500" />
-                    <span className="text-xs font-medium text-[#444444] whitespace-nowrap">プロフィール</span>
-                  </div>
-                  
-                  {/* Profile Dropdown */}
-                  {isProfileDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
-                      <button
-                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                        onClick={() => {
-                          router.visit('/dashboard');
-                          setIsProfileDropdownOpen(false);
-                        }}
-                      >
-                        ダッシュボード
-                      </button>
-                      <button
-                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
-                        onClick={() => {
-                          router.post(logout().url);
-                          setIsProfileDropdownOpen(false);
-                        }}
-                      >
-                        <LogOut className="w-4 h-4 mr-2" />
-                        ログアウト
-                      </button>
-                    </div>
-                  )}
-                  
-                  {/* Click outside to close dropdown */}
-                  {isProfileDropdownOpen && (
-                    <div 
-                      className="fixed inset-0 z-40" 
-                      onClick={() => setIsProfileDropdownOpen(false)}
-                    ></div>
-                  )}
-                </div>
-              ) : (
-                // If user is not logged in, show login/register buttons
-                <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}>
-                  <CircleUserRound className="w-4.5 h-4.5 text-gray-700" />
-                  <span className="text-xs font-medium text-[#444444] whitespace-nowrap">ログイン</span>
-                </div>
-              )}
-
-              {/* Favourite Button */}
-              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => {
-                setSearchQuery('');
-                router.visit('/wishlist');
-              }}>
-                <Heart className="w-4.5 h-4.5 text-gray-500" />
-                <span className="text-xs font-medium text-[#444444] whitespace-nowrap">お気に入り</span>
-              </div>
-            </div>
+                        <div className="relative flex flex-row items-center justify-center gap-3 p-3 w-48 h-12 bg-[#FCFCF7] border border-l border-t border-gray-200 flex-shrink-0">
+                          {/* User Profile Button - Conditionally renders based on auth state */}
+                          {isAuthenticated ? (
+                            // If user is logged in, show profile dropdown with logout
+                            <>
+                              <div 
+                                className="flex flex-col items-center justify-center cursor-pointer" 
+                                onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                              >
+                                <CircleUserRound className="w-4.5 h-4.5 text-gray-500" />
+                                <span className="text-xs font-medium text-[#444444] mt-1">プロフィール</span>
+                              </div>
+                            </>
+                          ) : (
+                            // If user is not logged in, show login/register buttons
+                            <div className="flex flex-col items-center justify-center cursor-pointer" onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}>
+                              <CircleUserRound className="w-4.5 h-4.5 text-gray-500" />
+                              <span className="text-xs font-medium text-[#444444] mt-1">ログイン</span>
+                            </div>
+                          )}
+            
+                          {/* Favourite Button */}
+                          <div className="flex flex-col items-center justify-center cursor-pointer" onClick={() => {
+                            setSearchQuery('');
+                            router.visit('/wishlist');
+                          }}>
+                            <Heart className="w-4.5 h-4.5 text-gray-500" />
+                            <span className="text-xs font-medium text-[#444444] mt-1">お気に入り</span>
+                          </div>
+            
+                          {/* Profile Dropdown */}
+                          {isProfileDropdownOpen && (
+                            <div className="absolute left-0 top-full mt-2 w-full bg-white border border-gray-200 shadow-lg z-50">
+                              <button
+                                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                onClick={() => {
+                                  router.visit('/dashboard');
+                                  setIsProfileDropdownOpen(false);
+                                }}
+                              >
+                                ダッシュボード
+                              </button>
+                              <button
+                                className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                                onClick={() => {
+                                  router.post(logout().url);
+                                  setIsProfileDropdownOpen(false);
+                                }}
+                              >
+                                <LogOut className="w-4 h-4 mr-2" />
+                                ログアウト
+                              </button>
+                            </div>
+                          )}
+                          
+                          {/* Click outside to close dropdown */}
+                          {isProfileDropdownOpen && (
+                            <div 
+                              className="fixed inset-0 z-40" 
+                              onClick={() => setIsProfileDropdownOpen(false)}
+                            ></div>
+                          )}
+                        </div>
           </div>
 
           {/* Bottom Section - Main Navigation Menu */}
@@ -714,7 +714,7 @@ export function HomeNavigation() {
                 
                 {/* Mobile Profile Dropdown */}
                 {isMobileProfileDropdownOpen && (
-                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-40 bg-white border border-gray-200 shadow-lg z-50">
                     <button
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                       onClick={() => {
@@ -980,7 +980,7 @@ export function HomeNavigation() {
                       
                       {/* Mobile Menu Profile Dropdown */}
                       {isMobileMenuProfileDropdownOpen && (
-                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                        <div className="absolute bottom-full left-0 mb-2 w-40 bg-white border border-gray-200 shadow-lg z-50">
                           <button
                             className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                             onClick={() => {
