@@ -2,7 +2,7 @@ const Hero = () => {
     return (
         <section className="mx-auto flex min-h-screen max-w-[1440px] flex-col items-center border-b border-black bg-[#FCFCF7] px-4">
             <div
-                className="flex flex-grow flex-col justify-end self-stretch bg-cover bg-center py-25"
+                className="flex flex-grow flex-col justify-center self-stretch bg-cover bg-center py-25"
                 style={{ backgroundImage: 'url(/perfume-images/hero-background.png)' }}
             >
                 <div className="flex max-w-3xl flex-col justify-center gap-6 pl-6">
