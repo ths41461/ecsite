@@ -466,23 +466,23 @@ export function HomeNavigation() {
   };
 
   return (
-    <div className="w-full bg-white px-4 py-2">
+    <div className="w-full bg-white py-2">
       {/* Desktop Layout */}
-      <div className="hidden lg:flex flex-row items-center max-w-[1440px] mx-auto">
+      <div className="hidden lg:flex flex-row items-center max-w-[1440px] mx-auto px-4">
         {/* Logo Area */}
-        <div className="flex items-center justify-center gap-2.5 p-8 w-[200px] h-[100px] border border-gray-200 cursor-pointer" onClick={() => router.get('/')}>
-          <div className="w-[200px] h-[65.19px] bg-gray-100 rounded flex items-center justify-center">
+        <div className="flex items-center justify-center gap-2.5 p-8 w-48 h-24 border border-gray-200 cursor-pointer flex-shrink-0" onClick={() => router.get('/')}>
+          <div className="w-48 h-16 bg-gray-100 rounded flex items-center justify-center">
             <span className="text-lg font-bold">LOGO</span>
           </div>
         </div>
 
         {/* Navigation Section */}
-        <div className="flex flex-col w-[1128px]">
+        <div className="flex flex-col flex-grow">
           {/* Top Section - Search and User Options */}
           <div className="flex flex-row items-center justify-between">
             {/* Search Bar */}
-            <div className="relative">
-              <div className="flex flex-row items-center gap-1.75 p-3 w-[934px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
+            <div className="relative flex-grow">
+              <div className="flex flex-row items-center gap-1.75 p-3 w-full h-12 bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
                 <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
                 <input
                   type="text"
@@ -514,7 +514,7 @@ export function HomeNavigation() {
               
               {/* Autocomplete Dropdown */}
               {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-gray-200 shadow-lg max-h-96 overflow-y-auto">
+                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 shadow-lg max-h-96 overflow-y-auto">
                   <ul>
                     {suggestions.map((suggestion, index) => (
                       <li 
@@ -559,24 +559,24 @@ export function HomeNavigation() {
                             {(suggestion.discount_percentage || suggestion.is_bestseller || suggestion.is_top_rated) && (
                               <div className="flex gap-1 flex-wrap justify-end">
                                 {suggestion.discount_percentage && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-red-50 text-red-700 border border-red-200">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200">
                                     {suggestion.discount_percentage}% 割引
                                   </span>
                                 )}
                                 {suggestion.is_bestseller && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                                     人気商品
                                   </span>
                                 )}
                                 {suggestion.is_top_rated && (
-                                  <span className="inline-flex items-center px-1.5 py-0.5 text-[0.7rem] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                  <span className="inline-flex items-center px-1.5 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
                                     高評価
                                   </span>
                                 )}
                               </div>
                             )}
                             {suggestion.rating !== undefined && suggestion.rating !== null && (
-                              <div className="flex items-center text-[0.7rem] text-[#444444] mt-1">
+                              <div className="flex items-center text-xs text-[#444444] mt-1">
                                 <span className="mr-1">⭐</span>
                                 <span className="font-medium">{suggestion.rating}</span>
                                 {suggestion.review_count && <span className="ml-1">({suggestion.review_count})</span>}
@@ -592,14 +592,14 @@ export function HomeNavigation() {
               
               {/* Loading indicator */}
               {loadingSuggestions && (
-                <div className="absolute z-50 mt-1 w-[934px] bg-white border border-gray-200 shadow-lg py-4 flex justify-center">
+                <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 shadow-lg py-4 flex justify-center">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black" />
                 </div>
               )}
             </div>
 
             {/* Top Navigation Bar */}
-            <div className="flex flex-row items-center justify-center gap-3 p-3 w-[194px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
+            <div className="flex flex-row items-center justify-center gap-3 p-3 w-48 h-12 bg-[#FCFCF7] border border-l border-r border-t border-gray-200 flex-shrink-0">
               {/* User Profile Button - Conditionally renders based on auth state */}
               {isAuthenticated ? (
                 // If user is logged in, show profile dropdown with logout
@@ -665,7 +665,7 @@ export function HomeNavigation() {
           </div>
 
           {/* Bottom Section - Main Navigation Menu */}
-          <div className="flex flex-col items-center gap-2.5 px-[312px] py-[5px]">
+          <div className="flex flex-col items-center gap-2.5 py-1">
             <div className="flex flex-row items-center justify-center gap-8 w-full">
               <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/products'); }}>商品一覧</CustomNavButton>
               <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/fragrance-diagnosis'); }}>香り診断</CustomNavButton>
@@ -677,7 +677,7 @@ export function HomeNavigation() {
 
         {/* Cart Section - Updated to show dynamic count and be clickable */}
         <button 
-          className="flex flex-row items-center justify-center gap-1.25 p-5 w-[80px] h-[100px] bg-[#FCFCF7] border border-gray-200 cursor-pointer"
+          className="flex flex-row items-center justify-center gap-1.25 p-5 w-20 h-24 bg-[#FCFCF7] border border-gray-200 cursor-pointer flex-shrink-0"
           onClick={handleCartClick}
         >
           <ShoppingCart className="w-3.75 h-3.75 text-gray-700" />
@@ -709,7 +709,7 @@ export function HomeNavigation() {
                   onClick={() => setIsMobileProfileDropdownOpen(!isMobileProfileDropdownOpen)}
                 >
                   <User className="w-5 h-5 text-gray-700" />
-                  <span className="text-[0.6rem] text-[#444444] mt-1">プロフィール</span>
+                  <span className="text-xs text-[#444444] mt-1">プロフィール</span>
                 </button>
                 
                 {/* Mobile Profile Dropdown */}
@@ -752,7 +752,7 @@ export function HomeNavigation() {
                 onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}
               >
                 <User className="w-5 h-5 text-gray-700" />
-                <span className="text-[0.6rem] text-[#444444] mt-1">ログイン</span>
+                <span className="text-xs text-[#444444] mt-1">ログイン</span>
               </button>
             )}
 
@@ -762,7 +762,7 @@ export function HomeNavigation() {
               router.visit('/wishlist');
             }}>
               <Heart className="w-5 h-5 text-gray-700" />
-              <span className="text-[0.6rem] text-[#444444] mt-1">お気に入り</span>
+              <span className="text-xs text-[#444444] mt-1">お気に入り</span>
             </button>
 
             {/* Cart - Updated to show dynamic count and be clickable */}
@@ -774,7 +774,7 @@ export function HomeNavigation() {
               }}
             >
               <ShoppingCart className="w-5 h-5 text-gray-700" />
-              <span className="text-[0.6rem] text-black mt-1">
+              <span className="text-xs text-black mt-1">
                 ({isLoading ? '...' : cartCount})
               </span>
             </button>
@@ -891,19 +891,19 @@ export function HomeNavigation() {
                               )}
                               <div className="flex-1 min-w-0">
                                 <div className="font-semibold text-[#0D0D0D] text-xs truncate">{suggestion.name}</div>
-                                <div className="text-[0.6rem] text-[#444444] truncate">
+                                <div className="text-xs text-[#444444] truncate">
                                   {suggestion.brand?.name} • {suggestion.category?.name}
                                 </div>
                               </div>
                             </div>
                             <div className="ml-2 flex flex-col items-end justify-start flex-shrink-0">
                               {suggestion.price && (
-                                <div className="text-[0.6rem] font-bold text-[#0D0D0D] mb-1">
+                                <div className="text-xs font-bold text-[#0D0D0D] mb-1">
                                   ¥{suggestion.price.toLocaleString()}
                                 </div>
                               )}
                               {suggestion.availability_status && (
-                                <div className={`text-[0.6rem] mb-1 ${
+                                <div className={`text-xs mb-1 ${
                                   suggestion.availability_status === 'In Stock' ? 'text-[#0D0D0D]' : 
                                   suggestion.availability_status === 'Low Stock' ? 'text-[#886600]' : 
                                   'text-[#880000]'
@@ -914,24 +914,24 @@ export function HomeNavigation() {
                               {(suggestion.discount_percentage || suggestion.is_bestseller || suggestion.is_top_rated) && (
                                 <div className="flex gap-1 flex-wrap justify-end">
                                   {suggestion.discount_percentage && (
-                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-red-50 text-red-700 border border-red-200">
+                                    <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200">
                                       {suggestion.discount_percentage}% 割引
                                     </span>
                                   )}
                                   {suggestion.is_bestseller && (
-                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-blue-50 text-blue-700 border border-blue-200">
+                                    <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200">
                                       人気商品
                                     </span>
                                   )}
                                   {suggestion.is_top_rated && (
-                                    <span className="inline-flex items-center px-1 py-0.5 text-[0.6rem] font-medium bg-purple-50 text-purple-700 border border-purple-200">
+                                    <span className="inline-flex items-center px-1 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200">
                                       高評価
                                     </span>
                                   )}
                                 </div>
                               )}
                               {suggestion.rating !== undefined && suggestion.rating !== null && (
-                                <div className="flex items-center text-[0.6rem] text-[#444444] mt-1">
+                                <div className="flex items-center text-xs text-[#444444] mt-1">
                                   <span className="mr-1">⭐</span>
                                   <span className="font-medium">{suggestion.rating}</span>
                                   {suggestion.review_count && <span className="ml-1">({suggestion.review_count})</span>}
