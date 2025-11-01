@@ -18,73 +18,73 @@ interface RecommendedSectionProps {
 
 const defaultDummyProducts: ProductData[] = [
     {
-        productImageSrc: "/perfume-images/perfume-1.png",
-        category: "ブランド名",
-        productName: "商品名 1",
-        price: "￥29,00",
+        productImageSrc: '/perfume-images/perfume-1.png',
+        category: 'ブランド名',
+        productName: '商品名 1',
+        price: '￥29,00',
         showRatingIcon: true,
         showGenderIcon: true,
         showWishlistIcon: true,
     },
     {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 2",
-        price: "￥35,00",
-        showRatingIcon: true,
-        showGenderIcon: false,
-        showWishlistIcon: true,
-    },
-    {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 3",
-        price: "￥25,00",
-        showRatingIcon: false,
-        showGenderIcon: true,
-        showWishlistIcon: false,
-    },
-    {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 4",
-        price: "￥40,00",
-        showRatingIcon: true,
-        showGenderIcon: true,
-        showWishlistIcon: true,
-    },
-    {
-        productImageSrc: "/perfume-images/perfume-1.png",
-        category: "ブランド名",
-        productName: "商品名 5",
-        price: "￥30,00",
+        productImageSrc: '/perfume-images/perfume-2.png',
+        category: 'ブランド名',
+        productName: '商品名 2',
+        price: '￥35,00',
         showRatingIcon: true,
         showGenderIcon: false,
         showWishlistIcon: true,
     },
     {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 6",
-        price: "￥32,00",
+        productImageSrc: '/perfume-images/perfume-3.png',
+        category: 'ブランド名',
+        productName: '商品名 3',
+        price: '￥25,00',
+        showRatingIcon: false,
+        showGenderIcon: true,
+        showWishlistIcon: false,
+    },
+    {
+        productImageSrc: '/perfume-images/perfume-4.png',
+        category: 'ブランド名',
+        productName: '商品名 4',
+        price: '￥40,00',
+        showRatingIcon: true,
+        showGenderIcon: true,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: '/perfume-images/perfume-5.png',
+        category: 'ブランド名',
+        productName: '商品名 5',
+        price: '￥30,00',
+        showRatingIcon: true,
+        showGenderIcon: false,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: '/perfume-images/perfume-6.png',
+        category: 'ブランド名',
+        productName: '商品名 6',
+        price: '￥32,00',
         showRatingIcon: false,
         showGenderIcon: true,
         showWishlistIcon: true,
     },
     {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 7",
-        price: "￥28,00",
+        productImageSrc: '/perfume-images/perfume-7.png',
+        category: 'ブランド名',
+        productName: '商品名 7',
+        price: '￥28,00',
         showRatingIcon: true,
         showGenderIcon: true,
         showWishlistIcon: false,
     },
     {
-        productImageSrc: "https://via.placeholder.com/310x263",
-        category: "ブランド名",
-        productName: "商品名 8",
-        price: "￥38,00",
+        productImageSrc: '/perfume-images/hero-background.png',
+        category: 'ブランド名',
+        productName: '商品名 8',
+        price: '￥38,00',
         showRatingIcon: true,
         showGenderIcon: false,
         showWishlistIcon: true,
@@ -101,11 +101,11 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
     }
 
     return (
-        <section className={`w-full bg-[#FCFCF7] py-4 border-t border-b border-[#888888] ${className}`}>
+        <section className={`w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-4 ${className}`}>
             <div className="container mx-auto px-4">
                 {/* Section Title */}
-                <div className="text-center mb-8">
-                    <h2 className="text-[30px] font-semibold text-[#444444] leading-[1.2666666666666666em]">おすすめ商品</h2>
+                <div className="mb-8 text-center">
+                    <h2 className="text-3xl leading-tight font-semibold text-[#444444]">おすすめ商品</h2>
                 </div>
 
                 {/* Product Cards Grid */}
@@ -125,8 +125,8 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                 </div>
 
                 {/* See More Products Button */}
-                <div className="text-center mt-12">
-                    <button className="bg-[#444444] text-white px-4 py-2.5 text-lg font-medium shadow-md hover:bg-gray-700 transition-colors">
+                <div className="mt-12 text-center">
+                    <button className="bg-[#444444] px-4 py-2.5 text-lg font-medium text-white shadow-md transition-colors hover:bg-gray-700">
                         商品もっと見る
                     </button>
                 </div>
