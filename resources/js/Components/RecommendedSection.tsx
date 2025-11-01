@@ -1,0 +1,138 @@
+import React from 'react';
+import ProductCard from './ProductCard';
+
+interface ProductData {
+    productImageSrc: string;
+    category: string;
+    productName: string;
+    price: string;
+    showRatingIcon?: boolean;
+    showGenderIcon?: boolean;
+    showWishlistIcon?: boolean;
+}
+
+interface RecommendedSectionProps {
+    products?: ProductData[]; // Make products prop optional
+    className?: string;
+}
+
+const defaultDummyProducts: ProductData[] = [
+    {
+        productImageSrc: "/perfume-images/perfume-1.png",
+        category: "ブランド名",
+        productName: "商品名 1",
+        price: "￥29,00",
+        showRatingIcon: true,
+        showGenderIcon: true,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 2",
+        price: "￥35,00",
+        showRatingIcon: true,
+        showGenderIcon: false,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 3",
+        price: "￥25,00",
+        showRatingIcon: false,
+        showGenderIcon: true,
+        showWishlistIcon: false,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 4",
+        price: "￥40,00",
+        showRatingIcon: true,
+        showGenderIcon: true,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: "/perfume-images/perfume-1.png",
+        category: "ブランド名",
+        productName: "商品名 5",
+        price: "￥30,00",
+        showRatingIcon: true,
+        showGenderIcon: false,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 6",
+        price: "￥32,00",
+        showRatingIcon: false,
+        showGenderIcon: true,
+        showWishlistIcon: true,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 7",
+        price: "￥28,00",
+        showRatingIcon: true,
+        showGenderIcon: true,
+        showWishlistIcon: false,
+    },
+    {
+        productImageSrc: "https://via.placeholder.com/310x263",
+        category: "ブランド名",
+        productName: "商品名 8",
+        price: "￥38,00",
+        showRatingIcon: true,
+        showGenderIcon: false,
+        showWishlistIcon: true,
+    },
+];
+
+const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, className }) => {
+    const productsToDisplay = products && products.length > 0 ? products : defaultDummyProducts;
+    const finalProducts = productsToDisplay.slice(0, 8); // Ensure max 8 products
+
+    // If fewer than 8 products are provided, fill with dummy data
+    while (finalProducts.length < 8) {
+        finalProducts.push(defaultDummyProducts[finalProducts.length]);
+    }
+
+    return (
+        <section className={`w-full bg-[#FCFCF7] py-4 border-t border-b border-[#888888] ${className}`}>
+            <div className="container mx-auto px-4">
+                {/* Section Title */}
+                <div className="text-center mb-8">
+                    <h2 className="text-[30px] font-semibold text-[#444444] leading-[1.2666666666666666em]">おすすめ商品</h2>
+                </div>
+
+                {/* Product Cards Grid */}
+                <div className="grid grid-cols-4 gap-8">
+                    {finalProducts.map((product, index) => (
+                        <ProductCard
+                            key={index}
+                            productImageSrc={product.productImageSrc}
+                            category={product.category}
+                            productName={product.productName}
+                            price={product.price}
+                            showRatingIcon={product.showRatingIcon}
+                            showGenderIcon={product.showGenderIcon}
+                            showWishlistIcon={product.showWishlistIcon}
+                        />
+                    ))}
+                </div>
+
+                {/* See More Products Button */}
+                <div className="text-center mt-12">
+                    <button className="bg-[#444444] text-white px-4 py-2.5 text-lg font-medium shadow-md hover:bg-gray-700 transition-colors">
+                        商品もっと見る
+                    </button>
+                </div>
+            </div>
+        </section>
+    );
+};
+
+export default RecommendedSection;
