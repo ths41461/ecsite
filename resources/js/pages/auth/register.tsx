@@ -91,7 +91,7 @@ export default function Register() {
 
                         <div className="text-center text-sm text-muted-foreground">
                             既にアカウントをお持ちですか？{' '}
-                            <TextLink href={login()} tabIndex={6}>
+                            <TextLink href={login() + window.location.search} tabIndex={6}>
                                 ログイン
                             </TextLink>
                         </div>

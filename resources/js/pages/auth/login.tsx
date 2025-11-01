@@ -77,7 +77,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
 
                         <div className="text-center text-sm text-muted-foreground">
                             アカウントをお持ちではありませんか？{' '}
-                            <TextLink href={register()} tabIndex={5}>
+                            <TextLink href={register() + window.location.search} tabIndex={5}>
                                 新規登録
                             </TextLink>
                         </div>

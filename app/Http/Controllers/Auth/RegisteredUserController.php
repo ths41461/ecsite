@@ -23,8 +23,13 @@ class RegisteredUserController extends Controller
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // If there's a redirect query parameter, set it as the intended URL
+        if ($request->has('redirect')) {
+            $request->session()->put('url.intended', $request->get('redirect'));
+        }
+        
         return Inertia::render('auth/register');
     }
 

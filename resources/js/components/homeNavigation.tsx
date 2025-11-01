@@ -1,7 +1,8 @@
-import { Search, User, Heart, ShoppingCart, Menu } from 'lucide-react';
+import { Search, User, Heart, ShoppingCart, Menu, UserRound, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
-import { router } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
+import { logout } from '@/routes';
 
 // Define cart related types
 type CartLine = {
@@ -81,8 +82,14 @@ const getCartFromStorage = (): Cart | null => {
 
 export function HomeNavigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [isMobileProfileDropdownOpen, setIsMobileProfileDropdownOpen] = useState(false);
+  const [isMobileMenuProfileDropdownOpen, setIsMobileMenuProfileDropdownOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const page = usePage();
+  const { auth } = page.props;
+  const isAuthenticated = !!auth?.user;
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -593,11 +600,58 @@ export function HomeNavigation() {
 
             {/* Top Navigation Bar */}
             <div className="flex flex-row items-center justify-center gap-3 p-3 w-[194px] h-[50px] bg-[#FCFCF7] border border-l border-r border-t border-[#888888]">
-              {/* Login Button */}
-              <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => setSearchQuery('')}>
-                <User className="w-4.5 h-4.5 text-gray-700" />
-                <span className="text-xs font-medium text-[#444444] whitespace-nowrap">ログイン</span>
-              </div>
+              {/* User Profile Button - Conditionally renders based on auth state */}
+              {isAuthenticated ? (
+                // If user is logged in, show profile dropdown with logout
+                <div className="relative">
+                  <div 
+                    className="flex flex-row items-center justify-center gap-2 cursor-pointer" 
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                  >
+                    <User className="w-4.5 h-4.5 text-gray-700" />
+                    <span className="text-xs font-medium text-[#444444] whitespace-nowrap">プロフィール</span>
+                  </div>
+                  
+                  {/* Profile Dropdown */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        onClick={() => {
+                          router.visit('/dashboard');
+                          setIsProfileDropdownOpen(false);
+                        }}
+                      >
+                        ダッシュボード
+                      </button>
+                      <button
+                        className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                        onClick={() => {
+                          router.post(logout().url);
+                          setIsProfileDropdownOpen(false);
+                        }}
+                      >
+                        <LogOut className="w-4 h-4 mr-2" />
+                        ログアウト
+                      </button>
+                    </div>
+                  )}
+                  
+                  {/* Click outside to close dropdown */}
+                  {isProfileDropdownOpen && (
+                    <div 
+                      className="fixed inset-0 z-40" 
+                      onClick={() => setIsProfileDropdownOpen(false)}
+                    ></div>
+                  )}
+                </div>
+              ) : (
+                // If user is not logged in, show login/register buttons
+                <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}>
+                  <User className="w-4.5 h-4.5 text-gray-700" />
+                  <span className="text-xs font-medium text-[#444444] whitespace-nowrap">ログイン</span>
+                </div>
+              )}
 
               {/* Favourite Button */}
               <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => setSearchQuery('')}>
@@ -641,13 +695,63 @@ export function HomeNavigation() {
             </div>
           </div>
 
-          {/* Right side - Menu, Login, Wishlist, and Cart */}
+          {/* Right side - Menu, User Profile, Wishlist, and Cart */}
           <div className="flex items-center space-x-3">
-            {/* Login Button */}
-            <button className="flex flex-col items-center cursor-pointer" onClick={() => setSearchQuery('')}>
-              <User className="w-5 h-5 text-gray-700" />
-              <span className="text-[0.6rem] text-[#444444] mt-1">ログイン</span>
-            </button>
+            {/* User Profile Button - Conditionally renders based on auth state */}
+            {isAuthenticated ? (
+              // If user is logged in, show profile dropdown with logout
+              <div className="relative">
+                <button 
+                  className="flex flex-col items-center cursor-pointer" 
+                  onClick={() => setIsMobileProfileDropdownOpen(!isMobileProfileDropdownOpen)}
+                >
+                  <User className="w-5 h-5 text-gray-700" />
+                  <span className="text-[0.6rem] text-[#444444] mt-1">プロフィール</span>
+                </button>
+                
+                {/* Mobile Profile Dropdown */}
+                {isMobileProfileDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => {
+                        router.visit('/dashboard');
+                        setIsMobileProfileDropdownOpen(false);
+                      }}
+                    >
+                      ダッシュボード
+                    </button>
+                    <button
+                      className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                      onClick={() => {
+                        router.post(logout().url);
+                        setIsMobileProfileDropdownOpen(false);
+                      }}
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      ログアウト
+                    </button>
+                  </div>
+                )}
+                
+                {/* Click outside to close mobile dropdown */}
+                {isMobileProfileDropdownOpen && (
+                  <div 
+                    className="fixed inset-0 z-40" 
+                    onClick={() => setIsMobileProfileDropdownOpen(false)}
+                  ></div>
+                )}
+              </div>
+            ) : (
+              // If user is not logged in, show login button
+              <button 
+                className="flex flex-col items-center cursor-pointer" 
+                onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}
+              >
+                <User className="w-5 h-5 text-gray-700" />
+                <span className="text-[0.6rem] text-[#444444] mt-1">ログイン</span>
+              </button>
+            )}
 
             {/* Wishlist Button */}
             <button className="flex flex-col items-center cursor-pointer" onClick={() => setSearchQuery('')}>
@@ -854,13 +958,71 @@ export function HomeNavigation() {
               {/* Additional Menu Options */}
               <div className="pt-4 border-t border-gray-200">
                 <div className="flex justify-around">
-                  <button className="flex flex-col items-center cursor-pointer" onClick={() => {
-                    setSearchQuery('');
-                    setIsMobileMenuOpen(false);
-                  }}>
-                    <User className="w-6 h-6 text-gray-700" />
-                    <span className="text-xs text-[#444444] mt-1">ログイン</span>
-                  </button>
+                  {isAuthenticated ? (
+                    // If user is logged in, show profile dropdown with logout
+                    <div className="relative">
+                      <button 
+                        className="flex flex-col items-center cursor-pointer" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsMobileMenuProfileDropdownOpen(!isMobileMenuProfileDropdownOpen);
+                        }}
+                      >
+                        <User className="w-6 h-6 text-gray-700" />
+                        <span className="text-xs text-[#444444] mt-1">プロフィール</span>
+                      </button>
+                      
+                      {/* Mobile Menu Profile Dropdown */}
+                      {isMobileMenuProfileDropdownOpen && (
+                        <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-50">
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => {
+                              router.visit('/dashboard');
+                              setIsMobileMenuOpen(false);
+                              setIsMobileMenuProfileDropdownOpen(false);
+                            }}
+                          >
+                            ダッシュボード
+                          </button>
+                          <button
+                            className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 flex items-center"
+                            onClick={() => {
+                              router.post(logout().url);
+                              setIsMobileMenuOpen(false);
+                              setIsMobileMenuProfileDropdownOpen(false);
+                            }}
+                          >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            ログアウト
+                          </button>
+                        </div>
+                      )}
+                      
+                      {/* Click outside to close mobile menu dropdown */}
+                      {isMobileMenuProfileDropdownOpen && (
+                        <div 
+                          className="fixed inset-0 z-40" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setIsMobileMenuProfileDropdownOpen(false);
+                          }}
+                        ></div>
+                      )}
+                    </div>
+                  ) : (
+                    // If user is not logged in, show login button
+                    <button 
+                      className="flex flex-col items-center cursor-pointer" 
+                      onClick={() => {
+                        router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search));
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <User className="w-6 h-6 text-gray-700" />
+                      <span className="text-xs text-[#444444] mt-1">ログイン</span>
+                    </button>
+                  )}
                   <button className="flex flex-col items-center cursor-pointer" onClick={() => {
                     setSearchQuery('');
                     setIsMobileMenuOpen(false);

@@ -649,7 +649,6 @@ export default function Dashboard() {
                                                                         rating: star
                                                                     })}
                                                                     className="focus:outline-none"
-                                                                    key={star}
                                                                 >
                                                                     <svg 
                                                                         className={`w-5 h-5 ${star <= editingReview.rating ? 'text-yellow-400' : 'text-gray-300'}`} 
