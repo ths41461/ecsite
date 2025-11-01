@@ -1,4 +1,4 @@
-import { Search, User, Heart, ShoppingCart, Menu, UserRound, LogOut } from 'lucide-react';
+import { Search, Heart, Menu, UserRound, LogOut, CircleUserRound, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
 import { router, usePage } from '@inertiajs/react';
@@ -482,7 +482,7 @@ export function HomeNavigation() {
           <div className="flex flex-row items-center justify-between">
             {/* Search Bar */}
             <div className="relative flex-grow">
-              <div className="flex flex-row items-center gap-1.75 p-3 w-full h-12 bg-[#FCFCF7] border border-l border-r border-t border-gray-200">
+              <div className="flex flex-row items-center gap-1.75 p-3 w-full h-12 bg-[#FCFCF7] border border-t border-gray-200">
                 <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
                 <input
                   type="text"
@@ -599,7 +599,7 @@ export function HomeNavigation() {
             </div>
 
             {/* Top Navigation Bar */}
-            <div className="flex flex-row items-center justify-center gap-3 p-3 w-48 h-12 bg-[#FCFCF7] border border-l border-r border-t border-gray-200 flex-shrink-0">
+            <div className="flex flex-row items-center justify-center gap-3 p-3 w-48 h-12 bg-[#FCFCF7] border border-l border-t border-gray-200 flex-shrink-0">
               {/* User Profile Button - Conditionally renders based on auth state */}
               {isAuthenticated ? (
                 // If user is logged in, show profile dropdown with logout
@@ -608,7 +608,7 @@ export function HomeNavigation() {
                     className="flex flex-row items-center justify-center gap-2 cursor-pointer" 
                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   >
-                    <User className="w-4.5 h-4.5 text-gray-700" />
+                    <CircleUserRound className="w-4.5 h-4.5 text-gray-700" />
                     <span className="text-xs font-medium text-[#444444] whitespace-nowrap">プロフィール</span>
                   </div>
                   
@@ -648,7 +648,7 @@ export function HomeNavigation() {
               ) : (
                 // If user is not logged in, show login/register buttons
                 <div className="flex flex-row items-center justify-center gap-2 cursor-pointer" onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}>
-                  <User className="w-4.5 h-4.5 text-gray-700" />
+                  <CircleUserRound className="w-4.5 h-4.5 text-gray-700" />
                   <span className="text-xs font-medium text-[#444444] whitespace-nowrap">ログイン</span>
                 </div>
               )}
@@ -680,7 +680,7 @@ export function HomeNavigation() {
           className="flex flex-row items-center justify-center gap-1.25 p-5 w-20 h-24 bg-[#FCFCF7] border border-gray-200 cursor-pointer flex-shrink-0"
           onClick={handleCartClick}
         >
-          <ShoppingCart className="w-3.75 h-3.75 text-gray-700" />
+          <ShoppingBag className="w-3.75 h-3.75 text-gray-700" />
           <span className="text-xs font-semibold text-black whitespace-nowrap">
             ({isLoading ? '...' : cartCount})
           </span>
@@ -708,7 +708,7 @@ export function HomeNavigation() {
                   className="flex flex-col items-center cursor-pointer" 
                   onClick={() => setIsMobileProfileDropdownOpen(!isMobileProfileDropdownOpen)}
                 >
-                  <User className="w-5 h-5 text-gray-700" />
+                  <CircleUserRound className="w-5 h-5 text-gray-700" />
                   <span className="text-xs text-[#444444] mt-1">プロフィール</span>
                 </button>
                 
@@ -751,7 +751,7 @@ export function HomeNavigation() {
                 className="flex flex-col items-center cursor-pointer" 
                 onClick={() => router.visit('/login?redirect=' + encodeURIComponent(window.location.pathname + window.location.search))}
               >
-                <User className="w-5 h-5 text-gray-700" />
+                <CircleUserRound className="w-5 h-5 text-gray-700" />
                 <span className="text-xs text-[#444444] mt-1">ログイン</span>
               </button>
             )}
@@ -773,7 +773,7 @@ export function HomeNavigation() {
                 handleCartClick();
               }}
             >
-              <ShoppingCart className="w-5 h-5 text-gray-700" />
+              <ShoppingBag className="w-5 h-5 text-gray-700" />
               <span className="text-xs text-black mt-1">
                 ({isLoading ? '...' : cartCount})
               </span>
@@ -974,7 +974,7 @@ export function HomeNavigation() {
                           setIsMobileMenuProfileDropdownOpen(!isMobileMenuProfileDropdownOpen);
                         }}
                       >
-                        <User className="w-6 h-6 text-gray-700" />
+                        <CircleUserRound className="w-6 h-6 text-gray-700" />
                         <span className="text-xs text-[#444444] mt-1">プロフィール</span>
                       </button>
                       
@@ -1025,7 +1025,7 @@ export function HomeNavigation() {
                         setIsMobileMenuOpen(false);
                       }}
                     >
-                      <User className="w-6 h-6 text-gray-700" />
+                      <CircleUserRound className="w-6 h-6 text-gray-700" />
                       <span className="text-xs text-[#444444] mt-1">ログイン</span>
                     </button>
                   )}
@@ -1046,7 +1046,7 @@ export function HomeNavigation() {
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    <ShoppingCart className="w-6 h-6 text-gray-700" />
+                    <ShoppingBag className="w-6 h-6 text-gray-700" />
                     <span className="text-xs text-black mt-1">
                       ({isLoading ? '...' : cartCount})
                     </span>
