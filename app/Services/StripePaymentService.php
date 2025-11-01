@@ -29,7 +29,8 @@ class StripePaymentService
         $returnUrl  = $successUrl; // Embedded Checkout uses return_url after completion
 
         // Update order with current cart calculations to ensure we have the exact same values as checkout
-        $cart = $this->cart->get($cartSessionId);
+        $userId = $order->user_id; // Use the user ID from the order to get the correct cart
+        $cart = $this->cart->get($cartSessionId, $userId);
 
         // Get the exact values as calculated in checkout
         $subtotalYen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);

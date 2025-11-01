@@ -216,10 +216,43 @@ class StripeWebhookController extends Controller
             }
         }
 
-        // Optionally clear the cart for the session that created this order
-        $sid = $pi->metadata->cart_session_id ?? null;
-        if ($sid && config('cart.clear_on_payment_success')) {
-            try { $this->cart->clear((string)$sid); } catch (\Throwable $e) {}
+        // Clear the appropriate cart based on whether the order was created by an authenticated user
+        if (config('cart.clear_on_payment_success')) {
+            // Determine which cart to clear based on the order's user_id
+            if ($order->user_id) {
+                // This was an order created by an authenticated user - clear the user-based cart
+                try {
+                    $this->cart->clear('', (int)$order->user_id);
+                    Log::info('Cleared user cart after payment', [
+                        'order_id' => $order->id,
+                        'user_id' => $order->user_id
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::warning('Failed to clear user cart after payment', [
+                        'order_id' => $order->id,
+                        'user_id' => $order->user_id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            } else {
+                // This was an order created by a guest - clear the session-based cart
+                $cartSessionId = $pi->metadata->cart_session_id ?? null;
+                if ($cartSessionId) {
+                    try {
+                        $this->cart->clear((string)$cartSessionId);
+                        Log::info('Cleared session cart after payment', [
+                            'order_id' => $order->id,
+                            'session_id' => $cartSessionId
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::warning('Failed to clear session cart after payment', [
+                            'order_id' => $order->id,
+                            'session_id' => $cartSessionId,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
+                }
+            }
         }
     }
 

@@ -32,7 +32,8 @@ class CheckoutController extends Controller
             $reason = $this->deriveLastAttemptReason($sessionId);
         }
 
-        $cart = $this->cart->get($sessionId);
+        $userId = $request->user()?->id;
+        $cart = $this->cart->get($sessionId, $userId);
         $order = $reusable ? $reusable->loadMissing('items') : null;
 
         $savedContact = null;
@@ -457,7 +458,8 @@ class CheckoutController extends Controller
 
         if ($shouldRecalculate) {
             // Get the current cart to ensure we're showing up-to-date values
-            $cart = $this->cart->get($currentCartSessionId);
+            $userId = request()->user()?->id;
+            $cart = $this->cart->get($currentCartSessionId, $userId);
             $subtotal_yen = (int) round(($cart['subtotal_cents'] ?? 0) / 100);
             $discount_yen = (int) round((int)($cart['savings_cents'] ?? 0) / 100);
             $coupon_discount_yen = (int) round((int)($cart['coupon_discount_cents'] ?? 0) / 100);
@@ -550,12 +552,22 @@ class CheckoutController extends Controller
     {
         $order = Order::where('order_number', $orderNumber)->firstOrFail();
         $sessionId = $request->session()->getId();
+        $userId = $request->user()?->id;
 
+        // For authenticated users, check if the order was created by them
+        if ($userId && $order->user_id === $userId) {
+            // If the order was created by the authenticated user, it's valid
+            // regardless of session ID mismatch
+            return $order;
+        }
+
+        // For guest orders, verify session matches
         if ($order->cart_session_id && $order->cart_session_id !== $sessionId) {
             \Log::warning('チェックアウトセッションの不一致', [
                 'order_number' => $orderNumber,
                 'stored_session' => $order->cart_session_id,
                 'current_session' => $sessionId,
+                'user_id' => $userId,
             ]);
             abort(403, 'この注文のチェックアウトセッションが一致しません。');
         }

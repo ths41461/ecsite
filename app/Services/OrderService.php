@@ -19,7 +19,8 @@ class OrderService
      */
     public function createFromCart(string $sessionId, array $customer): Order
     {
-        $cart = $this->cart->get($sessionId);
+        $userId = $customer['user_id'] ?? null;
+        $cart = $this->cart->get($sessionId, $userId);
 
         if (empty($cart['lines'])) {
             throw new \RuntimeException('Cart is empty');
