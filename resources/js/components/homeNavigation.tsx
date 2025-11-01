@@ -483,7 +483,7 @@ export function HomeNavigation() {
             {/* Search Bar */}
             <div className="relative flex-grow">
               <div className="flex flex-row items-center gap-1.75 p-3 w-full h-12 bg-[#FCFCF7] border border-t border-gray-200">
-                <Search className="w-5.5 h-5.5 text-[#0D0D0D]" />
+                <Search className="w-5.5 h-5.5 text-gray-500" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -608,7 +608,7 @@ export function HomeNavigation() {
                     className="flex flex-row items-center justify-center gap-2 cursor-pointer" 
                     onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
                   >
-                    <CircleUserRound className="w-4.5 h-4.5 text-gray-700" />
+<CircleUserRound className="w-4.5 h-4.5 text-gray-500" />
                     <span className="text-xs font-medium text-[#444444] whitespace-nowrap">プロフィール</span>
                   </div>
                   
@@ -658,7 +658,7 @@ export function HomeNavigation() {
                 setSearchQuery('');
                 router.visit('/wishlist');
               }}>
-                <Heart className="w-4.5 h-4.5 text-gray-700" />
+                <Heart className="w-4.5 h-4.5 text-gray-500" />
                 <span className="text-xs font-medium text-[#444444] whitespace-nowrap">お気に入り</span>
               </div>
             </div>
@@ -680,7 +680,7 @@ export function HomeNavigation() {
           className="flex flex-row items-center justify-center gap-1.25 p-5 w-20 h-24 bg-[#FCFCF7] border border-gray-200 cursor-pointer flex-shrink-0"
           onClick={handleCartClick}
         >
-          <ShoppingBag className="w-3.75 h-3.75 text-gray-700" />
+          <ShoppingBag className="w-3.75 h-3.75 text-gray-500" />
           <span className="text-xs font-semibold text-black whitespace-nowrap">
             ({isLoading ? '...' : cartCount})
           </span>
@@ -708,7 +708,7 @@ export function HomeNavigation() {
                   className="flex flex-col items-center cursor-pointer" 
                   onClick={() => setIsMobileProfileDropdownOpen(!isMobileProfileDropdownOpen)}
                 >
-                  <CircleUserRound className="w-5 h-5 text-gray-700" />
+                  <CircleUserRound className="w-5 h-5 text-gray-500" />
                   <span className="text-xs text-[#444444] mt-1">プロフィール</span>
                 </button>
                 
@@ -761,7 +761,7 @@ export function HomeNavigation() {
               setSearchQuery('');
               router.visit('/wishlist');
             }}>
-              <Heart className="w-5 h-5 text-gray-700" />
+              <Heart className="w-5 h-5 text-gray-500" />
               <span className="text-xs text-[#444444] mt-1">お気に入り</span>
             </button>
 
@@ -773,8 +773,8 @@ export function HomeNavigation() {
                 handleCartClick();
               }}
             >
-              <ShoppingBag className="w-5 h-5 text-gray-700" />
-              <span className="text-xs text-black mt-1">
+              <ShoppingBag className="w-5 h-5 text-gray-500" />
+              <span className="text-xs text-gray-500 mt-1">
                 ({isLoading ? '...' : cartCount})
               </span>
             </button>
@@ -974,7 +974,7 @@ export function HomeNavigation() {
                           setIsMobileMenuProfileDropdownOpen(!isMobileMenuProfileDropdownOpen);
                         }}
                       >
-                        <CircleUserRound className="w-6 h-6 text-gray-700" />
+                        <CircleUserRound className="w-6 h-6 text-gray-500" />
                         <span className="text-xs text-[#444444] mt-1">プロフィール</span>
                       </button>
                       
@@ -1025,7 +1025,7 @@ export function HomeNavigation() {
                         setIsMobileMenuOpen(false);
                       }}
                     >
-                      <CircleUserRound className="w-6 h-6 text-gray-700" />
+                      <CircleUserRound className="w-6 h-6 text-gray-500" />
                       <span className="text-xs text-[#444444] mt-1">ログイン</span>
                     </button>
                   )}
@@ -1034,7 +1034,7 @@ export function HomeNavigation() {
                     router.visit('/wishlist');
                     setIsMobileMenuOpen(false);
                   }}>
-                    <Heart className="w-6 h-6 text-gray-700" />
+                    <Heart className="w-6 h-6 text-gray-500" />
                     <span className="text-xs text-[#444444] mt-1">お気に入り</span>
                   </button>
                   {/* Cart in mobile menu - Updated to show dynamic count and be clickable */}
@@ -1046,8 +1046,8 @@ export function HomeNavigation() {
                       setIsMobileMenuOpen(false);
                     }}
                   >
-                    <ShoppingBag className="w-6 h-6 text-gray-700" />
-                    <span className="text-xs text-black mt-1">
+                    <ShoppingBag className="w-6 h-6 text-gray-500" />
+                    <span className="text-xs text-gray-500 mt-1">
                       ({isLoading ? '...' : cartCount})
                     </span>
                   </button>
