@@ -1,6 +1,7 @@
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
-import React, { useState } from 'react';
+import React from 'react';
 import ProductCard from './ProductCard';
+import ImprovedCarousel from './ImprovedCarousel';
 
 const RankingSection: React.FC = () => {
     const rankedProducts = [
@@ -58,22 +59,25 @@ const RankingSection: React.FC = () => {
             showGenderIcon: true,
             showWishlistIcon: false,
         },
+        {
+            productImageSrc: '/perfume-images/perfume-8.png',
+            category: 'ブランド名',
+            productName: '商品名 8',
+            price: '￥30,00',
+            showRatingIcon: true,
+            showGenderIcon: true,
+            showWishlistIcon: true,
+        },
+        {
+            productImageSrc: '/perfume-images/perfume-9.png',
+            category: 'ブランド名',
+            productName: '商品名 9',
+            price: '￥33,00',
+            showRatingIcon: false,
+            showGenderIcon: false,
+            showWishlistIcon: true,
+        },
     ];
-
-    const [startIndex, setStartIndex] = useState(0);
-    const visibleProducts = rankedProducts.slice(startIndex, startIndex + 4);
-
-    const handleNext = () => {
-        if (startIndex < rankedProducts.length - 4) {
-            setStartIndex(prev => prev + 1);
-        }
-    };
-
-    const handlePrev = () => {
-        if (startIndex > 0) {
-            setStartIndex(prev => prev - 1);
-        }
-    };
 
     return (
         <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-6">
@@ -111,45 +115,21 @@ const RankingSection: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Product Cards Carousel */}
-                <div className="relative flex items-center justify-center">
-                    <button 
-                        className="absolute left-0 z-10 -translate-x-8 transform"
-                        onClick={handlePrev}
-                        disabled={startIndex === 0}
-                    >
-                        <ChevronLeft className={`h-8 w-8 ${startIndex === 0 ? 'text-gray-300' : 'text-gray-600'}`} />
-                    </button>
-                    <div className="flex overflow-hidden" style={{ width: 'calc(18rem * 4 + 1.5rem * 3)' }}>
-                        {visibleProducts.map((product, index) => (
-                            <div 
-                                key={startIndex + index} 
-                                className="w-72 flex-shrink-0"
-                                style={{ 
-                                    marginRight: index < visibleProducts.length - 1 ? '1.5rem' : '0',
-                                    transition: 'margin-right 0.3s ease'
-                                }}
-                            >
-                                <ProductCard
-                                    productImageSrc={product.productImageSrc}
-                                    category={product.category}
-                                    productName={product.productName}
-                                    price={product.price}
-                                    showRatingIcon={product.showRatingIcon}
-                                    showGenderIcon={product.showGenderIcon}
-                                    showWishlistIcon={product.showWishlistIcon}
-                                />
-                            </div>
-                        ))}
-                    </div>
-                    <button 
-                        className="absolute right-0 z-10 translate-x-8 transform"
-                        onClick={handleNext}
-                        disabled={startIndex >= rankedProducts.length - 4}
-                    >
-                        <ChevronRight className={`h-8 w-8 ${startIndex >= rankedProducts.length - 4 ? 'text-gray-300' : 'text-gray-600'}`} />
-                    </button>
-                </div>
+                {/* Product Cards Carousel using ImprovedCarousel */}
+                <ImprovedCarousel itemsToShow={4} slideOffset={1}>
+                    {rankedProducts.map((product, index) => (
+                        <ProductCard
+                            key={index}
+                            productImageSrc={product.productImageSrc}
+                            category={product.category}
+                            productName={product.productName}
+                            price={product.price}
+                            showRatingIcon={product.showRatingIcon}
+                            showGenderIcon={product.showGenderIcon}
+                            showWishlistIcon={product.showWishlistIcon}
+                        />
+                    ))}
+                </ImprovedCarousel>
 
                 {/* See More Products Button */}
                 <div className="mt-12 text-center">
