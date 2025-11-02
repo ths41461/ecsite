@@ -80,35 +80,35 @@ const RankingSection: React.FC = () => {
     ];
 
     return (
-        <section className="my-15 w-full border-t border-[#888888] bg-[#FCFCF7] py-6">
+        <section className="my-16 w-full bg-[#FCFCF7] py-8">
             <div className="flex flex-col items-center">
                 {/* Section Header */}
-                <div className="mb-8 text-center">
-                    <h2 className="mb-2 font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-[#444444]">人気ランキング</h2>
-                    <p className="text-xl text-[#444444]">今月、1,200人以上の学生に選ばれた香り！</p>
+                <div className="mb-12 text-center">
+                    <h2 className="mb-3 font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-gray-800">人気ランキング</h2>
+                    <p className="text-lg text-gray-600">今月、1,200人以上の学生に選ばれた香り！</p>
                 </div>
 
                 {/* Main Ranked Product */}
-                <div className="mb-12 flex w-full max-w-5xl flex-col items-center p-8 md:flex-row">
-                    <div className="relative mb-6 w-full md:mb-0 md:w-1/2">
+                <div className="mb-16 flex w-full max-w-5xl flex-col items-center md:flex-row">
+                    <div className="relative mb-8 w-full md:mb-0 md:w-1/2">
                         <img
                             src="/perfume-images/perfume-1.png"
                             alt="ルイ・ヴィトン スパークル"
-                            className="h-auto w-full border border-gray-300 object-cover p-5"
+                            className="h-auto w-full object-cover"
                         />
-                        <div className="absolute top-2 right-2 rounded-full bg-white p-1 shadow-md">
-                            <Heart className="h-5 w-5 text-gray-700" />
+                        <div className="absolute top-2 right-2 rounded-full bg-white p-1">
+                            <Heart className="h-5 w-5 text-gray-500" />
                         </div>
                     </div>
-                    <div className="flex w-full flex-col items-start md:w-1/2 md:pl-12">
-                        <span className="mb-2 inline-block bg-[#616161] px-3 py-1 text-base font-semibold text-white shadow-xs">#1 ランキング</span>
-                        <h3 className="mb-2 font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-black">ルイ・ヴィトン スパークル</h3>
-                        <p className="mb-4 text-lg text-black">¥18,000</p>
-                        <div className="flex flex-col gap-2">
-                            <button className="flex h-10 items-center justify-center border border-[#EEDDD4] bg-[#EAB308] px-4 py-2.5 text-base font-semibold text-white shadow-sm">
+                    <div className="flex w-full flex-col items-start md:w-1/2 md:pl-16">
+                        <span className="mb-3 inline-block bg-gray-700 px-3 py-1.5 text-sm font-semibold text-white">#1 ランキング</span>
+                        <h3 className="mb-3 font-['Hiragino_Mincho_ProN'] text-2xl font-semibold text-gray-900">ルイ・ヴィトン スパークル</h3>
+                        <p className="mb-6 text-xl text-gray-900">¥18,000</p>
+                        <div className="flex flex-col gap-3">
+                            <button className="flex h-11 items-center justify-center bg-[#EAB308] px-5 py-3 text-base font-semibold text-white">
                                 カートに入れる
                             </button>
-                            <button className="flex h-10 items-center justify-center border border-[#D0D5DD] bg-[#888888] px-4 py-2.5 text-sm font-medium text-white shadow-sm">
+                            <button className="flex h-11 items-center justify-center bg-gray-500 px-5 py-3 text-base font-medium text-white">
                                 製品を見る
                             </button>
                         </div>
@@ -119,7 +119,7 @@ const RankingSection: React.FC = () => {
                 <ImprovedCarousel itemsToShow={4} slideOffset={1}>
                     {rankedProducts.map((product, index) => (
                         <div key={index} className="relative">
-                            <div className="bg-opacity-70 absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                            <div className="absolute top-1.5 left-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-black/80 text-xs font-bold text-white">
                                 #{index + 2}
                             </div>
                             <ProductCard
@@ -136,8 +136,8 @@ const RankingSection: React.FC = () => {
                 </ImprovedCarousel>
 
                 {/* See More Products Button */}
-                <div className="mt-12 text-center">
-                    <button className="bg-[#444444] px-6 py-3 text-base font-medium text-white shadow-md transition-colors hover:bg-gray-700">
+                <div className="mt-16 text-center">
+                    <button className="bg-gray-700 px-6 py-3.5 text-base font-medium text-white transition-colors hover:bg-gray-800">
                         商品もっと見る
                     </button>
                 </div>
