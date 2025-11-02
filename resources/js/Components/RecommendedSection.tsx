@@ -104,12 +104,12 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
         <section className={`w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-4 ${className}`}>
             <div className="container mx-auto px-4">
                 {/* Section Title */}
-                <div className="mb-8 text-center">
-                    <h2 className="mt-5 mb-12 text-3xl leading-tight font-semibold text-[#444444]">おすすめ商品</h2>
+                <div className="mb-10 text-center">
+                    <h2 className="mb-12 text-3xl leading-tight font-semibold text-gray-800">おすすめ商品</h2>
                 </div>
 
                 {/* Product Cards Grid */}
-                <div className="grid grid-cols-4 gap-8">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                     {finalProducts.map((product, index) => (
                         <ProductCard
                             key={index}
