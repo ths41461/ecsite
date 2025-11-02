@@ -105,7 +105,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
             <div className="container mx-auto px-4">
                 {/* Section Title */}
                 <div className="mb-8 text-center">
-                    <h2 className="text-3xl leading-tight font-semibold text-[#444444]">おすすめ商品</h2>
+                    <h2 className="mt-5 mb-12 text-3xl leading-tight font-semibold text-[#444444]">おすすめ商品</h2>
                 </div>
 
                 {/* Product Cards Grid */}
