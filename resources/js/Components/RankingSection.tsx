@@ -80,16 +80,16 @@ const RankingSection: React.FC = () => {
     ];
 
     return (
-        <section className="my-8 sm:my-12 w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-6 sm:py-8">
-            <div className="container mx-auto px-4 flex flex-col items-center">
+        <section className="my-8 w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-6 sm:my-12 sm:py-8">
+            <div className="container mx-auto flex flex-col items-center px-4">
                 {/* Section Header */}
-                <div className="mb-6 sm:mb-10 text-center">
-                    <h2 className="mb-3 font-['Hiragino_Mincho_ProN'] text-2xl sm:text-3xl font-semibold text-gray-800">人気ランキング</h2>
-                    <p className="text-base sm:text-lg text-gray-600">今月、1,200人以上の学生に選ばれた香り！</p>
+                <div className="mb-6 text-center sm:mb-10">
+                    <h2 className="mb-3 font-['Hiragino_Mincho_ProN'] text-2xl font-semibold text-gray-800 sm:text-3xl">人気ランキング</h2>
+                    <p className="text-base text-gray-600 sm:text-lg">今月、1,200人以上の学生に選ばれた香り！</p>
                 </div>
 
                 {/* Main Ranked Product */}
-                <div className="mb-10 sm:mb-16 flex w-full max-w-5xl flex-col items-center md:flex-row">
+                <div className="mb-10 flex w-full max-w-5xl flex-col items-center sm:mb-16 md:flex-row">
                     <div className="relative mb-4 w-full border border-gray-300 md:mb-0 md:w-1/2">
                         <img src="/perfume-images/perfume-1.png" alt="ルイ・ヴィトン スパークル" className="h-auto w-full object-cover" />
                         <div className="absolute top-2 right-2 rounded-full bg-white/80 p-1 shadow-sm">
@@ -97,14 +97,18 @@ const RankingSection: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex w-full flex-col items-start md:w-1/2 md:pl-16">
-                        <span className="mb-2 sm:mb-3 inline-block bg-gray-700 px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm font-semibold text-white">#1 ランキング</span>
-                        <h3 className="mb-2 sm:mb-3 font-['Hiragino_Mincho_ProN'] text-xl sm:text-2xl font-semibold text-gray-900">ルイ・ヴィトン スパークル</h3>
-                        <p className="mb-4 sm:mb-6 text-lg sm:text-xl text-gray-900">¥18,000</p>
-                        <div className="flex flex-col gap-3">
-                            <button className="flex h-11 items-center justify-center bg-[#EAB308] px-5 py-3 text-base font-semibold text-white">
+                        <span className="mb-2 inline-block bg-gray-700 px-2 py-1 text-xs font-semibold text-white sm:mb-3 sm:px-3 sm:py-1.5 sm:text-sm">
+                            #1 ランキング
+                        </span>
+                        <h3 className="mb-2 font-['Hiragino_Mincho_ProN'] text-xl font-semibold text-gray-900 sm:mb-3 sm:text-2xl">
+                            ルイ・ヴィトン スパークル
+                        </h3>
+                        <p className="mb-4 text-lg text-gray-900 sm:mb-6 sm:text-xl">¥18,000</p>
+                        <div className="flex flex-row gap-3 md:flex-col md:gap-3">
+                            <button className="flex-1 flex h-11 items-center justify-center bg-[#EAB308] px-4 py-3 text-sm md:text-base font-semibold text-white min-w-[130px]">
                                 カートに入れる
                             </button>
-                            <button className="flex h-11 items-center justify-center bg-gray-500 px-5 py-3 text-base font-medium text-white">
+                            <button className="flex-1 flex h-11 items-center justify-center bg-gray-500 px-4 py-3 text-sm md:text-base font-medium text-white min-w-[130px]">
                                 製品を見る
                             </button>
                         </div>
@@ -112,9 +116,9 @@ const RankingSection: React.FC = () => {
                 </div>
 
                 {/* Product Cards - Responsive Carousel: 1 item on mobile, 4 on desktop */}
-                <div className="w-full relative">
+                <div className="relative w-full">
                     {/* Mobile Carousel - 1 item */}
-                    <div className="block sm:hidden -mx-4 px-4">
+                    <div className="-mx-4 block px-4 sm:hidden">
                         <ImprovedCarousel itemsToShow={1} slideOffset={1}>
                             {rankedProducts.map((product, index) => (
                                 <div key={index} className="relative">
@@ -134,7 +138,7 @@ const RankingSection: React.FC = () => {
                             ))}
                         </ImprovedCarousel>
                     </div>
-                    
+
                     {/* Desktop Carousel - 4 items */}
                     <div className="hidden sm:block">
                         <ImprovedCarousel itemsToShow={4} slideOffset={1}>
@@ -159,8 +163,8 @@ const RankingSection: React.FC = () => {
                 </div>
 
                 {/* See More Products Button */}
-                <div className="mt-10 sm:mt-16 text-center">
-                    <button className="bg-gray-700 px-4 sm:px-6 py-2.5 sm:py-3.5 text-sm sm:text-base font-medium text-white transition-colors hover:bg-gray-800">
+                <div className="mt-10 text-center sm:mt-16">
+                    <button className="bg-gray-700 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-gray-800 sm:px-6 sm:py-3.5 sm:text-base">
                         商品もっと見る
                     </button>
                 </div>
