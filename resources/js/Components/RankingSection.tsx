@@ -80,7 +80,7 @@ const RankingSection: React.FC = () => {
     ];
 
     return (
-        <section className="my-16 w-full bg-[#FCFCF7] py-8">
+        <section className="my-16 w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-8">
             <div className="flex flex-col items-center">
                 {/* Section Header */}
                 <div className="mb-12 text-center">
@@ -90,12 +90,8 @@ const RankingSection: React.FC = () => {
 
                 {/* Main Ranked Product */}
                 <div className="mb-16 flex w-full max-w-5xl flex-col items-center md:flex-row">
-                    <div className="relative mb-8 w-full md:mb-0 md:w-1/2">
-                        <img
-                            src="/perfume-images/perfume-1.png"
-                            alt="ルイ・ヴィトン スパークル"
-                            className="h-auto w-full object-cover"
-                        />
+                    <div className="relative mb-8 w-full border border-gray-300 md:mb-0 md:w-1/2">
+                        <img src="/perfume-images/perfume-1.png" alt="ルイ・ヴィトン スパークル" className="h-auto w-full object-cover" />
                         <div className="absolute top-3 right-3 rounded-full bg-white/80 p-1.5 shadow-sm">
                             <Heart className="h-4 w-4 text-gray-600" />
                         </div>
