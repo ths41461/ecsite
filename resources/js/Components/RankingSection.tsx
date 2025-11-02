@@ -1,7 +1,7 @@
-import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
+import { Heart } from 'lucide-react';
 import React from 'react';
-import ProductCard from './ProductCard';
 import ImprovedCarousel from './ImprovedCarousel';
+import ProductCard from './ProductCard';
 
 const RankingSection: React.FC = () => {
     const rankedProducts = [
@@ -80,8 +80,8 @@ const RankingSection: React.FC = () => {
     ];
 
     return (
-        <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-6">
-            <div className="container mx-auto flex flex-col items-center px-4">
+        <section className="my-15 w-full border-t border-[#888888] bg-[#FCFCF7] py-6">
+            <div className="flex flex-col items-center">
                 {/* Section Header */}
                 <div className="mb-8 text-center">
                     <h2 className="mb-2 font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-[#444444]">人気ランキング</h2>
@@ -118,16 +118,20 @@ const RankingSection: React.FC = () => {
                 {/* Product Cards Carousel using ImprovedCarousel */}
                 <ImprovedCarousel itemsToShow={4} slideOffset={1}>
                     {rankedProducts.map((product, index) => (
-                        <ProductCard
-                            key={index}
-                            productImageSrc={product.productImageSrc}
-                            category={product.category}
-                            productName={product.productName}
-                            price={product.price}
-                            showRatingIcon={product.showRatingIcon}
-                            showGenderIcon={product.showGenderIcon}
-                            showWishlistIcon={product.showWishlistIcon}
-                        />
+                        <div key={index} className="relative">
+                            <div className="bg-opacity-70 absolute top-2 left-2 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-black text-sm font-bold text-white">
+                                #{index + 2}
+                            </div>
+                            <ProductCard
+                                productImageSrc={product.productImageSrc}
+                                category={product.category}
+                                productName={product.productName}
+                                price={product.price}
+                                showRatingIcon={product.showRatingIcon}
+                                showGenderIcon={product.showGenderIcon}
+                                showWishlistIcon={product.showWishlistIcon}
+                            />
+                        </div>
                     ))}
                 </ImprovedCarousel>
 
