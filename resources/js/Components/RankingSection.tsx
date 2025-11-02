@@ -40,6 +40,24 @@ const RankingSection: React.FC = () => {
             showGenderIcon: true,
             showWishlistIcon: true,
         },
+        {
+            productImageSrc: '/perfume-images/perfume-6.png',
+            category: 'ブランド名',
+            productName: '商品名 6',
+            price: '￥32,00',
+            showRatingIcon: true,
+            showGenderIcon: false,
+            showWishlistIcon: true,
+        },
+        {
+            productImageSrc: '/perfume-images/perfume-7.png',
+            category: 'ブランド名',
+            productName: '商品名 7',
+            price: '￥28,00',
+            showRatingIcon: false,
+            showGenderIcon: true,
+            showWishlistIcon: false,
+        },
     ];
 
     return (
@@ -83,9 +101,13 @@ const RankingSection: React.FC = () => {
                     <button className="absolute left-0 z-10 -translate-x-8 transform">
                         <ChevronLeft className="h-8 w-8 text-gray-600" />
                     </button>
-                    <div className="flex space-x-6">
+                    <div className="flex overflow-hidden" style={{ width: 'calc(18rem * 4 + 1.5rem * 3)' }}>
                         {rankedProducts.map((product, index) => (
-                            <div key={index} className="w-72 flex-shrink-0">
+                            <div 
+                                key={index} 
+                                className={`w-72 flex-shrink-0 ${index >= 4 ? 'hidden' : ''}`}
+                                style={{ marginRight: index < 3 ? '1.5rem' : '0' }}
+                            >
                                 <ProductCard
                                     productImageSrc={product.productImageSrc}
                                     category={product.category}
