@@ -96,8 +96,8 @@ const RankingSection: React.FC = () => {
                             alt="ルイ・ヴィトン スパークル"
                             className="h-auto w-full object-cover"
                         />
-                        <div className="absolute top-2 right-2 rounded-full bg-white p-1">
-                            <Heart className="h-5 w-5 text-gray-500" />
+                        <div className="absolute top-3 right-3 rounded-full bg-white/80 p-1.5 shadow-sm">
+                            <Heart className="h-4 w-4 text-gray-600" />
                         </div>
                     </div>
                     <div className="flex w-full flex-col items-start md:w-1/2 md:pl-16">
