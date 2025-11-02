@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Heart } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 import ProductCard from './ProductCard';
 
 const RankingSection: React.FC = () => {
@@ -60,6 +60,21 @@ const RankingSection: React.FC = () => {
         },
     ];
 
+    const [startIndex, setStartIndex] = useState(0);
+    const visibleProducts = rankedProducts.slice(startIndex, startIndex + 4);
+
+    const handleNext = () => {
+        if (startIndex < rankedProducts.length - 4) {
+            setStartIndex(prev => prev + 1);
+        }
+    };
+
+    const handlePrev = () => {
+        if (startIndex > 0) {
+            setStartIndex(prev => prev - 1);
+        }
+    };
+
     return (
         <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-6">
             <div className="container mx-auto flex flex-col items-center px-4">
@@ -98,15 +113,22 @@ const RankingSection: React.FC = () => {
 
                 {/* Product Cards Carousel */}
                 <div className="relative flex items-center justify-center">
-                    <button className="absolute left-0 z-10 -translate-x-8 transform">
-                        <ChevronLeft className="h-8 w-8 text-gray-600" />
+                    <button 
+                        className="absolute left-0 z-10 -translate-x-8 transform"
+                        onClick={handlePrev}
+                        disabled={startIndex === 0}
+                    >
+                        <ChevronLeft className={`h-8 w-8 ${startIndex === 0 ? 'text-gray-300' : 'text-gray-600'}`} />
                     </button>
                     <div className="flex overflow-hidden" style={{ width: 'calc(18rem * 4 + 1.5rem * 3)' }}>
-                        {rankedProducts.map((product, index) => (
+                        {visibleProducts.map((product, index) => (
                             <div 
-                                key={index} 
-                                className={`w-72 flex-shrink-0 ${index >= 4 ? 'hidden' : ''}`}
-                                style={{ marginRight: index < 3 ? '1.5rem' : '0' }}
+                                key={startIndex + index} 
+                                className="w-72 flex-shrink-0"
+                                style={{ 
+                                    marginRight: index < visibleProducts.length - 1 ? '1.5rem' : '0',
+                                    transition: 'margin-right 0.3s ease'
+                                }}
                             >
                                 <ProductCard
                                     productImageSrc={product.productImageSrc}
@@ -120,8 +142,12 @@ const RankingSection: React.FC = () => {
                             </div>
                         ))}
                     </div>
-                    <button className="absolute right-0 z-10 translate-x-8 transform">
-                        <ChevronRight className="h-8 w-8 text-gray-600" />
+                    <button 
+                        className="absolute right-0 z-10 translate-x-8 transform"
+                        onClick={handleNext}
+                        disabled={startIndex >= rankedProducts.length - 4}
+                    >
+                        <ChevronRight className={`h-8 w-8 ${startIndex >= rankedProducts.length - 4 ? 'text-gray-300' : 'text-gray-600'}`} />
                     </button>
                 </div>
 
