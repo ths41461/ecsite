@@ -38,15 +38,15 @@ const NewsletterSection: React.FC = () => {
     };
 
     return (
-        <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-12">
+        <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-8 sm:py-12">
             <div className="container mx-auto flex flex-col items-center px-4">
-                <h2 className="font-['Hiragino_Mincho_ProN'] text-3xl font-bold text-gray-900">登録で10%OFFクーポン</h2>
-                <p className="mt-2 text-center font-['Hiragino_Mincho_ProN'] text-base text-gray-700">
+                <h2 className="font-['Hiragino_Mincho_ProN'] text-2xl sm:text-3xl font-bold text-gray-900">登録で10%OFFクーポン</h2>
+                <p className="mt-2 text-center font-['Hiragino_Mincho_ProN'] text-sm sm:text-base text-gray-700">
                     学生限定のお得なセールや、新作香水の情報をいち早くお届けします。
                 </p>
                 
-                <form onSubmit={handleSubmit} className="mt-6 flex w-full max-w-2xl items-center justify-center gap-4">
-                    <div className="relative w-full max-w-md">
+                <form onSubmit={handleSubmit} className="mt-4 sm:mt-6 flex w-full max-w-2xl flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
+                    <div className="w-full">
                         <input
                             type="email"
                             id="newsletter-email"
@@ -58,7 +58,7 @@ const NewsletterSection: React.FC = () => {
                             disabled={isSubmitting}
                             className={`h-12 w-full border ${
                                 error ? 'border-red-500' : 'border-gray-300'
-                            } bg-white px-4 py-3 text-base text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 ${
+                            } bg-white px-3 sm:px-4 py-3 text-sm sm:text-base text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 ${
                                 isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
                             }`}
                             aria-label="メールアドレスを入力"
@@ -68,7 +68,7 @@ const NewsletterSection: React.FC = () => {
                     <button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className={`h-12 min-w-[140px] bg-gray-700 px-6 py-3 font-['Hiragino_Mincho_ProN'] text-base font-medium text-white ${
+                        className={`h-12 w-full sm:w-auto min-w-[140px] bg-gray-700 px-6 py-3 font-['Hiragino_Mincho_ProN'] text-sm sm:text-base font-medium text-white ${
                             isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-800'
                         }`}
                     >
