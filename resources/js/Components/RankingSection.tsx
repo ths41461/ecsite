@@ -83,7 +83,7 @@ const RankingSection: React.FC = () => {
                     <button className="absolute left-0 z-10 -translate-x-8 transform">
                         <ChevronLeft className="h-8 w-8 text-gray-600" />
                     </button>
-                    <div className="flex space-x-6 overflow-x-auto">
+                    <div className="flex space-x-6">
                         {rankedProducts.map((product, index) => (
                             <div key={index} className="w-72 flex-shrink-0">
                                 <ProductCard
