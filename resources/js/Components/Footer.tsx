@@ -2,48 +2,85 @@ import React from 'react';
 
 const Footer: React.FC = () => {
     return (
-        <footer className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] pt-[100px] pb-0">
-            <div className="mx-auto max-w-[1360px] px-[15px]">
+        <footer className="mt-16 w-full border-t border-b border-[#888888] bg-[#FCFCF7] pt-16 pb-0">
+            <div className="mx-auto max-w-7xl px-4">
                 {/* Top part: Logo, Nav Links, Social Icons */}
-                <div className="flex items-center justify-between py-6">
+                <div className="flex flex-col items-center justify-between gap-8 py-6 md:flex-row">
                     {/* Logo */}
                     <div>
-                        <div className="flex h-12 items-center justify-center bg-red-500" style={{ width: '178.49px' }}>
-                            <span className="text-lg font-bold text-white font-['Plus_Jakarta_Sans']">LOGO</span>
-                        </div>
+                        <a href="/" className="flex h-12 items-center justify-center bg-red-500">
+                            <span className="font-['Hiragino_Mincho_ProN'] text-xl font-bold text-white">LOGO</span>
+                        </a>
                     </div>
 
                     {/* Navigation Links */}
-                    <nav>
-                        <ul className="flex items-center gap-x-8 text-base text-[#444444] font-['Noto_Sans_JP']">
-                            <li><a href="#" className="hover:underline">ホーム</a></li>
-                            <li><img src="/icons/footer-nav-separator.svg" alt="" /></li>
-                            <li><a href="#" className="hover:underline">商品一覧</a></li>
-                            <li><img src="/icons/footer-nav-separator.svg" alt="" /></li>
-                            <li><a href="#" className="hover:underline">香り診断</a></li>
-                            <li><img src="/icons/footer-nav-separator.svg" alt="" /></li>
-                            <li><a href="#" className="hover:underline">ブランド紹介</a></li>
-                            <li><img src="/icons/footer-nav-separator.svg" alt="" /></li>
-                            <li><a href="#" className="hover:underline">お問い合わせ</a></li>
+                    <nav aria-label="footer navigation">
+                        <ul className="flex flex-wrap items-center justify-center gap-4 font-['Hiragino_Mincho_ProN'] text-base text-gray-700 md:justify-normal">
+                            <li>
+                                <a href="#" className="transition-colors hover:text-gray-900">
+                                    ホーム
+                                </a>
+                            </li>
+                            <li className="hidden md:block">
+                                <span className="text-gray-400">|</span>
+                            </li>
+                            <li>
+                                <a href="#" className="transition-colors hover:text-gray-900">
+                                    商品一覧
+                                </a>
+                            </li>
+                            <li className="hidden md:block">
+                                <span className="text-gray-400">|</span>
+                            </li>
+                            <li>
+                                <a href="#" className="transition-colors hover:text-gray-900">
+                                    香り診断
+                                </a>
+                            </li>
+                            <li className="hidden md:block">
+                                <span className="text-gray-400">|</span>
+                            </li>
+                            <li>
+                                <a href="#" className="transition-colors hover:text-gray-900">
+                                    ブランド紹介
+                                </a>
+                            </li>
+                            <li className="hidden md:block">
+                                <span className="text-gray-400">|</span>
+                            </li>
+                            <li>
+                                <a href="#" className="transition-colors hover:text-gray-900">
+                                    お問い合わせ
+                                </a>
+                            </li>
                         </ul>
                     </nav>
 
                     {/* Social Media Icons */}
-                    <div>
-                        <img src="/icons/footer-social-icons.svg" alt="Social media icons" />
+                    <div className="flex items-center gap-4">
+                        <a href="#" className="transition-opacity hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" aria-label="Visit us on Facebook">
+                            <img src="/icons/facebook.svg" alt="" />
+                        </a>
+                        <a href="#" className="transition-opacity hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" aria-label="Follow us on Instagram">
+                            <img src="/icons/instagram.svg" alt="" />
+                        </a>
+                        <a href="#" className="transition-opacity hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" aria-label="Follow us on X">
+                            <img src="/icons/x.svg" alt="" />
+                        </a>
+                        <a href="#" className="transition-opacity hover:opacity-75 focus:outline-none focus:ring-2 focus:ring-gray-400 rounded" aria-label="Subscribe to our YouTube channel">
+                            <img src="/icons/youtube.svg" alt="" />
+                        </a>
                     </div>
                 </div>
 
                 {/* Bottom part: Copyright, Payment Methods */}
-                <div className="mt-[50px] border-t border-[#D6D6D6] py-6 flex items-end justify-between">
+                <div className="mt-12 flex flex-col items-center justify-between gap-6 border-t border-gray-300 py-6 md:flex-row">
                     {/* Copyright */}
-                    <div className="text-base text-[#444444] font-['Plus_Jakarta_Sans']">
-                        © 2025 Copyright. All rights reserved.
-                    </div>
+                    <div className="font-['Hiragino_Mincho_ProN'] text-base text-gray-700">© 2025 Copyright. All rights reserved.</div>
 
                     {/* Payment Methods */}
                     <div>
-                        <img src="/icons/footer-payment-methods.svg" alt="Payment methods" />
+                        <img src="/icons/footer-payment-methods.svg" alt="We accept various payment methods" />
                     </div>
                 </div>
             </div>
