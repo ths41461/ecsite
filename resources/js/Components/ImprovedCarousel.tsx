@@ -38,7 +38,7 @@ const ImprovedCarousel: React.FC<CarouselProps> = ({
     return (
         <div className="relative flex items-center justify-center">
             <button 
-                className="absolute left-0 z-10 -translate-x-8 transform"
+                className="absolute left-0 z-10 -translate-x-4 md:-translate-x-8 transform hover:scale-110 transition-transform"
                 onClick={handlePrev}
                 disabled={currentIndex === 0}
                 aria-label="Previous items"
@@ -77,7 +77,7 @@ const ImprovedCarousel: React.FC<CarouselProps> = ({
             </div>
             
             <button 
-                className="absolute right-0 z-10 translate-x-8 transform"
+                className="absolute right-0 z-10 translate-x-4 md:translate-x-8 transform hover:scale-110 transition-transform"
                 onClick={handleNext}
                 disabled={currentIndex >= maxIndex}
                 aria-label="Next items"
