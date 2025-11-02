@@ -2,6 +2,7 @@ import { HomeNavigation } from '@/components/homeNavigation';
 import RecommendedSection from '@/Components/RecommendedSection';
 import Hero from '../components/Hero/Hero';
 import RankingSection from '../Components/RankingSection';
+import NewsletterSection from '../Components/NewsletterSection';
 
 export default function Homepage() {
     return (
@@ -11,6 +12,7 @@ export default function Homepage() {
             <main>
                 <RecommendedSection className="mt-15" />
                 <RankingSection />
+                <NewsletterSection />
             </main>
         </div>
     );
