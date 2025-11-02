@@ -1,7 +1,7 @@
 import { HomeNavigation } from '@/components/homeNavigation';
 import RecommendedSection from '@/Components/RecommendedSection';
-import RankingSection from '@/Components/RankingSection';
 import Hero from '../components/Hero/Hero';
+import RankingSection from '../Components/RankingSection';
 
 export default function Homepage() {
     return (
