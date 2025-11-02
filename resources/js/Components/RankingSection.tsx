@@ -81,7 +81,7 @@ const RankingSection: React.FC = () => {
 
     return (
         <section className="my-16 w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-8">
-            <div className="flex flex-col items-center">
+            <div className="container mx-auto px-4 flex flex-col items-center">
                 {/* Section Header */}
                 <div className="mb-12 text-center">
                     <h2 className="mb-3 font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-gray-800">人気ランキング</h2>

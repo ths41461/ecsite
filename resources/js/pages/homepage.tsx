@@ -3,6 +3,7 @@ import RecommendedSection from '@/Components/RecommendedSection';
 import Hero from '../components/Hero/Hero';
 import RankingSection from '../Components/RankingSection';
 import NewsletterSection from '../Components/NewsletterSection';
+import Footer from '../Components/Footer';
 
 export default function Homepage() {
     return (
@@ -14,6 +15,7 @@ export default function Homepage() {
                 <RankingSection />
                 <NewsletterSection />
             </main>
+            <Footer />
         </div>
     );
 }
