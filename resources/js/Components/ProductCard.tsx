@@ -33,26 +33,26 @@ const ProductCard: React.FC<ProductCardProps> = ({
             </div>
 
             {/* Product Info */}
-            <div className="px-2 py-6">
+            <div className="px-3 py-6">
                 {/* Category and Rating */}
                 <div className="mb-1 flex items-end justify-between">
-                    <span className="text-sm font-normal text-[#616161]">{category}</span>
+                    <span className="font-['Hiragino_Mincho_ProN'] text-sm font-normal text-gray-600">{category}</span>
                     {showRatingIcon && <img src="/icons/rating-container.svg" alt="Rating" className="h-4" />}
                 </div>
 
                 {/* Product Name and Gender */}
                 <div className="mb-2 flex items-center justify-between">
-                    <h3 className="text-xl leading-normal font-normal text-[#444444]">{productName}</h3>
+                    <h3 className="font-['Hiragino_Mincho_ProN'] text-lg leading-normal font-normal text-gray-800">{productName}</h3>
                     {showGenderIcon && <img src="/icons/gender.svg" alt="Gender" className="h-5" />}
                 </div>
 
                 {/* Product Price */}
                 <div className="mb-4 flex items-center justify-center">
-                    <span className="text-2xl leading-snug font-normal text-black">{price}</span>
+                    <span className="font-['Hiragino_Mincho_ProN'] text-xl leading-snug font-semibold text-gray-900">{price}</span>
                 </div>
 
                 {/* Add to Cart Button */}
-                <button className="flex h-10 w-full items-center justify-center border border-[#EEDDD4] bg-[#EAB308] px-4 py-2.5 text-sm font-medium text-[#FCFCFC] shadow-sm">
+                <button className="flex h-10 w-full items-center justify-center border border-[#EEDDD4] bg-[#EAB308] px-4 py-2.5 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EAB308]">
                     <img src="/icons/icon-cart.svg" alt="Cart" className="mr-2 h-5 w-5" />
                     カートに入れる
                 </button>

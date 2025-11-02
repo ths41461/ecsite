@@ -1,5 +1,6 @@
 import React from 'react';
 import ProductCard from './ProductCard';
+import ImprovedCarousel from './ImprovedCarousel';
 
 interface ProductData {
     productImageSrc: string;
@@ -104,29 +105,47 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
         <section className={`w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-4 ${className}`}>
             <div className="container mx-auto px-4">
                 {/* Section Title */}
-                <div className="mb-10 text-center">
-                    <h2 className="mb-12 text-3xl leading-tight font-semibold text-gray-800">おすすめ商品</h2>
+                <div className="mb-6 text-center">
+                    <h2 className="font-['Hiragino_Mincho_ProN'] mb-6 text-2xl leading-tight font-semibold text-gray-800">おすすめ商品</h2>
                 </div>
 
-                {/* Product Cards Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {finalProducts.map((product, index) => (
-                        <ProductCard
-                            key={index}
-                            productImageSrc={product.productImageSrc}
-                            category={product.category}
-                            productName={product.productName}
-                            price={product.price}
-                            showRatingIcon={product.showRatingIcon}
-                            showGenderIcon={product.showGenderIcon}
-                            showWishlistIcon={product.showWishlistIcon}
-                        />
-                    ))}
+                {/* Product Cards - Carousel for Mobile, Grid for Desktop */}
+                <div className="w-full">
+                    <div className="block sm:hidden">
+                        <ImprovedCarousel itemsToShow={1} slideOffset={1}>
+                            {finalProducts.map((product, index) => (
+                                <ProductCard
+                                    key={index}
+                                    productImageSrc={product.productImageSrc}
+                                    category={product.category}
+                                    productName={product.productName}
+                                    price={product.price}
+                                    showRatingIcon={product.showRatingIcon}
+                                    showGenderIcon={product.showGenderIcon}
+                                    showWishlistIcon={product.showWishlistIcon}
+                                />
+                            ))}
+                        </ImprovedCarousel>
+                    </div>
+                    <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+                        {finalProducts.map((product, index) => (
+                            <ProductCard
+                                key={index}
+                                productImageSrc={product.productImageSrc}
+                                category={product.category}
+                                productName={product.productName}
+                                price={product.price}
+                                showRatingIcon={product.showRatingIcon}
+                                showGenderIcon={product.showGenderIcon}
+                                showWishlistIcon={product.showWishlistIcon}
+                            />
+                        ))}
+                    </div>
                 </div>
 
                 {/* See More Products Button */}
-                <div className="mt-12 text-center">
-                    <button className="bg-[#444444] px-4 py-2.5 text-lg font-medium text-white shadow-md transition-colors hover:bg-gray-700">
+                <div className="mt-6 text-center">
+                    <button className="bg-gray-800 px-6 py-3 text-base font-medium text-white shadow-md transition-colors hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 min-h-[44px]">
                         商品もっと見る
                     </button>
                 </div>
