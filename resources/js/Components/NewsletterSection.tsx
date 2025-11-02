@@ -38,15 +38,15 @@ const NewsletterSection: React.FC = () => {
     };
 
     return (
-        <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-16">
+        <section className="w-full border-t border-b border-[#888888] bg-[#FCFCF7] py-12">
             <div className="container mx-auto flex flex-col items-center px-4">
-                <h2 className="font-['Hiragino_Mincho_ProN'] text-3xl font-semibold text-gray-800">登録で10%OFFクーポン</h2>
-                <p className="mt-3 text-center font-['Hiragino_Mincho_ProN'] text-lg text-gray-600">
+                <h2 className="font-['Hiragino_Mincho_ProN'] text-3xl font-bold text-gray-900">登録で10%OFFクーポン</h2>
+                <p className="mt-2 text-center font-['Hiragino_Mincho_ProN'] text-base text-gray-700">
                     学生限定のお得なセールや、新作香水の情報をいち早くお届けします。
                 </p>
                 
-                <form onSubmit={handleSubmit} className="mt-8 flex w-full max-w-2xl flex-wrap items-center justify-center gap-4">
-                    <div className="relative w-full max-w-xs">
+                <form onSubmit={handleSubmit} className="mt-6 flex w-full max-w-2xl items-center justify-center gap-4">
+                    <div className="relative w-full max-w-md">
                         <input
                             type="email"
                             id="newsletter-email"
@@ -68,7 +68,7 @@ const NewsletterSection: React.FC = () => {
                     <button 
                         type="submit" 
                         disabled={isSubmitting}
-                        className={`h-12 min-w-[120px] bg-gray-700 px-6 py-3 font-['Hiragino_Mincho_ProN'] text-base font-medium text-white ${
+                        className={`h-12 min-w-[140px] bg-gray-700 px-6 py-3 font-['Hiragino_Mincho_ProN'] text-base font-medium text-white ${
                             isSubmitting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-gray-800'
                         }`}
                     >
@@ -77,13 +77,13 @@ const NewsletterSection: React.FC = () => {
                 </form>
                 
                 {error && (
-                    <p className="mt-2 text-sm text-red-500" role="alert">
+                    <p className="mt-3 text-sm text-red-600 font-medium" role="alert">
                         {error}
                     </p>
                 )}
                 
                 {submitSuccess && (
-                    <p className="mt-2 text-sm text-green-600" role="status">
+                    <p className="mt-3 text-sm text-green-700 font-medium" role="status">
                         メールアドレスの登録が完了しました！10%OFFクーポンを送信しました。
                     </p>
                 )}
