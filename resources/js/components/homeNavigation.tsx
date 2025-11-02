@@ -1070,8 +1070,9 @@ function CustomNavButton({ children, className, onClick }: CustomNavButtonProps 
   return (
     <button
       className={cn(
-              "flex flex-row items-center justify-center gap-2 h-10 border border-gray-200 text-sm font-medium text-[#444444] px-4 py-2.5 cursor-pointer",
-              className      )}
+        "flex flex-row items-center justify-center gap-2 h-10 border border-gray-200 text-sm font-medium text-gray-700 px-4 py-2.5 cursor-pointer",
+        className
+      )}
       onClick={onClick}
     >
       {children}
