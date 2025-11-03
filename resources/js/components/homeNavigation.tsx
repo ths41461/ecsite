@@ -1085,3 +1085,6 @@ function CustomNavLink({ children, className, href, onClick }: CustomNavLinkProp
 
 // Export types for other components to use
 export { Cart as CartType, CartLine as CartLineType };
+
+// Ensure the HomeNavigation component is properly exported
+// export function HomeNavigation() { ... } is already present above
