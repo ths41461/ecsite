@@ -378,7 +378,7 @@ export default function Show({ product, gallery, related }: Props) {
                 <Head title={product.name} />
                 <div className="grid gap-6 md:grid-cols-2">
                 {/* GALLERY */}
-                <div className="flex space-x-4">
+                <div className="flex space-x-3">
                     {gallery.length > 1 && (
                         <div className="flex flex-col gap-2">
                             {gallery.map((g, i) => {
@@ -388,7 +388,7 @@ export default function Show({ product, gallery, related }: Props) {
                                         key={i}
                                         type="button"
                                         onClick={() => setActiveIndex(i)}
-                                        className={`w-20 aspect-square overflow-hidden border ${
+                                        className={`w-16 aspect-square overflow-hidden border ${
                                             selected ? 'border-2 border-gray-800' : 'border border-gray-300 hover:border-gray-400'
                                         }`}
                                         aria-label={`サムネイル ${i + 1}`}
@@ -409,20 +409,20 @@ export default function Show({ product, gallery, related }: Props) {
                 </div>
 
                 {/* DETAILS */}
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {/* Product Name and Brand */}
                     <div className="space-y-1">
                         {product.brand?.name && (
-                            <div className="text-sm" style={{ color: '#888888' }}>{product.brand.name}</div>
+                            <div className="text-sm text-gray-500">{product.brand.name}</div>
                         )}
-                        <h1 className="text-2xl font-semibold text-gray-800 font-['Hiragino_Mincho_ProN']">{product.name}</h1>
+                        <h1 className="text-xl font-semibold text-gray-800">{product.name}</h1>
                     </div>
                     
                     {/* Price and Stock */}
                     {selectedVariant && (
                         <div className="flex items-center justify-between">
-                            <div className="text-2xl font-bold text-gray-800">{yen(selectedVariant.price_cents)}</div>
-                            <div className={`px-3 py-1 text-sm ${ 
+                            <div className="text-xl font-bold text-gray-800">{yen(selectedVariant.price_cents)}</div>
+                            <div className={`px-2 py-1 text-xs ${ 
                                 stockBadgeFor(selectedVariant) === '在庫切れ' 
                                     ? 'bg-rose-100 text-rose-700' 
                                     : stockBadgeFor(selectedVariant) === '在庫僅少' 
@@ -435,23 +435,22 @@ export default function Show({ product, gallery, related }: Props) {
                     )}
 
                     {/* Content Volume Heading */}
-                    <div className="text-base font-medium" style={{ color: '#888888' }}>内容量</div>
+                    <div className="text-sm font-medium text-gray-500">内容量</div>
 
                     {/* Size Options */}
                     {product.variants.length > 1 && (
-                        <div className="flex gap-3">
+                        <div className="flex gap-2">
                             {product.variants.map((v) => {
                                 const isSelected = selectedVariant?.sku === v.sku;
                                 return (
                                     <button
                                         key={v.sku}
                                         onClick={() => setSelectedVariant(v)}
-                                        className={`flex-1 border border-gray-300 p-4 text-center ${
+                                        className={`flex-1 border p-2 text-center text-sm ${
                                             isSelected 
-                                                ? 'border-2 border-gray-800' 
-                                                : 'hover:border-gray-400'
+                                                ? 'border-gray-800 bg-gray-50' 
+                                                : 'border-gray-300 hover:border-gray-400'
                                         }`}
-                                        style={{ color: isSelected ? '#363842' : '#000000' }}
                                     >
                                         <span>{v.options?.size_ml}ml</span>
                                     </button>
@@ -462,7 +461,7 @@ export default function Show({ product, gallery, related }: Props) {
 
                     {/* Single variant display */}
                     {product.variants.length === 1 && selectedVariant && (
-                        <div className="border border-gray-300 p-4 text-center" style={{ color: '#363842' }}>
+                        <div className="border border-gray-300 p-2 text-center text-sm">
                             <span>{selectedVariant.options?.size_ml}ml</span>
                         </div>
                     )}
@@ -470,18 +469,18 @@ export default function Show({ product, gallery, related }: Props) {
                     {/* Quantity Selector */}
                     {selectedVariant && (
                         <div>
-                            <div className="text-sm font-medium" style={{ color: '#888888' }}>数量</div>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="text-xs font-medium text-gray-500 mb-1">数量</div>
+                            <div className="flex items-center gap-2">
                                 <button
                                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                    className="border border-gray-300 w-10 h-10 flex items-center justify-center text-sm hover:bg-gray-50"
+                                    className="border border-gray-300 w-8 h-8 flex items-center justify-center text-sm hover:bg-gray-50"
                                 >
                                     -
                                 </button>
-                                <span className="w-12 text-center text-sm font-medium">{quantity}</span>
+                                <span className="w-8 text-center text-sm font-medium">{quantity}</span>
                                 <button
                                     onClick={() => setQuantity(Math.min(20, quantity + 1))}
-                                    className="border border-gray-300 w-10 h-10 flex items-center justify-center text-sm hover:bg-gray-50"
+                                    className="border border-gray-300 w-8 h-8 flex items-center justify-center text-sm hover:bg-gray-50"
                                 >
                                     +
                                 </button>
@@ -495,7 +494,7 @@ export default function Show({ product, gallery, related }: Props) {
                             <button
                                 onClick={handleAddToCartEvent}
                                 disabled={isAddingToCart || !selectedVariant}
-                                className="w-full bg-[#EAB308] text-gray-800 py-4 font-medium text-base hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="w-full bg-[#EAB308] text-gray-800 py-3 font-medium hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 {isAddingToCart ? '追加中...' : 'カートに追加'}
                             </button>
@@ -507,7 +506,7 @@ export default function Show({ product, gallery, related }: Props) {
                         <button
                             onClick={handleWishlistAdd}
                             disabled={isWishlisting || isWishlisted}
-                            className="border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+                            className="border border-gray-300 px-3 py-2 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100"
                             aria-label={isWishlisted ? 'お気に入り登録済み' : 'お気に入りに追加'}
                         >
                             {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
@@ -515,23 +514,23 @@ export default function Show({ product, gallery, related }: Props) {
                     </div>
 
                     {/* Fragrance Type - From Figma design */}
-                    <div className="flex justify-between items-center border-b border-gray-200 pb-2">
-                        <div className="text-lg font-medium" style={{ color: '#888888' }}>香りのタイプ</div>
-                        <div className="text-lg font-medium" style={{ color: '#444444' }}>フローラル</div>
+                    <div className="flex justify-between items-center border-b border-gray-200 pb-1">
+                        <div className="text-sm font-medium text-gray-500">香りのタイプ</div>
+                        <div className="text-sm font-medium text-gray-800">フローラル</div>
                     </div>
 
                     {/* Delivery Information */}
-                    <div className="border border-gray-200 p-4">
-                        <div className="text-base font-medium mb-2" style={{ color: '#000000' }}>配送について</div>
-                        <div className="border border-gray-300 p-4">
-                            <div className="flex justify-between">
-                                <div style={{ color: '#888888' }}>配送料：</div>
-                                <div style={{ color: '#444444' }}>無料配送</div>
+                    <div className="border border-gray-200 p-3">
+                        <div className="text-sm font-medium mb-1 text-gray-800">配送について</div>
+                        <div className="border border-gray-300 p-3">
+                            <div className="flex justify-between text-xs">
+                                <div className="text-gray-500">配送料：</div>
+                                <div className="text-gray-700">無料配送</div>
                             </div>
-                            <div className="mt-2" style={{ color: '#888888' }}>9,350円(税込)～購入で無料配送</div>
-                            <div className="flex justify-between mt-4">
-                                <div style={{ color: '#888888' }}>配送料：</div>
-                                <div style={{ color: '#444444' }}>ご注文完了から2日～7日前後のお届け</div>
+                            <div className="mt-1 text-xs text-gray-500">9,350円(税込)～購入で無料配送</div>
+                            <div className="flex justify-between mt-2 text-xs">
+                                <div className="text-gray-500">配送料：</div>
+                                <div className="text-gray-700">ご注文完了から2日～7日前後のお届け</div>
                             </div>
                         </div>
                     </div>
@@ -549,28 +548,28 @@ export default function Show({ product, gallery, related }: Props) {
             </div>
 
             {/* Product Detail Sections from Figma */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
-                <div className="flex space-x-10 mb-6">
-                    <div className="text-base text-gray-800 pb-2 border-b-2 border-gray-800 cursor-pointer" style={{ color: '#444444' }}>製品詳細</div>
-                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>香りノート</div>
-                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>レーダーチャート</div>
-                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>レビュー</div>
+            <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex space-x-6 mb-4">
+                    <div className="text-sm text-gray-800 pb-1 border-b-2 border-gray-800 cursor-pointer">製品詳細</div>
+                    <div className="text-sm text-gray-500 pb-1 border-b border-transparent cursor-pointer">香りノート</div>
+                    <div className="text-sm text-gray-500 pb-1 border-b border-transparent cursor-pointer">レーダーチャート</div>
+                    <div className="text-sm text-gray-500 pb-1 border-b border-transparent cursor-pointer">レビュー</div>
                 </div>
 
                 {/* Product Details Content - Only show if long_desc exists */}
                 {product.long_desc && (
-                    <div className="border border-gray-300 p-4 mb-6" style={{ color: '#444444' }}>
-                        <div className="whitespace-pre-wrap">{product.long_desc}</div>
+                    <div className="border border-gray-300 p-3 mb-4 text-sm">
+                        <div className="whitespace-pre-wrap text-gray-700">{product.long_desc}</div>
                     </div>
                 )}
 
                 {/* Reviews Section */}
                 <div id="reviews">
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold text-gray-800">レビュー</h2>
+                    <div className="flex items-center justify-between mb-3">
+                        <h2 className="text-lg font-semibold text-gray-800">レビュー</h2>
                         {productRatings.averageRating > 0 && productRatings.reviewCount > 0 ? (
                             <div className="flex items-center">
-                                <RatingStars rating={productRatings.averageRating} size="md" showLabel />
+                                <RatingStars rating={productRatings.averageRating} size="sm" showLabel />
                                 <span className="ml-2 text-sm text-gray-600">({productRatings.reviewCount} 件のレビュー)</span>
                             </div>
                         ) : (
@@ -579,8 +578,8 @@ export default function Show({ product, gallery, related }: Props) {
                     </div>
 
                     {productRatings.averageRating > 0 && productRatings.reviewCount > 0 && (
-                        <div className="mb-6">
-                            {loadingReviews ? <div className="text-center py-4 text-gray-500">レビューを読み込み中...</div> : <ReviewList reviews={reviews} productId={product.id} />}
+                        <div className="mb-4">
+                            {loadingReviews ? <div className="text-center py-3 text-gray-500">レビューを読み込み中...</div> : <ReviewList reviews={reviews} productId={product.id} />}
                         </div>
                     )}
 
@@ -664,17 +663,17 @@ export default function Show({ product, gallery, related }: Props) {
             </div>
 
             {related.length > 0 && (
-                <div className="mt-8">
-                    <h2 className="mb-4 text-lg font-semibold text-gray-800">関連商品</h2>
-                    <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                <div className="mt-6">
+                    <h2 className="mb-3 text-base font-semibold text-gray-800">関連商品</h2>
+                    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
                         {related.map((p) => (
-                            <div key={p.id} className="bg-[#FCFCF7] border border-gray-200 p-3">
+                            <div key={p.id} className="bg-[#FCFCF7] border border-gray-200 p-2">
                                 {p.image ? (
                                     <img src={p.image} alt={p.name} className="w-full aspect-square object-cover" />
                                 ) : (
                                     <div className="w-full aspect-square bg-gray-100" />
                                 )}
-                                <div className="mt-2 text-sm font-medium text-gray-800">{p.name}</div>
+                                <div className="mt-1 text-xs font-medium text-gray-800">{p.name}</div>
                                 <div className="text-xs text-gray-600">{yen(p.price_cents)}</div>
                             </div>
                         ))}
