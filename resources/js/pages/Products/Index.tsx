@@ -429,7 +429,7 @@ export default function Index({ products, filters, facets }: Props) {
                         </div>
 
                         <div className="relative w-[200px] border border-[#AAB4C3]">
-                            <div className="flex items-center gap-[10px] px-[16px] py-[8px]">
+                            <div className="relative flex items-center gap-[10px] px-[16px] py-[8px]">
                                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
@@ -439,7 +439,7 @@ export default function Index({ products, filters, facets }: Props) {
                                     />
                                 </svg>
                                 <select
-                                    className="w-[200px] appearance-none border-none bg-transparent font-[Sora] text-[12px] text-[#444444] focus:outline-none" /* 200px - 16px*2 padding - 10px gap = ~158px */
+                                    className="absolute left-0 w-[200px] flex-shrink-0 appearance-none border-none bg-transparent pl-2 font-[Sora] text-[12px] text-[#444444] focus:outline-none" /* 200px - left-padding - svg-width - gap - right-padding */
                                     value={stateFilters.sort || 'alphabetical'}
                                     onChange={(e) => {
                                         const value = e.target.value === 'alphabetical' ? '' : e.target.value;
