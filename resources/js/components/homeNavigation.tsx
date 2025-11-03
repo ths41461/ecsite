@@ -1,7 +1,7 @@
 import { Search, Heart, Menu, UserRound, LogOut, CircleUserRound, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useState, useEffect, useRef } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { logout } from '@/routes';
 
 // Define cart related types
@@ -667,10 +667,10 @@ export function HomeNavigation() {
           {/* Bottom Section - Main Navigation Menu */}
           <div className="flex flex-col items-center gap-2.5 py-1">
             <div className="flex flex-row items-center justify-center gap-8 w-full">
-              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/products'); }}>商品一覧</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/fragrance-diagnosis'); }}>香り診断</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/brand-introduction'); }}>ブランド紹介</CustomNavButton>
-              <CustomNavButton className="whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/contact'); }}>お問い合わせ</CustomNavButton>
+              <CustomNavLink href="/products" className="whitespace-nowrap" onClick={() => setSearchQuery('')}>商品一覧</CustomNavLink>
+              <CustomNavLink href="/fragrance-diagnosis" className="whitespace-nowrap" onClick={() => setSearchQuery('')}>香り診断</CustomNavLink>
+              <CustomNavLink href="/brand-introduction" className="whitespace-nowrap" onClick={() => setSearchQuery('')}>ブランド紹介</CustomNavLink>
+              <CustomNavLink href="/contact" className="whitespace-nowrap" onClick={() => setSearchQuery('')}>お問い合わせ</CustomNavLink>
             </div>
           </div>
         </div>
@@ -955,10 +955,10 @@ export function HomeNavigation() {
 
               {/* Main Navigation Menu */}
               <div className="flex flex-col items-center gap-4 py-4 flex-1">
-                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/products'); setIsMobileMenuOpen(false); }}>商品一覧</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/fragrance-diagnosis'); setIsMobileMenuOpen(false); }}>香り診断</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/brand-introduction'); setIsMobileMenuOpen(false); }}>ブランド紹介</CustomNavButton>
-                <CustomNavButton className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); router.get('/contact'); setIsMobileMenuOpen(false); }}>お問い合わせ</CustomNavButton>
+                <CustomNavLink href="/products" className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); setIsMobileMenuOpen(false); }}>商品一覧</CustomNavLink>
+                <CustomNavLink href="/fragrance-diagnosis" className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); setIsMobileMenuOpen(false); }}>香り診断</CustomNavLink>
+                <CustomNavLink href="/brand-introduction" className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); setIsMobileMenuOpen(false); }}>ブランド紹介</CustomNavLink>
+                <CustomNavLink href="/contact" className="w-full text-center whitespace-nowrap" onClick={() => { setSearchQuery(''); setIsMobileMenuOpen(false); }}>お問い合わせ</CustomNavLink>
               </div>
 
               {/* Additional Menu Options */}
@@ -1061,22 +1061,25 @@ export function HomeNavigation() {
   );
 }
 
-interface CustomNavButtonProps {
+interface CustomNavLinkProps {
   children: React.ReactNode;
   className?: string;
+  href: string;
+  onClick?: () => void;
 }
 
-function CustomNavButton({ children, className, onClick }: CustomNavButtonProps & { onClick?: () => void }) {
+function CustomNavLink({ children, className, href, onClick }: CustomNavLinkProps) {
   return (
-    <button
+    <Link
+      href={href}
+      onClick={onClick}
       className={cn(
         "flex flex-row items-center justify-center gap-2 h-10 border border-gray-200 text-sm font-medium text-gray-700 px-4 py-2.5 cursor-pointer",
         className
       )}
-      onClick={onClick}
     >
       {children}
-    </button>
+    </Link>
   );
 }
 
