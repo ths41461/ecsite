@@ -109,13 +109,13 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
             </div>
 
             {/* Content Area */}
-            <div className="px-2.5 flex flex-col flex-grow">
+            <div className="px-2.5 pt-2 pb-4 flex flex-col flex-grow">
                 {product.brand && (
                     <div className="text-xs font-normal text-[#81859C] font-sans mb-1">
                         {product.brand}
                     </div>
                 )}
-                <h3 className="text-lg font-semibold text-[#363842] font-serif leading-snug">
+                <h3 className="text-xl font-bold text-[#363842] font-serif leading-snug">
                     {product.name}
                 </h3>
                 
@@ -149,7 +149,7 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                                             </div>
                                         )}
                                         <div className="flex items-baseline gap-1">
-                                            <span className="text-2xl font-bold text-[#363842] font-serif leading-none">
+                                            <span className="text-lg font-semibold text-[#363842] font-serif leading-none">
                                                 ￥{yen(hasSale ? product.salePrice! : product.price)}
                                             </span>
                                             {hasSale && (
