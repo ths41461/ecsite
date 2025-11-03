@@ -131,46 +131,39 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                     ))}
                 </div>
 
-                                {/* Spacer to push the bottom content down */}
-                                <div className="flex-grow" />
-                
-                                {/* Bottom aligned content */}
-                                <div className="flex justify-between items-end">
-                                    {/* Left side: Price & Rating */}
-                                    <div className="flex flex-col">
-                                        {(displayRating !== undefined && displayRating > 0) && (
-                                            <div className="flex items-center mb-1">
-                                                {renderStarRating(displayRating)}
-                                                {displayReviewCount !== undefined && displayReviewCount > 0 && (
-                                                    <span className="text-xs text-gray-500 ml-2">
-                                                        ({displayReviewCount})
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-lg font-semibold text-[#363842] font-serif leading-none">
-                                                ￥{yen(hasSale ? product.salePrice! : product.price)}
-                                            </span>
-                                            {hasSale && (
-                                                <span className="text-sm font-normal text-[#363842] font-serif ml-1">
-                                                    ({product.sizes?.[0]}ml)
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                
-                                    {/* Right side: Cart Button - Sits on top of the link */}
-                                    <button
-                                        type="button"
-                                        aria-label="カートに追加"
-                                        className="relative z-10 w-[85px] h-[52px] flex items-center justify-center bg-[#EAB308]"
-                                    >
-                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                            <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.707 15.293C4.077 15.923 4.523 17 5.414 17H17M17 17C15.895 17 15 17.895 15 19C15 20.105 15.895 21 17 21C18.105 21 19 20.105 19 19C19 17.895 18.105 17 17 17ZM9 19C9 20.105 8.105 21 7 21C5.895 21 5 20.105 5 19C5 17.895 5.895 17 7 17C8.105 17 9 17.895 9 19Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                                        </svg>
-                                    </button>
-                                </div>            </div>
+                <div className="mt-auto">
+                    {(displayRating !== undefined && displayRating > 0) && (
+                        <div className="flex items-center mb-2">
+                            {renderStarRating(displayRating)}
+                            {displayReviewCount !== undefined && displayReviewCount > 0 && (
+                                <span className="text-xs text-gray-500 ml-2">
+                                    ({displayReviewCount})
+                                </span>
+                            )}
+                        </div>
+                    )}
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-baseline gap-1">
+                            <span className="text-lg font-semibold text-[#363842] font-serif leading-none">
+                                ￥{yen(hasSale ? product.salePrice! : product.price)}
+                            </span>
+                            {hasSale && (
+                                <span className="text-sm font-normal text-[#363842] font-serif ml-1">
+                                    ({product.sizes?.[0]}ml)
+                                </span>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="カートに追加"
+                            className="relative z-10 w-[85px] h-[52px] flex items-center justify-center bg-[#EAB308]"
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.707 15.293C4.077 15.923 4.523 17 5.414 17H17M17 17C15.895 17 15 17.895 15 19C15 20.105 15.895 21 17 21C18.105 21 19 20.105 19 19C19 17.895 18.105 17 17 17ZM9 19C9 20.105 8.105 21 7 21C5.895 21 5 20.105 5 19C5 17.895 5.895 17 7 17C8.105 17 9 17.895 9 19Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>            </div>
         </div>
     );
 }

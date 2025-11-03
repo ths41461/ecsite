@@ -1,5 +1,5 @@
 import { HomeNavigation } from '@/components/homeNavigation';
-import ProductCard from '@/components/ProductCard';
+import MinimalistProductCard from '@/Components/MinimalistProductCard';
 import BrandFilter from '@/components/search-filters/BrandFilter';
 import FragranceTypeFilter from '@/components/search-filters/FragranceTypeFilter';
 import GenderFilter from '@/components/search-filters/GenderFilter';
@@ -595,7 +595,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 const salePrice = hasSale ? priceYen : null;
 
                                 return (
-                                    <ProductCard
+                                    <MinimalistProductCard
                                         key={p.id}
                                         product={{
                                             id: p.id,
