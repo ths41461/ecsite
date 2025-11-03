@@ -29,7 +29,7 @@ type ProductItem = {
 type Paginated<T> = {
     data: T[];
     links: { url: string | null; label: string; active: boolean }[];
-    meta: { current_page: number; last_page: number; total: number };
+    meta?: { current_page: number; last_page: number; total: number };
 };
 type FacetBrand = { slug: string; name: string; count: number; active?: boolean };
 type FacetCategory = { id: number; slug: string; name: string; count: number; active?: boolean; parent_id?: number | null; depth?: number };
@@ -355,18 +355,20 @@ export default function Index({ products, filters, facets }: Props) {
             <div className="mx-auto max-w-[1408px] px-4 py-6">
                 <Head title="商品" />
 
-                <div className="mb-8 w-full">
+                <div className="w-full">
                 <div className="mx-auto w-full max-w-[1408px]">
-                    <div className="flex h-[300px] w-full items-center justify-center rounded-lg bg-gradient-to-r from-amber-100 to-orange-100 dark:from-amber-900/20 dark:to-orange-900/20">
-                        <div className="text-center">
-                            <h2 className="mb-4 text-3xl font-bold text-amber-800 dark:text-amber-200">特別キャンペーン</h2>
-                            <p className="text-xl text-amber-600 dark:text-amber-300">期間限定オファーをチェック</p>
+                    <div className="flex h-[300px] w-full items-center bg-[#AAB4C3]">
+                        <div className="ml-[34px]">
+                            <h1 className="text-[60px] font-bold text-white leading-[1.2] tracking-[-2%] font-serif">
+                                商品一覧
+                            </h1>
+                            <p className="text-[20px] text-white leading-[1.5] mt-2 font-sans">
+                                {(products.meta?.total ?? 0)}個の商品
+                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <h1 className="mb-4 text-2xl font-bold">商品</h1>
 
             <div className="mb-6 flex items-center justify-between">
                 <button 
@@ -504,12 +506,12 @@ export default function Index({ products, filters, facets }: Props) {
 
                 <div className={isFilterSidebarOpen ? "lg:w-3/4" : "lg:w-full"}>
                     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                        {products.data.length === 0 && (
+                        {products.data?.length === 0 && (
                             <div className="col-span-full rounded-lg border p-8 text-center text-sm text-neutral-600 dark:text-neutral-300">
                                 商品が見つかりません。フィルターを調整してみてください。
                             </div>
                         )}
-                        {products.data.map((p) => {
+                        {products.data?.map((p) => {
                             const priceYen = (p.price_cents ?? 0) / 100;
                             const compareAtYen = p.compare_at_cents != null ? p.compare_at_cents / 100 : null;
 
@@ -547,7 +549,7 @@ export default function Index({ products, filters, facets }: Props) {
                     </div>
 
                     <nav className="mt-8 flex items-center gap-2">
-                        {products.links.map((l, i) => {
+                        {products.links?.map((l, i) => {
                             const href = l.url
                                 ? (() => {
                                       const u = new URL(l.url!, window.location.origin);
