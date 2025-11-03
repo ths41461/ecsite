@@ -1,6 +1,8 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import { HomeNavigation } from '@/components/homeNavigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 type ProductRef = { id: number; name: string; slug: string };
 type LineNotice = { code: 'qty_clamped_to_available'; requested: number; available: number };
@@ -54,6 +56,244 @@ function xsrfHeaders(): HeadersInit {
         ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
     };
 }
+
+// Cart Line Component
+interface CartLineProps {
+    line: Line;
+    busyLine: string | null;
+    couponLineIdSet: Set<string>;
+    onUpdateQty: (line: Line, qty: number) => void;
+    onRemoveLine: (line: Line) => void;
+}
+
+const CartLine: React.FC<CartLineProps> = ({ line, busyLine, couponLineIdSet, onUpdateQty, onRemoveLine }) => {
+    const clamped = line.notice?.code === 'qty_clamped_to_available';
+    const couponApplied = couponLineIdSet.has(line.line_id);
+
+    return (
+        <div className="border-b border-[#D8D9E0] pb-4 mb-4">
+            {/* Header: product + sku */}
+            <div className="mb-3 flex items-start justify-between">
+                <div className="flex-1">
+                    <a href={`/products/${line.product.slug}`} className="font-medium text-[#363842] hover:underline block">
+                        {line.product.name}
+                    </a>
+                    <div className="text-xs text-[#81859C] mt-1">SKU: {line.sku}</div>
+                </div>
+                <button
+                    onClick={() => onRemoveLine(line)}
+                    disabled={busyLine === line.line_id}
+                    className="ml-4 text-[#81859C] hover:text-[#363842] disabled:opacity-50 disabled:cursor-not-allowed"
+                    aria-label="削除"
+                >
+                    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M15 5L5 15M5 5L15 15" stroke="#81859C" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                </button>
+            </div>
+
+            {/* notice if qty clamped */}
+            {clamped && (
+                <div className="mb-3 bg-[#FEF3C7] px-3 py-2 text-xs text-[#D97706]">
+                    {line.notice!.requested} 個リクエストしましたが、在庫は {line.notice!.available} 個のみです。数量を調整しました。
+                </div>
+            )}
+
+            {/* qty + price */}
+            <div className="flex items-center justify-between gap-4">
+                <div>
+                    <div className="mb-1 text-xs text-[#81859C]">{line.stock_badge}</div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => onUpdateQty(line, Math.max(0, line.qty - 1))}
+                            disabled={busyLine === line.line_id}
+                            className="w-8 h-8 border border-[#D8D9E0] flex items-center justify-center text-[#363842] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="数量を減らす"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3.333 8H12.667" stroke="currentColor" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                        <span className="w-10 text-center text-sm font-medium text-[#363842]">{line.qty}</span>
+                        <button
+                            onClick={() => onUpdateQty(line, Math.min(20, line.qty + 1))}
+                            disabled={busyLine === line.line_id}
+                            className="w-8 h-8 border border-[#D8D9E0] flex items-center justify-center text-[#363842] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            aria-label="数量を増やす"
+                        >
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M8 3.333V12.667M3.333 8H12.667" stroke="currentColor" strokeWidth="1.667" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div className="text-right">
+                    {line.compare_at_cents != null && line.compare_at_cents > line.price_cents && (
+                        <div className="text-xs text-[#81859C] line-through">{yen(line.compare_at_cents)}</div>
+                    )}
+                    <div className="text-[#363842] font-serif font-semibold">{yen(line.price_cents)}</div>
+                    <div className="text-xs text-[#81859C]">小計: {yen(line.line_total_cents)}</div>
+                    {couponApplied && <div className="text-xs font-medium text-[#059669]">クーポン適用</div>}
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// Cart Summary Component
+interface CartSummaryProps {
+    cart: Cart;
+    couponInput: string;
+    couponBusy: boolean;
+    couponError: string | null;
+    couponNotice: string | null;
+    onApplyCoupon: () => void;
+    onRemoveCoupon: () => void;
+    setCouponInput: (value: string) => void;
+}
+
+const CartSummary: React.FC<CartSummaryProps> = ({ 
+    cart, 
+    couponInput, 
+    couponBusy, 
+    couponError, 
+    couponNotice, 
+    onApplyCoupon, 
+    onRemoveCoupon, 
+    setCouponInput 
+}) => {
+    const couponLineIdSet = useMemo(() => new Set(cart.coupon_line_ids ?? []), [cart.coupon_line_ids]);
+
+    return (
+        <div className="border border-[#D8D9E0] bg-white p-6">
+            <h2 className="font-['Hiragino_Mincho_ProN'] text-[22px] font-semibold text-[#363842] mb-6">合計</h2>
+            
+            <div className="space-y-3 mb-6">
+                <div className="flex justify-between">
+                    <span className="text-[#81859C]">小計</span>
+                    <span className="text-[#363842] font-serif">{yen(cart.subtotal_cents)}</span>
+                </div>
+                
+                {cart.savings_cents > 0 && (
+                    <div className="flex justify-between text-[#059669]">
+                        <span className="text-[#81859C]">割引</span>
+                        <span className="text-[#059669] font-serif">-{yen(cart.savings_cents)}</span>
+                    </div>
+                )}
+                
+                {(cart.tax_cents ?? 0) > 0 && (
+                    <div className="flex justify-between">
+                        <span className="text-[#81859C]">税金</span>
+                        <span className="text-[#363842] font-serif">{yen(cart.tax_cents ?? 0)}</span>
+                    </div>
+                )}
+                
+                {cart.coupon_code && (
+                    <div className="pt-3 border-t border-[#D8D9E0]">
+                        <div className="flex justify-between items-center mb-1">
+                            <span className="flex items-center">
+                                <span className="text-[#81859C]">クーポン</span>
+                                <span className="ml-2 px-2 py-0.5 text-xs bg-[#F3F4F6] text-[#374151]">
+                                    {cart.coupon_code}
+                                </span>
+                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[#DC2626] font-serif">-{yen(cart.coupon_discount_cents || 0)}</span>
+                                <button
+                                    type="button"
+                                    onClick={onRemoveCoupon}
+                                    disabled={couponBusy}
+                                    className="text-xs text-[#81859C] hover:text-[#363842] underline disabled:cursor-not-allowed"
+                                >
+                                    削除
+                                </button>
+                            </div>
+                        </div>
+                        {cart.coupon_summary && (
+                            <div className="text-xs text-[#81859C]">{cart.coupon_summary}</div>
+                        )}
+                        {(cart.coupon_line_names?.length ?? 0) > 0 && (
+                            <div className="text-xs text-[#81859C]">
+                                {cart.coupon_line_names?.[0] === 'すべての商品'
+                                    ? 'カート内のすべての商品に適用'
+                                    : `適用対象: ${cart.coupon_line_names?.join(', ')}`}
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+            
+            <div className="pt-4 border-t border-[#D8D9E0]">
+                <div className="flex justify-between text-[#363842] font-semibold mb-1">
+                    <span className="font-['Hiragino_Mincho_ProN']">合計</span>
+                    <span className="font-['Hiragino_Mincho_ProN'] font-bold text-lg">{yen(cart.total_cents)}</span>
+                </div>
+                <p className="text-xs text-[#81859C] text-center">税込み。配送料はチェックアウト時に計算されます。</p>
+            </div>
+
+            {/* Coupon entry */}
+            <div className="mt-6 pt-4 border-t border-[#D8D9E0]">
+                <div className="flex justify-between items-center mb-3">
+                    <span className="text-[#363842] font-medium">クーポンコードをお持ちですか？</span>
+                    {cart.coupon_code && (
+                        <button
+                            type="button"
+                            onClick={onRemoveCoupon}
+                            disabled={couponBusy}
+                            className="text-xs text-[#81859C] hover:text-[#363842] underline disabled:cursor-not-allowed"
+                        >
+                            現在のクーポンを削除
+                        </button>
+                    )}
+                </div>
+                
+                <div className="flex gap-2">
+                    <Input
+                        value={couponInput}
+                        onChange={(e) => setCouponInput(e.target.value)}
+                        placeholder="コードを入力"
+                        className="flex-1 h-[40px] border-[#D8D9E0] bg-white text-[#363842]"
+                    />
+                    <Button 
+                        onClick={onApplyCoupon}
+                        disabled={couponBusy || !couponInput.trim()}
+                        variant="default"
+                        className="h-[40px] bg-[#EAB308] text-[#363842] hover:bg-amber-500 rounded-none"
+                    >
+                        適用
+                    </Button>
+                </div>
+                
+                {cart.coupon_code && couponInput !== cart.coupon_code && (
+                    <p className="mt-2 text-xs text-[#81859C]">
+                        新しいコードを入力して「適用」ボタンを押すと、現在のクーポンを置き換えます。
+                    </p>
+                )}
+            </div>
+
+            {couponError && (
+                <div className="mt-3 px-3 py-2 text-xs text-[#DC2626] bg-[#FEF2F2]">{couponError}</div>
+            )}
+            {couponNotice && !couponError && (
+                <div className="mt-3 px-3 py-2 text-xs text-[#059669] bg-[#ECFDF5]">{couponNotice}</div>
+            )}
+
+            <Button 
+                asChild
+                className="w-full mt-6 h-12 bg-[#363842] hover:bg-gray-800 text-white text-base font-medium rounded-none"
+            >
+                <a href="/checkout">チェックアウトに進む</a>
+            </Button>
+
+            <div className="mt-4 text-center">
+                <a href="/products" className="text-sm text-[#81859C] hover:text-[#363842] underline">
+                    買い物を続ける
+                </a>
+            </div>
+        </div>
+    );
+};
 
 export default function CartIndex({ initialCart }: PageProps) {
     const [cart, setCart] = useState<Cart>(initialCart);
@@ -234,232 +474,76 @@ export default function CartIndex({ initialCart }: PageProps) {
     const couponLineIdSet = useMemo(() => new Set(cart.coupon_line_ids ?? []), [cart.coupon_line_ids]);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-[#FCFCF7]">
             <HomeNavigation />
-            <div className="mx-auto max-w-5xl px-4 py-6">
+            <div className="max-w-[1440px] mx-auto px-4 py-6">
                 <Head title="ショッピングカート" />
 
-                <div className="mb-6 flex items-end justify-between">
-                <div>
-                    <h1 className="text-2xl font-semibold">ショッピングカート</h1>
-                    <p className="text-sm text-neutral-500">{hasItems ? `${cart.lines.length} 個の商品` : '商品がありません'}</p>
+                <div className="mb-8">
+                    <h1 className="font-['Hiragino_Mincho_ProN'] text-2xl font-semibold text-[#363842] mb-2">ショッピングカート</h1>
+                    <p className="text-sm text-[#81859C]">{hasItems ? `${cart.lines.length} 個の商品` : '商品がありません'}</p>
                 </div>
-                <button
-                    onClick={refreshCart}
-                    disabled={loading}
-                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                    {loading ? '更新中…' : '更新'}
-                </button>
-            </div>
 
-            {!hasItems && (
-                <div className="rounded-xl border p-6 text-center">
-                    <p className="mb-4 text-neutral-600">カートに商品がありません。</p>
-                    <a href="/products" className="inline-block rounded-lg bg-rose-600 px-4 py-2 text-white hover:bg-rose-700">
-                        買い物を続ける
-                    </a>
-                </div>
-            )}
-
-            {hasItems && (
-                <div className="grid gap-6 md:grid-cols-[1fr_320px]">
-                    {/* Lines */}
-                    <div className="space-y-4">
-                        {cart.lines.map((line) => {
-                            const clamped = line.notice?.code === 'qty_clamped_to_available';
-                            const couponApplied = couponLineIdSet.has(line.line_id);
-
-                            return (
-                                <div key={line.line_id} className="rounded-xl border p-4">
-                                    {/* header: product + sku */}
-                                    <div className="mb-2 flex items-center justify-between">
-                                        <div>
-                                            <a href={`/products/${line.product.slug}`} className="font-medium hover:underline">
-                                                {line.product.name}
-                                            </a>
-                                            <div className="text-xs text-neutral-500">SKU: {line.sku}</div>
-                                        </div>
-                                        <button
-                                            onClick={() => removeLine(line)}
-                                            disabled={busyLine === line.line_id}
-                                            className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
-                                        >
-                                            削除
-                                        </button>
-                                    </div>
-
-                                    {/* notice if qty clamped */}
-                                    {clamped && (
-                                        <div className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                                            {line.notice!.requested} 個リクエストしましたが、在庫は {line.notice!.available} 個のみです。数量を調整しました。
-                                        </div>
-                                    )}
-
-                                    {/* qty + price */}
-                                    <div className="flex items-end justify-between gap-4">
-                                        <div>
-                                            <div className="mb-1 text-xs text-neutral-500">{line.stock_badge}</div>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    onClick={() => updateQty(line, Math.max(0, line.qty - 1))}
-                                                    disabled={busyLine === line.line_id}
-                                                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
-                                                    aria-label="数量を減らす"
-                                                >
-                                                    -
-                                                </button>
-                                                <span className="w-10 text-center text-sm font-medium">{line.qty}</span>
-                                                <button
-                                                    onClick={() => updateQty(line, Math.min(20, line.qty + 1))}
-                                                    disabled={busyLine === line.line_id}
-                                                    className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 disabled:cursor-not-allowed"
-                                                    aria-label="数量を増やす"
-                                                >
-                                                    +
-                                                </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="text-right">
-                                            {line.compare_at_cents != null && line.compare_at_cents > line.price_cents && (
-                                                <div className="text-xs text-neutral-500 line-through">{yen(line.compare_at_cents)}</div>
-                                            )}
-                                            <div className="text-lg font-semibold">{yen(line.price_cents)}</div>
-                                            <div className="text-sm text-neutral-600">小計: {yen(line.line_total_cents)}</div>
-                                            {couponApplied && <div className="text-xs font-medium text-emerald-600">クーポン適用</div>}
-                                        </div>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                {!hasItems && (
+                    <div className="flex flex-col items-center justify-center py-16 border border-[#D8D9E0] bg-white">
+                        <p className="mb-6 text-[#81859C] text-center">カートに商品がありません。</p>
+                        <Button asChild className="bg-[#363842] hover:bg-gray-800 text-white rounded-none">
+                            <a href="/products">買い物を続ける</a>
+                        </Button>
                     </div>
+                )}
 
-                    {/* Summary */}
-        <aside className="h-fit rounded-xl border p-4">
-            <h2 className="mb-3 text-lg font-semibold">合計</h2>
-            <div className="mb-1 flex items-center justify-between text-sm">
-                            <span>小計</span>
-                            <span>{yen(cart.subtotal_cents)}</span>
-                        </div>
-                        {cart.savings_cents > 0 && (
-                            <div className="mb-1 flex items-center justify-between text-sm text-emerald-700">
-                                <span>割引</span>
-                                <span>-{yen(cart.savings_cents)}</span>
-                            </div>
-                        )}
-                        {(cart.tax_cents ?? 0) > 0 && (
-                            <div className="mb-1 flex items-center justify-between text-sm">
-                                <span>税金</span>
-                                <span>{yen(cart.tax_cents ?? 0)}</span>
-                            </div>
-                        )}
-                        {cart.coupon_code && (
-                            <div className="mb-1 text-sm">
-                                <div className="mb-1 flex items-center justify-between">
-                                    <span>
-                                        クーポン
-                                        <span className="ml-2 rounded-full bg-neutral-100 px-2 py-0.5 text-xs text-neutral-700">
-                                            {cart.coupon_code}
-                                        </span>
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-rose-700">
-                                            -{yen(cart.coupon_discount_cents || 0)}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={removeCouponFromCart}
-                                            disabled={couponBusy}
-                                            className="rounded-md border border-neutral-300 px-2 py-0.5 text-xs text-neutral-600 hover:bg-neutral-100 disabled:cursor-not-allowed"
-                                        >
-                                            削除
-                                        </button>
-                                    </div>
-                                </div>
-                                {cart.coupon_summary && (
-                                    <div className="text-xs text-neutral-500">{cart.coupon_summary}</div>
-                                )}
-                                {(cart.coupon_line_names?.length ?? 0) > 0 && (
-                                    <div className="text-xs text-neutral-500">
-                                        {cart.coupon_line_names?.[0] === 'すべての商品'
-                                            ? 'カート内のすべての商品に適用'
-                                            : `適用対象: ${cart.coupon_line_names?.join(', ')}`}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        <div className="mt-2 border-t pt-2">
-                            <div className="flex items-center justify-between text-base font-semibold">
-                                <span>合計</span>
-                                <span>{yen(cart.total_cents)}</span>
-                            </div>
-                            <p className="mt-1 text-xs text-neutral-500">税込み。配送料はチェックアウト時に計算されます。</p>
-                        </div>
-
-                        {/* Coupon entry */}
-                        <div className="mt-4 rounded-lg border border-neutral-200 p-3">
-                            <div className="mb-2 flex items-center justify-between text-sm font-medium">
-                                <span>クーポンコードをお持ちですか？</span>
-                                {cart.coupon_code && (
-                                    <button
-                                        type="button"
-                                        onClick={removeCouponFromCart}
-                                        disabled={couponBusy}
-                                        className="text-xs text-neutral-600 hover:underline disabled:cursor-not-allowed"
+                {hasItems && (
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Lines */}
+                        <div className="lg:col-span-2">
+                            <div className="border border-[#D8D9E0] bg-white p-6">
+                                {cart.lines.map((line) => (
+                                    <CartLine
+                                        key={line.line_id}
+                                        line={line}
+                                        busyLine={busyLine}
+                                        couponLineIdSet={couponLineIdSet}
+                                        onUpdateQty={updateQty}
+                                        onRemoveLine={removeLine}
+                                    />
+                                ))}
+                                
+                                <div className="pt-4 flex justify-end">
+                                    <Button
+                                        onClick={refreshCart}
+                                        disabled={loading}
+                                        variant="outline"
+                                        className="border-[#363842] text-[#363842] bg-white hover:bg-[#363842] hover:text-white rounded-none h-10"
                                     >
-                                        現在のクーポンを削除
-                                    </button>
-                                )}
+                                        {loading ? '更新中…' : '更新'}
+                                    </Button>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    value={couponInput}
-                                    onChange={(e) => setCouponInput(e.target.value)}
-                                    placeholder="コードを入力"
-                                    className="flex-1 rounded-md border px-3 py-2 text-sm"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={applyCoupon}
-                                    disabled={couponBusy || !couponInput.trim()}
-                                    className="rounded-md bg-neutral-800 px-3 py-2 text-sm text-white hover:bg-neutral-900 disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                    適用
-                                </button>
+                            
+                            <div className="mt-4 text-center">
+                                <a href="/products" className="text-sm text-[#81859C] hover:text-[#363842] underline">
+                                    買い物を続ける
+                                </a>
                             </div>
-                            {cart.coupon_code && couponInput !== cart.coupon_code && (
-                                <p className="mt-2 text-xs text-neutral-500">
-                                    新しいコードを入力して「適用」ボタンを押すと、現在のクーポンを置き換えます。
-                                </p>
-                            )}
                         </div>
 
-                        {couponError && (
-                            <div className="mt-3 rounded-md bg-rose-50 px-3 py-2 text-xs text-rose-700">{couponError}</div>
-                        )}
-                        {couponNotice && !couponError && (
-                            <div className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs text-emerald-700">{couponNotice}</div>
-                        )}
-
-                        <div className="mt-4">
-                            <a
-                                href="/checkout"
-                                className="block w-full rounded-lg bg-rose-600 px-4 py-3 text-center font-medium text-white hover:bg-rose-700"
-                            >
-                                チェックアウトに進む
-                            </a>
+                        {/* Summary */}
+                        <div className="lg:col-span-1">
+                            <CartSummary
+                                cart={cart}
+                                couponInput={couponInput}
+                                couponBusy={couponBusy}
+                                couponError={couponError}
+                                couponNotice={couponNotice}
+                                onApplyCoupon={applyCoupon}
+                                onRemoveCoupon={removeCouponFromCart}
+                                setCouponInput={setCouponInput}
+                            />
                         </div>
-
-                        <div className="mt-2 text-center">
-                            <a href="/products" className="text-sm text-neutral-600 hover:underline">
-                                買い物を続ける
-                            </a>
-                        </div>
-                    </aside>
-                </div>
-            )}
-        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

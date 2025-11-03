@@ -61,7 +61,7 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
       <HomeNavigation />
       <div className="mx-auto max-w-2xl px-4 py-10">
         <Head title="チェックアウト" />
-        <h1 className="mb-2 text-2xl font-semibold">チェックアウト</h1>
+        <h1 className="mb-2 text-2xl font-semibold text-[#363842]">チェックアウト</h1>
       <p className="mb-6 text-sm text-neutral-600">支払いを完了するためにStripeにリダイレクトされます。</p>
       {previousCancelledReason && (
         (() => {
@@ -94,21 +94,21 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
               msg = '最後の支払い試行は完了しませんでした。請求は行われていません。'
           }
           return (
-            <div className={`mb-4 rounded-lg px-3 py-2 text-sm ${cls}`}>
+            <div className={`mb-4 px-3 py-2 text-sm ${cls}`}>
               {msg}
             </div>
           )
         })()
       )}
-      {error && <div className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
+      {error && <div className="mb-4 bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</div>}
       {pendingOrderNumber && (
-        <div className="mb-4 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
+        <div className="mb-4 border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-700">
           注文番号 #{pendingOrderNumber} の支払い試行が保留中です。
           <div className="mt-2 flex gap-3">
             <button
               onClick={proceed}
               disabled={loading}
-              className="rounded-md bg-rose-600 px-3 py-2 text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="bg-rose-600 px-3 py-2 text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loading ? '準備中…' : '支払いを再開'}
             </button>
@@ -118,12 +118,12 @@ export default function CheckoutStart({ previousCancelledReason, pendingOrderNum
       <button
         onClick={proceed}
         disabled={loading}
-        className="rounded-lg bg-rose-600 px-5 py-3 font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="bg-rose-600 px-5 py-3 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
       >
         {loading ? '準備中…' : '支払いに進む'}
       </button>
       <div className="mt-4">
-        <a href="/cart" className="text-sm text-neutral-600 hover:underline">カートに戻る</a>
+        <a href="/cart" className="text-sm text-neutral-600">カートに戻る</a>
       </div>
     </div>
     </div>

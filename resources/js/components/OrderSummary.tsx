@@ -20,53 +20,53 @@ function yen(y: number) {
 export default function OrderSummary({ order }: { order: OrderDTO }) {
   return (
     <div>
-      <div className="mb-6 rounded-xl border p-4">
+      <div className="mb-6 border p-4">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-sm text-neutral-600">小計</span>
-          <span className="font-medium">{yen(order.subtotal_yen)}</span>
+          <span className="text-sm font-hiragino-mincho text-[#363842]">小計</span>
+          <span className="font-medium font-hiragino-mincho text-[#363842]">{yen(order.subtotal_yen)}</span>
         </div>
         {order.discount_yen > 0 && (
           <div className="mb-2 flex items-center justify-between text-emerald-700">
-            <span className="text-sm">割引</span>
-            <span>-{yen(order.discount_yen)}</span>
+            <span className="text-sm font-hiragino-mincho">割引</span>
+            <span className="font-hiragino-mincho">-{yen(order.discount_yen)}</span>
           </div>
         )}
         {order.coupon_code && (order.coupon_discount_yen ?? 0) > 0 && (
           <div className="mb-2 flex items-center justify-between text-sm text-rose-600">
-            <span>クーポン ({order.coupon_code})</span>
-            <span>-{yen(order.coupon_discount_yen ?? 0)}</span>
+            <span className="font-hiragino-mincho">クーポン ({order.coupon_code})</span>
+            <span className="font-hiragino-mincho">-{yen(order.coupon_discount_yen ?? 0)}</span>
           </div>
         )}
         {order.shipping_yen > 0 && (
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-neutral-600">送料</span>
-            <span className="font-medium">{yen(order.shipping_yen)}</span>
+            <span className="text-sm font-hiragino-mincho text-[#363842]">送料</span>
+            <span className="font-medium font-hiragino-mincho text-[#363842]">{yen(order.shipping_yen)}</span>
           </div>
         )}
         {order.tax_yen > 0 && (
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-neutral-600">税金</span>
-            <span className="font-medium">{yen(order.tax_yen)}</span>
+            <span className="text-sm font-hiragino-mincho text-[#363842]">税金</span>
+            <span className="font-medium font-hiragino-mincho text-[#363842]">{yen(order.tax_yen)}</span>
           </div>
         )}
         <div className="mt-2 border-t pt-2">
-          <div className="flex items-center justify-between text-lg font-semibold">
+          <div className="flex items-center justify-between text-lg font-semibold font-hiragino-mincho text-[#363842]">
             <span>合計</span>
             <span>{yen(order.total_yen)}</span>
           </div>
         </div>
       </div>
 
-      <div className="mb-6 rounded-xl border p-4">
-        <h2 className="mb-3 text-lg font-semibold">商品</h2>
+      <div className="mb-6 border p-4">
+        <h2 className="mb-3 text-lg font-semibold font-hiragino-mincho text-[#363842]">商品</h2>
         <div className="space-y-3">
           {order.items.map((it, idx) => (
             <div key={idx} className="flex items-center justify-between">
               <div>
-                <div className="font-medium">{it.name}</div>
-                <div className="text-xs text-neutral-500">SKU: {it.sku}</div>
+                <div className="font-medium font-hiragino-mincho text-[#363842]">{it.name}</div>
+                <div className="text-xs font-hiragino-mincho text-[#363842]">SKU: {it.sku}</div>
               </div>
-              <div className="text-right text-sm">
+              <div className="text-right text-sm font-hiragino-mincho text-[#363842]">
                 <div>数量: {it.qty}</div>
                 <div>{yen(it.line_total_yen)}</div>
               </div>
