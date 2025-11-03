@@ -350,14 +350,6 @@ export default function Index({ products, filters, facets }: Props) {
 
             <h1 className="mb-4 text-2xl font-bold">商品</h1>
 
-            <div className="mb-6 relative">
-                <SearchWithAutocomplete
-                    initialQuery={stateFilters.q || ''}
-                    currentFilters={stateFilters}
-                    updateFilter={updateFilter}
-                />
-            </div>
-
             <div className="mb-6 flex items-center justify-between">
                 <button 
                     onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
@@ -436,7 +428,14 @@ export default function Index({ products, filters, facets }: Props) {
                 {isFilterSidebarOpen && (
                     <div className="lg:w-1/4">
                         <div className="sticky top-4 rounded-lg border p-4">
-                            <div className="flex justify-between items-center mb-4">
+                            <div className="mb-4">
+                                <SearchWithAutocomplete
+                                    initialQuery={stateFilters.q || ''}
+                                    currentFilters={stateFilters}
+                                    updateFilter={updateFilter}
+                                />
+                            </div>
+                            <div className="flex justify-between items-center mb-4 mt-4">
                                 <h2 className="text-lg font-semibold">フィルター</h2>
                                 <button onClick={() => setFilterSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
                                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
