@@ -213,15 +213,15 @@ function SearchWithAutocomplete({
                     onFocus={handleInputFocus}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                     placeholder="商品を検索..."
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-10 pl-12 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-400"
+                    className="w-full border border-gray-300 px-4 py-2.5 pr-10 pl-10 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 focus:outline-none"
                 />
-                <div className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400">
+                <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
                 </div>
                 {query && (
-                    <button onClick={clearSearch} className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <button onClick={clearSearch} className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -229,12 +229,12 @@ function SearchWithAutocomplete({
                 )}
             </div>
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-300 bg-white shadow-lg dark:border-gray-600 dark:bg-gray-800">
+                <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white">
                     <ul>
                         {suggestions.map((suggestion, index) => (
                             <li
                                 key={suggestion.id}
-                                className={`cursor-pointer px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 ${index === selectedIndex ? 'bg-blue-50 dark:bg-blue-900/50' : ''}`}
+                                className={`cursor-pointer px-4 py-3 ${index === selectedIndex ? 'bg-gray-100' : ''}`}
                                 onMouseDown={() => handleSuggestionClick(suggestion)}
                             >
                                 <div className="flex items-center gap-3">
@@ -243,18 +243,18 @@ function SearchWithAutocomplete({
                                             <img
                                                 src={suggestion.image}
                                                 alt={suggestion.name}
-                                                className="h-full w-full rounded-md object-cover"
+                                                className="h-full w-full object-cover"
                                                 loading="lazy"
                                             />
                                         </div>
                                     )}
                                     <div className="min-w-0 flex-1">
-                                        <div className="truncate font-medium">{suggestion.name}</div>
-                                        <div className="truncate text-sm text-gray-500 dark:text-gray-400">
+                                        <div className="font-['Hiragino_Mincho_ProN'] truncate font-medium text-gray-900">{suggestion.name}</div>
+                                        <div className="truncate text-sm text-gray-500">
                                             {suggestion.brand?.name} • {suggestion.category?.name}
                                         </div>
                                         {suggestion.price && (
-                                            <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                            <div className="text-sm font-['Hiragino_Mincho_ProN'] font-medium text-gray-900">
                                                 ¥{suggestion.price.toLocaleString()}
                                             </div>
                                         )}
@@ -267,11 +267,11 @@ function SearchWithAutocomplete({
             )}
             {loading && (
                 <div className="absolute top-1/2 right-10 -translate-y-1/2">
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-gray-300 border-t-blue-500" />
+                    <div className="h-5 w-5 animate-spin border-2 border-gray-300 border-t-black" />
                 </div>
             )}
             {showSuggestions && suggestions.length === 0 && query && !loading && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg border border-gray-300 bg-white px-4 py-3 dark:border-gray-600 dark:bg-gray-800">
+                <div className="absolute z-10 mt-1 w-full border border-gray-300 bg-white px-4 py-3 text-sm text-gray-600">
                     検索結果が見つかりません
                 </div>
             )}
@@ -381,131 +381,193 @@ export default function Index({ products, filters, facets }: Props) {
         (stateFilters.fragranceType && stateFilters.fragranceType.length > 0);
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
-            <div className="mx-auto max-w-[1408px] px-4 py-6">
+            <div className="container mx-auto px-4 py-6">
                 <Head title="商品" />
 
-                <div className="w-full">
-                    <div className="mx-auto w-full max-w-[1408px]">
-                        <div className="flex h-[300px] w-full items-center bg-[#AAB4C3]">
-                            <div className="ml-[34px]">
-                                <h1 className="font-serif text-[60px] leading-[1.2] font-bold tracking-[-2%] text-white">商品一覧</h1>
-                                <p className="mt-2 font-sans text-[20px] leading-[1.5] text-white">{products.meta?.total ?? 0}個の商品</p>
-                            </div>
+                {/* Header Section with consistent spacing and typography */}
+                <div className="w-full border-b border-[#888888] py-8 bg-[#FCFCF7]">
+                    <div className="container mx-auto px-4">
+                        <div className="flex flex-col items-center text-center">
+                            <h1 className="font-['Hiragino_Mincho_ProN'] text-3xl font-bold text-gray-900 mb-2">商品一覧</h1>
+                            <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-700">{products.meta?.total ?? 0}個の商品</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex h-[92px] items-center">
-                    <div className="flex w-full items-center justify-between px-4">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
-                                className="flex items-center justify-center gap-[10px] border border-[#AAB4C3] px-[16px] py-[16px]"
-                            >
-                                <svg className="h-4 w-4 stroke-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                    />
-                                </svg>
-                                <span className="font-[Sora] text-[12px] text-black">絞り込み</span>
-                            </button>
-
-                            {hasActiveFilters && (
+                {/* Filter Controls with consistent styling */}
+                <div className="py-6">
+                    <div className="container mx-auto px-4">
+                        <div className="flex flex-wrap items-center justify-between gap-4">
+                            <div className="flex flex-wrap items-center gap-4">
                                 <button
-                                    onClick={handleClearAllFilters}
-                                    className="flex w-[123px] items-center justify-center gap-[10px] border border-[#AAB4C3] px-[16px] py-[16px]"
+                                    onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
+                                    className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 bg-white text-sm font-medium text-gray-700"
                                 >
-                                    <span className="font-[Sora] text-[12px] text-black">絞り込み削除</span>
-                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    <svg className="h-4 w-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                        />
                                     </svg>
+                                    <span>絞り込み</span>
                                 </button>
-                            )}
-                        </div>
 
-                        <div className="relative w-[200px] border border-[#AAB4C3]">
-                            <div className="relative flex items-center gap-[10px] px-[16px] py-[8px]">
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                                    />
-                                </svg>
-                                <select
-                                    className="absolute left-0 w-[200px] flex-shrink-0 appearance-none border-none bg-transparent pl-2 font-[Sora] text-[12px] text-[#444444] focus:outline-none" /* 200px - left-padding - svg-width - gap - right-padding */
-                                    value={stateFilters.sort || 'alphabetical'}
-                                    onChange={(e) => {
-                                        const value = e.target.value === 'alphabetical' ? '' : e.target.value;
-                                        updateFilter('sort', value);
-                                    }}
-                                >
-                                    <option value="alphabetical">アルファベット順, A–Z</option>
-                                    <option value="newest">新着順</option>
-                                    <option value="price_asc">価格の安い順</option>
-                                    <option value="price_desc">価格の高い順</option>
-                                </select>
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={handleClearAllFilters}
+                                        className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 bg-white text-sm font-medium text-gray-700"
+                                    >
+                                        <span>絞り込み削除</span>
+                                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
-                            <div className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 transform">
-                                <svg className="h-4 w-4 text-[#444444]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                </svg>
+
+                            <div className="w-full sm:w-auto sm:flex-1 sm:max-w-xs">
+                                <div className="relative border border-gray-300">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
+                                            />
+                                        </svg>
+                                    </div>
+                                    <select
+                                        className="block w-full pl-10 pr-10 py-2.5 text-sm text-gray-700 font-medium bg-white border-0 focus:outline-none focus:ring-0 focus:ring-offset-0"
+                                        value={stateFilters.sort || 'alphabetical'}
+                                        onChange={(e) => {
+                                            const value = e.target.value === 'alphabetical' ? '' : e.target.value;
+                                            updateFilter('sort', value);
+                                        }}
+                                    >
+                                        <option value="alphabetical">アルファベット順, A–Z</option>
+                                        <option value="newest">新着順</option>
+                                        <option value="price_asc">価格の安い順</option>
+                                        <option value="price_desc">価格の高い順</option>
+                                    </select>
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {hasActiveFilters && (
-                    <div className="mb-4 flex items-center gap-2">
-                        <span className="text-sm text-neutral-600 dark:text-neutral-400">選択中のフィルター:</span>
-                        <div className="flex flex-wrap gap-2">
-                            {stateFilters.q && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    検索: {stateFilters.q}
-                                </span>
-                            )}
-                            {stateFilters.brand && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    ブランド: {facets.brands.find((b) => b.slug === stateFilters.brand)?.name || stateFilters.brand}
-                                </span>
-                            )}
-                            {stateFilters.category && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    カテゴリ: {facets.categories.find((c) => c.slug === stateFilters.category)?.name || stateFilters.category}
-                                </span>
-                            )}
-                            {stateFilters.rating && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    評価: {stateFilters.rating}+
-                                </span>
-                            )}
-                            {stateFilters.gender && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    性別: {stateFilters.gender === 'men' ? 'メンズ' : stateFilters.gender === 'women' ? 'レディース' : 'ユニセックス'}
-                                </span>
-                            )}
-                            {stateFilters.size && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    容量: {stateFilters.size}ml
-                                </span>
-                            )}
-                            {stateFilters.fragranceType && stateFilters.fragranceType.length > 0 && (
-                                <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                    香りタイプ: {stateFilters.fragranceType.join(', ')}
-                                </span>
-                            )}
-                            <button
-                                onClick={handleClearAllFilters}
-                                className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
-                            >
-                                クリア
-                            </button>
+                    <div className="container mx-auto px-4 py-4">
+                        <div className="flex flex-wrap items-center gap-3">
+                            <span className="font-['Hiragino_Mincho_ProN'] text-sm text-gray-700">選択中のフィルター:</span>
+                            <div className="flex flex-wrap gap-2">
+                                {stateFilters.q && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        検索: {stateFilters.q}
+                                        <button 
+                                            onClick={() => updateFilter('q', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.brand && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        ブランド: {facets.brands.find((b) => b.slug === stateFilters.brand)?.name || stateFilters.brand}
+                                        <button 
+                                            onClick={() => updateFilter('brand', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.category && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        カテゴリ: {facets.categories.find((c) => c.slug === stateFilters.category)?.name || stateFilters.category}
+                                        <button 
+                                            onClick={() => updateFilter('category', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.rating && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        評価: {stateFilters.rating}+
+                                        <button 
+                                            onClick={() => updateFilter('rating', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.gender && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        性別: {stateFilters.gender === 'men' ? 'メンズ' : stateFilters.gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                        <button 
+                                            onClick={() => updateFilter('gender', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.size && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        容量: {stateFilters.size}ml
+                                        <button 
+                                            onClick={() => updateFilter('size', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                {stateFilters.fragranceType && stateFilters.fragranceType.length > 0 && (
+                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                        香りタイプ: {stateFilters.fragranceType.join(', ')}
+                                        <button 
+                                            onClick={() => updateFilter('fragranceType', undefined)}
+                                            className="ml-2 flex items-center"
+                                        >
+                                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </span>
+                                )}
+                                <button
+                                    onClick={handleClearAllFilters}
+                                    className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-800"
+                                >
+                                    すべてクリア
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -513,63 +575,68 @@ export default function Index({ products, filters, facets }: Props) {
                 <div className="flex flex-col gap-6 lg:flex-row">
                     {isFilterSidebarOpen && (
                         <div className="lg:w-1/4">
-                            <div className="sticky top-4 rounded-lg border p-4">
-                                <div className="mb-4">
+                            <div className="sticky top-4 bg-white border border-gray-200 p-4">
+                                <div className="mb-6">
                                     <SearchWithAutocomplete
                                         initialQuery={stateFilters.q || ''}
                                         currentFilters={stateFilters}
                                         updateFilter={updateFilter}
                                     />
                                 </div>
-                                <div className="mt-4 mb-4 flex items-center justify-between">
-                                    <h2 className="text-lg font-semibold text-black">フィルター</h2>
-                                    <button onClick={() => setFilterSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
-                                        <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div className="mb-6 flex items-center justify-between">
+                                    <h2 className="font-['Hiragino_Mincho_ProN'] text-lg font-semibold text-gray-900">フィルター</h2>
+                                    <button 
+                                        onClick={() => setFilterSidebarOpen(false)} 
+                                        className="text-gray-500 p-1"
+                                    >
+                                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
                                     </button>
                                 </div>
 
-                                <BrandFilter brands={facets.brands} currentFilters={stateFilters} onFilterChange={updateFilter} />
+                                <div className="space-y-6">
+                                    <BrandFilter brands={facets.brands} currentFilters={stateFilters} onFilterChange={updateFilter} />
 
-                                <HierarchicalCategoryFilter
-                                    categories={facets.categories}
-                                    currentFilters={stateFilters}
-                                    onFilterChange={updateFilter}
-                                />
+                                    <HierarchicalCategoryFilter
+                                        categories={facets.categories}
+                                        currentFilters={stateFilters}
+                                        onFilterChange={updateFilter}
+                                    />
 
-                                <PriceFilter
-                                    prices={facets.prices}
-                                    currentFilters={stateFilters}
-                                    onFilterChange={updateFilter}
-                                    onClearFilter={handleClearPrice}
-                                />
+                                    <PriceFilter
+                                        prices={facets.prices}
+                                        currentFilters={stateFilters}
+                                        onFilterChange={updateFilter}
+                                        onClearFilter={handleClearPrice}
+                                    />
 
-                                <RatingFilter
-                                    ratings={facets.ratings}
-                                    currentFilters={stateFilters}
-                                    onFilterChange={updateFilter}
-                                    onClearFilter={() => clearFilter('rating')}
-                                />
+                                    <RatingFilter
+                                        ratings={facets.ratings}
+                                        currentFilters={stateFilters}
+                                        onFilterChange={updateFilter}
+                                        onClearFilter={() => clearFilter('rating')}
+                                    />
 
-                                <GenderFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
+                                    <GenderFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
 
-                                <SizeFilter currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('size')} />
+                                    <SizeFilter currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('size')} />
 
-                                <FragranceTypeFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
+                                    <FragranceTypeFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
+                                </div>
 
-                                <div className="mt-6 flex flex-col gap-4">
+                                <div className="mt-8 flex flex-col gap-3">
                                     <button
-                                        className="flex w-full items-center justify-center rounded-lg border border-[#AAB4C3] bg-[#EAB308] py-4 text-sm text-white"
+                                        className="w-full py-3 text-sm font-medium text-white bg-gray-800"
                                         onClick={() => {
                                             // Filter search functionality is already handled by the filter state changes
                                             // This button can be used to trigger any additional search logic if needed
                                         }}
                                     >
-                                        フィルター検索
+                                        フィルター適用
                                     </button>
                                     <button
-                                        className="flex w-full items-center justify-center rounded-lg border border-[#AAB4C3] bg-[#EAB308] py-4 text-sm text-white"
+                                        className="w-full py-3 text-sm font-medium text-gray-700 bg-gray-100"
                                         onClick={handleResetConditions}
                                     >
                                         条件をリセット
@@ -580,10 +647,10 @@ export default function Index({ products, filters, facets }: Props) {
                     )}
 
                     <div className={isFilterSidebarOpen ? 'lg:w-3/4' : 'lg:w-full'}>
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 justify-items-center">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                             {products.data?.length === 0 && (
-                                <div className="col-span-full rounded-lg border p-8 text-center text-sm text-neutral-600 dark:text-neutral-300">
-                                    商品が見つかりません。フィルターを調整してみてください。
+                                <div className="col-span-full py-12 text-center">
+                                    <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-600">商品が見つかりません。フィルターを調整してみてください。</p>
                                 </div>
                             )}
                             {products.data?.map((p) => {
@@ -617,13 +684,13 @@ export default function Index({ products, filters, facets }: Props) {
                             {isLoading && (
                                 <>
                                     {Array.from({ length: 8 }).map((_, i) => (
-                                        <div key={i} className="h-64 animate-pulse rounded-2xl border bg-neutral-100 dark:bg-neutral-800" />
+                                        <div key={i} className="w-full max-w-xs h-64 animate-pulse border border-gray-200 bg-gray-100" />
                                     ))}
                                 </>
                             )}
                         </div>
 
-                        <nav className="mt-8 flex items-center gap-2">
+                        <nav className="mt-8 flex items-center justify-center gap-2 py-4">
                             {products.links?.map((l, i) => {
                                 const href = l.url
                                     ? (() => {
@@ -650,7 +717,11 @@ export default function Index({ products, filters, facets }: Props) {
                                     <Link
                                         key={i}
                                         href={href}
-                                        className={`rounded border px-3 py-1 text-sm ${l.active ? 'bg-black text-white' : 'hover:bg-neutral-100'} ${!l.url ? 'cursor-not-allowed text-neutral-400' : ''}`}
+                                        className={`px-3 py-2 text-sm font-medium ${
+                                            l.active 
+                                                ? 'bg-gray-800 text-white' 
+                                                : 'text-gray-700'
+                                        } ${!l.url ? 'cursor-not-allowed text-gray-400' : ''}`}
                                         disabled={!l.url || l.active}
                                     >
                                         <span dangerouslySetInnerHTML={{ __html: l.label }} />

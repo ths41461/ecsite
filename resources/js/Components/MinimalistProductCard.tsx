@@ -53,12 +53,12 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
     const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
 
     return (
-        <div className="group relative flex h-[392px] w-[288px] flex-col overflow-hidden border border-neutral-200 bg-white font-sans transition-shadow hover:shadow-lg">
+        <div className="group relative flex h-[392px] max-w-[288px] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans mx-4">
             {/* Favorite Button */}
             <button
                 type="button"
                 aria-label="お気に入りに追加"
-                className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center bg-white/70 backdrop-blur-sm transition hover:bg-white"
+                className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center bg-white/70 backdrop-blur-sm"
             >
                 <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -91,17 +91,17 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                     </div>
                 </div>
 
-                {/* Content Area with Cross-Fade */}
+                {/* Content Area with Hover Reveal */}
                 <div className="relative flex-grow p-4 text-center">
                     {/* Default View */}
-                    <div className="absolute inset-0 flex flex-col justify-center opacity-100 transition-opacity duration-300 group-hover:opacity-0">
+                    <div className="absolute inset-0 flex flex-col justify-center opacity-100 group-hover:opacity-0">
                         <div>
                             {product.brand && (
                                 <div className="text-xs font-medium uppercase tracking-wider text-neutral-500">
                                     {product.brand}
                                 </div>
                             )}
-                            <h3 className="mt-1 font-hiragino-mincho text-lg font-medium text-neutral-800 group-hover:underline">
+                            <h3 className="mt-1 font-hiragino-mincho text-lg font-medium text-neutral-800">
                                 {product.name}
                             </h3>
                             {product.genders && product.genders.length > 0 && (
@@ -130,8 +130,8 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                         </div>
                     </div>
 
-                    {/* Hover View */}
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                    {/* Hover Reveal View */}
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white opacity-0 group-hover:opacity-100">
                         {displayRating !== undefined && displayRating > 0 && displayReviewCount !== undefined && displayReviewCount > 0 && (
                             <div className="flex items-center gap-1 text-sm text-neutral-600">
                                 {renderStarRating(displayRating)}
@@ -146,7 +146,7 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                         <button
                             type="button"
                             aria-label="カートに追加"
-                            className="mt-2 flex h-10 w-full max-w-[150px] items-center justify-center gap-2 bg-[#EAB308] px-4 text-sm font-medium text-black transition hover:bg-yellow-500"
+                            className="mt-2 flex h-10 w-full max-w-[150px] items-center justify-center gap-2 bg-[#EAB308] px-4 text-sm font-medium text-black"
                             onClick={(e) => {
                                 e.preventDefault(); // Prevent link navigation
                                 e.stopPropagation(); // Stop event bubbling
