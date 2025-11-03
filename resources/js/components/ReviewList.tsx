@@ -36,8 +36,8 @@ export default function ReviewList({ reviews, productId }: ReviewListProps) {
     };
 
     return (
-        <div className="mt-8">
-            <h3 className="mb-4 text-lg font-semibold">レビュー</h3>
+        <div className="mt-6">
+            <h3 className="mb-4 text-lg font-semibold text-gray-800">レビュー</h3>
 
             {reviews.length === 0 ? (
                 <p className="text-gray-500">この商品のレビューはまだありません。</p>
@@ -48,7 +48,7 @@ export default function ReviewList({ reviews, productId }: ReviewListProps) {
                             <div key={review.id} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
                                 <div className="mb-2 flex items-center justify-between">
                                     <div className="flex items-center">
-                                        <span className="font-medium">{review.user?.name || '匿名ユーザー'}</span>
+                                        <span className="font-medium text-gray-800">{review.user?.name || '匿名ユーザー'}</span>
                                         <span className="mx-2 text-gray-300">•</span>
                                         <RatingStars rating={review.rating} size="sm" />
                                     </div>
@@ -68,8 +68,8 @@ export default function ReviewList({ reviews, productId }: ReviewListProps) {
                                     <button
                                         key={page}
                                         onClick={() => setCurrentPage(page)}
-                                        className={`rounded-md px-3 py-1 text-sm ${
-                                            currentPage === page ? 'bg-rose-600 text-white' : 'text-gray-700 hover:bg-gray-100'
+                                        className={`px-3 py-1 text-sm ${
+                                            currentPage === page ? 'bg-[#EAB308] text-gray-800' : 'text-gray-700 hover:bg-gray-100'
                                         }`}
                                     >
                                         {page}

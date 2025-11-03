@@ -366,20 +366,20 @@ export default function Show({ product, gallery, related }: Props) {
         const hero = gallery[activeIndex];
         const src = hero?.url ?? product.image ?? null;
         if (!src) {
-            return <div className="grid h-full w-full place-items-center text-sm text-neutral-500">画像なし</div>;
+            return <div className="grid h-full w-full place-items-center text-sm text-gray-500">画像なし</div>;
         }
         return <img src={src} alt={hero?.alt ?? product.name} className="h-full w-full object-cover" />;
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
             <div className="mx-auto max-w-5xl px-4 py-6">
                 <Head title={product.name} />
                 <div className="grid gap-6 md:grid-cols-2">
                 {/* GALLERY */}
                 <div>
-                    <div className="aspect-square overflow-hidden rounded-xl bg-neutral-100">
+                    <div className="aspect-square overflow-hidden bg-[#FCFCF7] border border-gray-200">
                         <MainImage />
                     </div>
 
@@ -392,15 +392,15 @@ export default function Show({ product, gallery, related }: Props) {
                                         key={i}
                                         type="button"
                                         onClick={() => setActiveIndex(i)}
-                                        className={`aspect-square overflow-hidden rounded border transition ${
-                                            selected ? 'ring-2 ring-black' : 'hover:border-neutral-300'
+                                        className={`aspect-square overflow-hidden border transition ${
+                                            selected ? 'ring-2 ring-black border-black' : 'border-gray-200 hover:border-gray-300'
                                         }`}
                                         aria-label={`サムネイル ${i + 1}`}
                                     >
                                         {g.url ? (
                                             <img src={g.url} alt={g.alt ?? product.name} className="h-full w-full object-cover" />
                                         ) : (
-                                            <div className="h-full w-full bg-neutral-100" />
+                                            <div className="h-full w-full bg-gray-100" />
                                         )}
                                     </button>
                                 );
@@ -411,15 +411,15 @@ export default function Show({ product, gallery, related }: Props) {
 
                 {/* DETAILS */}
                 <div>
-                    {product.brand?.name && <div className="text-sm text-neutral-500">{product.brand.name}</div>}
-                    <h1 className="mb-2 text-2xl font-semibold">{product.name}</h1>
-                    {product.short_desc && <p className="mb-4 text-neutral-700">{product.short_desc}</p>}
+                    {product.brand?.name && <div className="text-sm text-gray-500">{product.brand.name}</div>}
+                    <h1 className="mb-2 text-2xl font-semibold text-gray-800">{product.name}</h1>
+                    {product.short_desc && <p className="mb-4 text-gray-700">{product.short_desc}</p>}
 
                     <div className="space-y-4">
                         {/* VARIANT PICKER (inline for now; will extract later) */}
                                                     {product.variants.length > 1 && (
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">バリエーションを選択</label>
+                                <label className="mb-2 block text-sm font-medium text-gray-700">バリエーションを選択</label>
                                 <div className="space-y-2">
                                     {product.variants.map((v) => {
                                         const badge = stockBadgeFor(v);
@@ -430,27 +430,27 @@ export default function Show({ product, gallery, related }: Props) {
                                                 key={v.sku}
                                                 onClick={() => setSelectedVariant(v)}
                                                 disabled={isOut}
-                                                className={`w-full rounded-lg border p-3 text-left transition-colors ${
+                                                className={`w-full border p-3 text-left transition-colors ${
                                                     isSelected
-                                                        ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20'
+                                                        ? 'border-gray-800 bg-gray-50'
                                                         : isOut
-                                                          ? 'border-gray-200 bg-gray-50 text-gray-400 dark:border-gray-700 dark:bg-gray-800'
-                                                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700 dark:hover:border-gray-600'
+                                                          ? 'border-gray-200 bg-gray-50 text-gray-400'
+                                                          : 'border-gray-200 hover:border-gray-300'
                                                 }`}
                                             >
                                                 <div className="flex items-center justify-between">
                                                     <div className="flex items-baseline gap-2">
-                                                        <span className="font-semibold text-rose-700 dark:text-rose-400">{yen(v.price_cents)}</span>
+                                                        <span className="font-semibold text-gray-800">{yen(v.price_cents)}</span>
                                                         {v.compare_at_cents != null && (
-                                                            <span className="text-sm text-neutral-500 line-through">{yen(v.compare_at_cents)}</span>
+                                                            <span className="text-sm text-gray-500 line-through">{yen(v.compare_at_cents)}</span>
                                                         )}
-                                                        <span className="text-xs text-neutral-500">SKU: {v.sku}</span>
+                                                        <span className="text-xs text-gray-500">SKU: {v.sku}</span>
                                                         {/* Gender and Size Icons for Variants */}
                                                         {v.options && (
                                                             <div className="flex gap-1">
                                                                 {v.options.gender && (
                                                                     <span 
-                                                                        className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                                        className="inline-flex items-center justify-center bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
                                                                         title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
                                                                     >
                                                                         {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
@@ -458,7 +458,7 @@ export default function Show({ product, gallery, related }: Props) {
                                                                 )}
                                                                 {v.options.size_ml && (
                                                                     <span 
-                                                                        className="inline-flex items-center justify-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                                                                        className="inline-flex items-center justify-center bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
                                                                         title={`${v.options.size_ml}ml`}
                                                                     >
                                                                         {v.options.size_ml}ml
@@ -468,12 +468,12 @@ export default function Show({ product, gallery, related }: Props) {
                                                         )}
                                                     </div>
                                                     <span
-                                                        className={`rounded px-2 py-0.5 text-xs ${
+                                                        className={`px-2 py-0.5 text-xs ${
                                                             badge === '在庫切れ'
-                                                                ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                                                ? 'bg-rose-100 text-rose-700'
                                                                 : badge === '在庫僅少'
-                                                                  ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                                  : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                                  ? 'bg-amber-100 text-amber-700'
+                                                                  : 'bg-emerald-100 text-emerald-700'
                                                         }`}
                                                     >
                                                         {badge}
@@ -493,17 +493,17 @@ export default function Show({ product, gallery, related }: Props) {
                                 const badge = stockBadgeFor(v);
                                 return (
                                     <div className="flex items-baseline gap-2 text-lg">
-                                        <span className="font-semibold text-rose-700 dark:text-rose-400">{yen(v.price_cents)}</span>
+                                        <span className="font-semibold text-gray-800">{yen(v.price_cents)}</span>
                                         {v.compare_at_cents != null && (
-                                            <span className="text-sm text-neutral-500 line-through">{yen(v.compare_at_cents)}</span>
+                                            <span className="text-sm text-gray-500 line-through">{yen(v.compare_at_cents)}</span>
                                         )}
-                                        <span className="ml-2 text-xs text-neutral-500">SKU: {v.sku}</span>
+                                        <span className="ml-2 text-xs text-gray-500">SKU: {v.sku}</span>
                                         {/* Gender and Size Icons for Single Variant */}
                                         {v.options && (
                                             <div className="flex gap-1">
                                                 {v.options.gender && (
                                                     <span 
-                                                        className="inline-flex items-center justify-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                                                        className="inline-flex items-center justify-center bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
                                                         title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
                                                     >
                                                         {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
@@ -511,7 +511,7 @@ export default function Show({ product, gallery, related }: Props) {
                                                 )}
                                                 {v.options.size_ml && (
                                                     <span 
-                                                        className="inline-flex items-center justify-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-200"
+                                                        className="inline-flex items-center justify-center bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
                                                         title={`${v.options.size_ml}ml`}
                                                     >
                                                         {v.options.size_ml}ml
@@ -520,12 +520,12 @@ export default function Show({ product, gallery, related }: Props) {
                                             </div>
                                         )}
                                         <span
-                                            className={`ml-2 rounded px-2 py-0.5 text-xs ${
+                                            className={`ml-2 px-2 py-0.5 text-xs ${
                                                 badge === '在庫切れ'
-                                                    ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                                                    ? 'bg-rose-100 text-rose-700'
                                                     : badge === '在庫僅少'
-                                                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                      ? 'bg-amber-100 text-amber-700'
+                                                      : 'bg-emerald-100 text-emerald-700'
                                             }`}
                                         >
                                             {badge}
@@ -538,18 +538,18 @@ export default function Show({ product, gallery, related }: Props) {
                         {selectedVariant && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">数量</label>
+                                    <label className="mb-2 block text-sm font-medium text-gray-700">数量</label>
                                     <div className="flex items-center gap-2">
                                         <button
                                             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                            className="border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
                                         >
                                             -
                                         </button>
                                         <span className="w-12 text-center text-sm font-medium">{quantity}</span>
                                         <button
                                             onClick={() => setQuantity(Math.min(20, quantity + 1))}
-                                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-800"
+                                            className="border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
                                         >
                                             +
                                         </button>
@@ -560,14 +560,14 @@ export default function Show({ product, gallery, related }: Props) {
                                     <button
                                         onClick={handleAddToCartEvent}
                                         disabled={isAddingToCart || !selectedVariant}
-                                        className="flex-1 rounded-lg bg-rose-600 px-6 py-3 font-medium text-white hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-gray-400 dark:bg-rose-500 dark:hover:bg-rose-600"
+                                        className="flex-1 border border-[#EEDDD4] bg-[#EAB308] text-gray-800 px-6 py-3 font-medium transition-colors min-h-[44px] hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         {isAddingToCart ? '追加中...' : 'カートに追加'}
                                     </button>
                                     <button
                                         onClick={handleWishlistAdd}
                                         disabled={isWishlisting || isWishlisted}
-                                        className="rounded-lg border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-800"
+                                        className="border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100"
                                         aria-label={isWishlisted ? 'お気に入り登録済み' : 'お気に入りに追加'}
                                     >
                                         {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
@@ -577,14 +577,14 @@ export default function Show({ product, gallery, related }: Props) {
                         )}
                     </div>
 
-                    {product.long_desc && <div className="prose mt-6 max-w-none whitespace-pre-wrap">{product.long_desc}</div>}
+                    {product.long_desc && <div className="prose mt-6 max-w-none whitespace-pre-wrap text-gray-700">{product.long_desc}</div>}
                 </div>
             </div>
 
             {/* Reviews Section */}
-            <div className="mt-10 border-t border-gray-200 pt-10">
+            <div className="mt-8 border-t border-gray-200 pt-8">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-2xl font-bold">レビュー</h2>
+                    <h2 className="text-xl font-semibold text-gray-800">レビュー</h2>
                     {productRatings.averageRating > 0 && productRatings.reviewCount > 0 ? (
                         <div className="flex items-center">
                             <RatingStars rating={productRatings.averageRating} size="md" showLabel />
@@ -596,12 +596,12 @@ export default function Show({ product, gallery, related }: Props) {
                 </div>
 
                 {productRatings.averageRating > 0 && productRatings.reviewCount > 0 && (
-                    <div className="mt-6">
-                        {loadingReviews ? <div>Loading reviews...</div> : <ReviewList reviews={reviews} productId={product.id} />}
+                    <div className="mt-4">
+                        {loadingReviews ? <div className="text-center py-4 text-gray-500">レビューを読み込み中...</div> : <ReviewList reviews={reviews} productId={product.id} />}
                     </div>
                 )}
 
-                <div className="mt-8">
+                <div className="mt-6">
                     <ReviewForm
                         productId={product.id}
                         onSubmit={async (rating, comment) => {
@@ -680,17 +680,18 @@ export default function Show({ product, gallery, related }: Props) {
             </div>
 
             {related.length > 0 && (
-                <div className="mt-10">
-                    <h2 className="mb-3 text-lg font-semibold">関連商品</h2>
+                <div className="mt-8">
+                    <h2 className="mb-4 text-lg font-semibold text-gray-800">関連商品</h2>
                     <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                         {related.map((p) => (
-                            <div key={p.id} className="rounded-xl border p-2">
+                            <div key={p.id} className="bg-[#FCFCF7] border border-gray-200 p-3">
                                 {p.image ? (
-                                    <img src={p.image} alt={p.name} className="aspect-square w-full rounded-lg object-cover" />
+                                    <img src={p.image} alt={p.name} className="w-full aspect-square object-cover" />
                                 ) : (
-                                    <div className="aspect-square w-full rounded-lg bg-neutral-100" />
+                                    <div className="w-full aspect-square bg-gray-100" />
                                 )}
-                                <div className="mt-2 text-sm font-medium">{p.name}</div>
+                                <div className="mt-2 text-sm font-medium text-gray-800">{p.name}</div>
+                                <div className="text-xs text-gray-600">{yen(p.price_cents)}</div>
                             </div>
                         ))}
                     </div>
@@ -701,11 +702,11 @@ export default function Show({ product, gallery, related }: Props) {
                 <div
                     role="status"
                     aria-live="polite"
-                    className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-4 py-2 text-sm shadow-lg transition ${
+                    className={`fixed bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-lg px-4 py-2 text-sm transition ${
                         {
-                            success: 'bg-emerald-600 text-white',
-                            warning: 'bg-amber-600 text-white',
-                            error: 'bg-rose-600 text-white',
+                            success: 'bg-[#FCFCF7] border border-gray-200 text-gray-800',
+                            warning: 'bg-[#FCFCF7] border border-gray-200 text-gray-800',
+                            error: 'bg-[#FCFCF7] border border-gray-200 text-gray-800',
                         }[toast.kind]
                     }`}
                 >
