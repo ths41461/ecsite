@@ -11,6 +11,7 @@ import { useFilterState } from '@/hooks/use-filter-state';
 import { useInertiaLoading } from '@/hooks/use-inertia-loading';
 import { Head, Link, router } from '@inertiajs/react';
 import { useEffect, useRef, useState } from 'react';
+import Footer from '../../Components/Footer';
 
 type ProductItem = {
     id: number;
@@ -213,7 +214,7 @@ function SearchWithAutocomplete({
                     onFocus={handleInputFocus}
                     onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
                     placeholder="商品を検索..."
-                    className="w-full border border-gray-300 px-4 py-2.5 pr-10 pl-10 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 focus:outline-none"
+                    className="w-full border border-gray-300 px-4 py-2.5 pr-10 pl-10 focus:border-gray-500 focus:ring-1 focus:ring-gray-500 focus:outline-none text-gray-900 placeholder:text-gray-400"
                 />
                 <div className="absolute top-1/2 left-3 -translate-y-1/2 text-gray-400">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -378,7 +379,7 @@ export default function Index({ products, filters, facets }: Props) {
     return (
         <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
-            <div className="mx-auto max-w-[1440px] px-4 py-6">
+            <main className="mx-auto max-w-[1440px] px-4 py-6">
                 <Head title="商品" />
 
                 {/* Header Section with consistent spacing and typography */}
@@ -393,7 +394,7 @@ export default function Index({ products, filters, facets }: Props) {
 
                 {/* Filter Controls with consistent styling */}
                 <div className="py-6">
-                    <div className="mx-auto max-w-[1440px]">
+                    <div>
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex flex-wrap items-center gap-4">
                                 <button
@@ -427,7 +428,7 @@ export default function Index({ products, filters, facets }: Props) {
                             <div className="w-full sm:w-auto sm:max-w-xs sm:flex-1">
                                 <div className="relative border border-gray-300">
                                     <select
-                                        className="block w-full border-0 bg-white py-2.5 pr-10 pl-10 text-sm font-medium text-gray-700 focus:ring-0 focus:ring-offset-0 focus:outline-none"
+                                        className="block w-full border-0 bg-white py-2.5 pr-10 pl-10 text-sm font-medium text-gray-700 focus:ring-0 focus:ring-offset-0 focus:outline-none appearance-none"
                                         value={stateFilters.sort || 'alphabetical'}
                                         onChange={(e) => {
                                             const value = e.target.value === 'alphabetical' ? '' : e.target.value;
@@ -444,6 +445,7 @@ export default function Index({ products, filters, facets }: Props) {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                         </svg>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -697,7 +699,8 @@ export default function Index({ products, filters, facets }: Props) {
                         </nav>
                     </div>
                 </div>
-            </div>
+            </main>
+            <Footer />
         </div>
     );
 }
