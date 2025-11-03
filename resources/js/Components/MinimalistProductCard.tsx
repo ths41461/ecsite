@@ -53,7 +53,7 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
     const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
 
     return (
-        <div className="group relative flex h-[392px] max-w-[288px] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans mx-4">
+        <div className="group relative flex h-[392px] max-w-[288px] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans lg:mb-4 lg:mx-2">
             {/* Favorite Button */}
             <button
                 type="button"

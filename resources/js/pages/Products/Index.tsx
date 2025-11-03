@@ -647,7 +647,7 @@ export default function Index({ products, filters, facets }: Props) {
                     )}
 
                     <div className={isFilterSidebarOpen ? 'lg:w-3/4' : 'lg:w-full'}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                             {products.data?.length === 0 && (
                                 <div className="col-span-full py-12 text-center">
                                     <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-600">商品が見つかりません。フィルターを調整してみてください。</p>
