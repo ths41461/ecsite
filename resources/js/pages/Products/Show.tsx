@@ -374,17 +374,13 @@ export default function Show({ product, gallery, related }: Props) {
     return (
         <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
-            <div className="mx-auto max-w-5xl px-4 py-6">
+            <div className="mx-auto max-w-[1440px] px-4 py-6 w-full">
                 <Head title={product.name} />
                 <div className="grid gap-6 md:grid-cols-2">
                 {/* GALLERY */}
-                <div>
-                    <div className="aspect-square overflow-hidden bg-[#FCFCF7] border border-gray-200">
-                        <MainImage />
-                    </div>
-
+                <div className="flex space-x-4">
                     {gallery.length > 1 && (
-                        <div className="mt-3 grid grid-cols-4 gap-2">
+                        <div className="flex flex-col gap-2">
                             {gallery.map((g, i) => {
                                 const selected = i === activeIndex;
                                 return (
@@ -392,8 +388,8 @@ export default function Show({ product, gallery, related }: Props) {
                                         key={i}
                                         type="button"
                                         onClick={() => setActiveIndex(i)}
-                                        className={`aspect-square overflow-hidden border transition ${
-                                            selected ? 'ring-2 ring-black border-black' : 'border-gray-200 hover:border-gray-300'
+                                        className={`w-20 aspect-square overflow-hidden border ${
+                                            selected ? 'border-2 border-gray-800' : 'border border-gray-300 hover:border-gray-400'
                                         }`}
                                         aria-label={`サムネイル ${i + 1}`}
                                     >
@@ -407,275 +403,263 @@ export default function Show({ product, gallery, related }: Props) {
                             })}
                         </div>
                     )}
+                    <div className="aspect-square overflow-hidden bg-[#FCFCF7] border border-gray-200" style={{minWidth: 0, flex: 1}}>
+                        <MainImage />
+                    </div>
                 </div>
 
                 {/* DETAILS */}
-                <div>
-                    {product.brand?.name && <div className="text-sm text-gray-500">{product.brand.name}</div>}
-                    <h1 className="mb-2 text-2xl font-semibold text-gray-800">{product.name}</h1>
-                    {product.short_desc && <p className="mb-4 text-gray-700">{product.short_desc}</p>}
-
-                    <div className="space-y-4">
-                        {/* VARIANT PICKER (inline for now; will extract later) */}
-                                                    {product.variants.length > 1 && (
-                            <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">バリエーションを選択</label>
-                                <div className="space-y-2">
-                                    {product.variants.map((v) => {
-                                        const badge = stockBadgeFor(v);
-                                        const isSelected = selectedVariant?.sku === v.sku;
-                                        const isOut = badge === '在庫切れ';
-                                        return (
-                                            <button
-                                                key={v.sku}
-                                                onClick={() => setSelectedVariant(v)}
-                                                disabled={isOut}
-                                                className={`w-full border p-3 text-left transition-colors ${
-                                                    isSelected
-                                                        ? 'border-gray-800 bg-gray-50'
-                                                        : isOut
-                                                          ? 'border-gray-200 bg-gray-50 text-gray-400'
-                                                          : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-baseline gap-2">
-                                                        <span className="font-semibold text-gray-800">{yen(v.price_cents)}</span>
-                                                        {v.compare_at_cents != null && (
-                                                            <span className="text-sm text-gray-500 line-through">{yen(v.compare_at_cents)}</span>
-                                                        )}
-                                                        <span className="text-xs text-gray-500">SKU: {v.sku}</span>
-                                                        {/* Gender and Size Icons for Variants */}
-                                                        {v.options && (
-                                                            <div className="flex gap-1">
-                                                                {v.options.gender && (
-                                                                    <span 
-                                                                        className="inline-flex items-center justify-center bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
-                                                                        title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
-                                                                    >
-                                                                        {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
-                                                                    </span>
-                                                                )}
-                                                                {v.options.size_ml && (
-                                                                    <span 
-                                                                        className="inline-flex items-center justify-center bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                                                                        title={`${v.options.size_ml}ml`}
-                                                                    >
-                                                                        {v.options.size_ml}ml
-                                                                    </span>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <span
-                                                        className={`px-2 py-0.5 text-xs ${
-                                                            badge === '在庫切れ'
-                                                                ? 'bg-rose-100 text-rose-700'
-                                                                : badge === '在庫僅少'
-                                                                  ? 'bg-amber-100 text-amber-700'
-                                                                  : 'bg-emerald-100 text-emerald-700'
-                                                        }`}
-                                                    >
-                                                        {badge}
-                                                    </span>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
+                <div className="space-y-6">
+                    {/* Product Name and Brand */}
+                    <div className="space-y-1">
+                        {product.brand?.name && (
+                            <div className="text-sm" style={{ color: '#888888' }}>{product.brand.name}</div>
                         )}
+                        <h1 className="text-2xl font-semibold text-gray-800 font-['Hiragino_Mincho_ProN']">{product.name}</h1>
+                    </div>
+                    
+                    {/* Price and Stock */}
+                    {selectedVariant && (
+                        <div className="flex items-center justify-between">
+                            <div className="text-2xl font-bold text-gray-800">{yen(selectedVariant.price_cents)}</div>
+                            <div className={`px-3 py-1 text-sm ${ 
+                                stockBadgeFor(selectedVariant) === '在庫切れ' 
+                                    ? 'bg-rose-100 text-rose-700' 
+                                    : stockBadgeFor(selectedVariant) === '在庫僅少' 
+                                        ? 'bg-amber-100 text-amber-700' 
+                                        : 'bg-emerald-100 text-emerald-700'
+                            }`}>
+                                {stockBadgeFor(selectedVariant)}
+                            </div>
+                        </div>
+                    )}
 
-                        {/* Single variant display */}
-                        {product.variants.length === 1 &&
-                            (() => {
-                                const v = product.variants[0];
-                                const badge = stockBadgeFor(v);
+                    {/* Content Volume Heading */}
+                    <div className="text-base font-medium" style={{ color: '#888888' }}>内容量</div>
+
+                    {/* Size Options */}
+                    {product.variants.length > 1 && (
+                        <div className="flex gap-3">
+                            {product.variants.map((v) => {
+                                const isSelected = selectedVariant?.sku === v.sku;
                                 return (
-                                    <div className="flex items-baseline gap-2 text-lg">
-                                        <span className="font-semibold text-gray-800">{yen(v.price_cents)}</span>
-                                        {v.compare_at_cents != null && (
-                                            <span className="text-sm text-gray-500 line-through">{yen(v.compare_at_cents)}</span>
-                                        )}
-                                        <span className="ml-2 text-xs text-gray-500">SKU: {v.sku}</span>
-                                        {/* Gender and Size Icons for Single Variant */}
-                                        {v.options && (
-                                            <div className="flex gap-1">
-                                                {v.options.gender && (
-                                                    <span 
-                                                        className="inline-flex items-center justify-center bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800"
-                                                        title={v.options.gender === 'men' ? 'メンズ' : v.options.gender === 'women' ? 'レディース' : 'ユニセックス'}
-                                                    >
-                                                        {v.options.gender === 'men' ? '♂' : v.options.gender === 'women' ? '♀' : '⚥'}
-                                                    </span>
-                                                )}
-                                                {v.options.size_ml && (
-                                                    <span 
-                                                        className="inline-flex items-center justify-center bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800"
-                                                        title={`${v.options.size_ml}ml`}
-                                                    >
-                                                        {v.options.size_ml}ml
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                        <span
-                                            className={`ml-2 px-2 py-0.5 text-xs ${
-                                                badge === '在庫切れ'
-                                                    ? 'bg-rose-100 text-rose-700'
-                                                    : badge === '在庫僅少'
-                                                      ? 'bg-amber-100 text-amber-700'
-                                                      : 'bg-emerald-100 text-emerald-700'
-                                            }`}
-                                        >
-                                            {badge}
-                                        </span>
-                                    </div>
+                                    <button
+                                        key={v.sku}
+                                        onClick={() => setSelectedVariant(v)}
+                                        className={`flex-1 border border-gray-300 p-4 text-center ${
+                                            isSelected 
+                                                ? 'border-2 border-gray-800' 
+                                                : 'hover:border-gray-400'
+                                        }`}
+                                        style={{ color: isSelected ? '#363842' : '#000000' }}
+                                    >
+                                        <span>{v.options?.size_ml}ml</span>
+                                    </button>
                                 );
-                            })()}
+                            })}
+                        </div>
+                    )}
 
-                        {/* Quantity + Actions */}
-                        {selectedVariant && (
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="mb-2 block text-sm font-medium text-gray-700">数量</label>
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                                            className="border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
-                                        >
-                                            -
-                                        </button>
-                                        <span className="w-12 text-center text-sm font-medium">{quantity}</span>
-                                        <button
-                                            onClick={() => setQuantity(Math.min(20, quantity + 1))}
-                                            className="border border-gray-300 px-3 py-2 text-sm hover:bg-gray-50"
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
+                    {/* Single variant display */}
+                    {product.variants.length === 1 && selectedVariant && (
+                        <div className="border border-gray-300 p-4 text-center" style={{ color: '#363842' }}>
+                            <span>{selectedVariant.options?.size_ml}ml</span>
+                        </div>
+                    )}
 
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleAddToCartEvent}
-                                        disabled={isAddingToCart || !selectedVariant}
-                                        className="flex-1 border border-[#EEDDD4] bg-[#EAB308] text-gray-800 px-6 py-3 font-medium transition-colors min-h-[44px] hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        {isAddingToCart ? '追加中...' : 'カートに追加'}
-                                    </button>
-                                    <button
-                                        onClick={handleWishlistAdd}
-                                        disabled={isWishlisting || isWishlisted}
-                                        className="border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100"
-                                        aria-label={isWishlisted ? 'お気に入り登録済み' : 'お気に入りに追加'}
-                                    >
-                                        {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
-                                    </button>
-                                </div>
+                    {/* Quantity Selector */}
+                    {selectedVariant && (
+                        <div>
+                            <div className="text-sm font-medium" style={{ color: '#888888' }}>数量</div>
+                            <div className="flex items-center gap-2 mt-1">
+                                <button
+                                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                    className="border border-gray-300 w-10 h-10 flex items-center justify-center text-sm hover:bg-gray-50"
+                                >
+                                    -
+                                </button>
+                                <span className="w-12 text-center text-sm font-medium">{quantity}</span>
+                                <button
+                                    onClick={() => setQuantity(Math.min(20, quantity + 1))}
+                                    className="border border-gray-300 w-10 h-10 flex items-center justify-center text-sm hover:bg-gray-50"
+                                >
+                                    +
+                                </button>
                             </div>
-                        )}
+                        </div>
+                    )}
+
+                    {/* Add to Cart Button */}
+                    {selectedVariant && (
+                        <div>
+                            <button
+                                onClick={handleAddToCartEvent}
+                                disabled={isAddingToCart || !selectedVariant}
+                                className="w-full bg-[#EAB308] text-gray-800 py-4 font-medium text-base hover:bg-amber-500 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                                {isAddingToCart ? '追加中...' : 'カートに追加'}
+                            </button>
+                        </div>
+                    )}
+                    
+                    {/* Wishlist Button */}
+                    <div className="flex justify-center">
+                        <button
+                            onClick={handleWishlistAdd}
+                            disabled={isWishlisting || isWishlisted}
+                            className="border border-gray-300 px-4 py-3 text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100"
+                            aria-label={isWishlisted ? 'お気に入り登録済み' : 'お気に入りに追加'}
+                        >
+                            {isWishlisting ? '...' : isWishlisted ? '♥' : '♡'}
+                        </button>
                     </div>
 
-                    {product.long_desc && <div className="prose mt-6 max-w-none whitespace-pre-wrap text-gray-700">{product.long_desc}</div>}
+                    {/* Fragrance Type - From Figma design */}
+                    <div className="flex justify-between items-center border-b border-gray-200 pb-2">
+                        <div className="text-lg font-medium" style={{ color: '#888888' }}>香りのタイプ</div>
+                        <div className="text-lg font-medium" style={{ color: '#444444' }}>フローラル</div>
+                    </div>
+
+                    {/* Delivery Information */}
+                    <div className="border border-gray-200 p-4">
+                        <div className="text-base font-medium mb-2" style={{ color: '#000000' }}>配送について</div>
+                        <div className="border border-gray-300 p-4">
+                            <div className="flex justify-between">
+                                <div style={{ color: '#888888' }}>配送料：</div>
+                                <div style={{ color: '#444444' }}>無料配送</div>
+                            </div>
+                            <div className="mt-2" style={{ color: '#888888' }}>9,350円(税込)～購入で無料配送</div>
+                            <div className="flex justify-between mt-4">
+                                <div style={{ color: '#888888' }}>配送料：</div>
+                                <div style={{ color: '#444444' }}>ご注文完了から2日～7日前後のお届け</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Product Description */}
+                    {product.long_desc && (
+                        <div>
+                            <div className="text-lg font-medium mb-2" style={{ color: '#888888' }}>製品詳細</div>
+                            <div className="border border-gray-300 p-4" style={{ color: '#444444' }}>
+                                <div className="prose max-w-none whitespace-pre-wrap">{product.long_desc}</div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Reviews Section */}
-            <div className="mt-8 border-t border-gray-200 pt-8">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-800">レビュー</h2>
-                    {productRatings.averageRating > 0 && productRatings.reviewCount > 0 ? (
-                        <div className="flex items-center">
-                            <RatingStars rating={productRatings.averageRating} size="md" showLabel />
-                            <span className="ml-2 text-sm text-gray-600">({productRatings.reviewCount} 件のレビュー)</span>
-                        </div>
-                    ) : (
-                        <span className="text-sm text-gray-500">レビューがまだありません</span>
-                    )}
+            {/* Product Detail Sections from Figma */}
+            <div className="border-t border-gray-200 pt-6 mt-6">
+                <div className="flex space-x-10 mb-6">
+                    <div className="text-base text-gray-800 pb-2 border-b-2 border-gray-800 cursor-pointer" style={{ color: '#444444' }}>製品詳細</div>
+                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>香りノート</div>
+                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>レーダーチャート</div>
+                    <div className="text-base text-gray-500 pb-2 border-b border-transparent cursor-pointer" style={{ color: '#444444' }}>レビュー</div>
                 </div>
 
-                {productRatings.averageRating > 0 && productRatings.reviewCount > 0 && (
-                    <div className="mt-4">
-                        {loadingReviews ? <div className="text-center py-4 text-gray-500">レビューを読み込み中...</div> : <ReviewList reviews={reviews} productId={product.id} />}
+                {/* Product Details Content - Only show if long_desc exists */}
+                {product.long_desc && (
+                    <div className="border border-gray-300 p-4 mb-6" style={{ color: '#444444' }}>
+                        <div className="whitespace-pre-wrap">{product.long_desc}</div>
                     </div>
                 )}
 
-                <div className="mt-6">
-                    <ReviewForm
-                        productId={product.id}
-                        onSubmit={async (rating, comment) => {
-                            try {
-                                // Get CSRF token from cookie using the same approach as other pages
-                                function getCookie(name: string) {
-                                    const parts = document.cookie.split('; ').map((c) => c.split('='));
-                                    const found = parts.find(([k]) => k === name);
-                                    return found ? decodeURIComponent(found[1] ?? '') : null;
-                                }
+                {/* Reviews Section */}
+                <div id="reviews">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-xl font-semibold text-gray-800">レビュー</h2>
+                        {productRatings.averageRating > 0 && productRatings.reviewCount > 0 ? (
+                            <div className="flex items-center">
+                                <RatingStars rating={productRatings.averageRating} size="md" showLabel />
+                                <span className="ml-2 text-sm text-gray-600">({productRatings.reviewCount} 件のレビュー)</span>
+                            </div>
+                        ) : (
+                            <span className="text-sm text-gray-500">レビューがまだありません</span>
+                        )}
+                    </div>
 
-                                function xsrfHeaders(): HeadersInit {
-                                    const xsrf = getCookie('XSRF-TOKEN');
-                                    return {
-                                        'Content-Type': 'application/json',
-                                        'X-Requested-With': 'XMLHttpRequest',
-                                        ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+                    {productRatings.averageRating > 0 && productRatings.reviewCount > 0 && (
+                        <div className="mb-6">
+                            {loadingReviews ? <div className="text-center py-4 text-gray-500">レビューを読み込み中...</div> : <ReviewList reviews={reviews} productId={product.id} />}
+                        </div>
+                    )}
+
+                    <div>
+                        <ReviewForm
+                            productId={product.id}
+                            onSubmit={async (rating, comment) => {
+                                try {
+                                    // Get CSRF token from cookie using the same approach as other pages
+                                    function getCookie(name: string) {
+                                        const parts = document.cookie.split('; ').map((c) => c.split('='));
+                                        const found = parts.find(([k]) => k === name);
+                                        return found ? decodeURIComponent(found[1] ?? '') : null;
+                                    }
+
+                                    function xsrfHeaders(): HeadersInit {
+                                        const xsrf = getCookie('XSRF-TOKEN');
+                                        return {
+                                            'Content-Type': 'application/json',
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+                                        };
+                                    }
+
+                                    const response = await fetch(`/products/${product.slug}/reviews`, {
+                                        method: 'POST',
+                                        headers: xsrfHeaders(),
+                                        credentials: 'same-origin',
+                                        body: JSON.stringify({
+                                            rating: rating,
+                                            body: comment,
+                                        }),
+                                    });
+
+                                    if (!response.ok) {
+                                        const errorData = await response.json().catch(() => ({}));
+                                        throw new Error(errorData.message || 'レビューの送信に失敗しました。');
+                                    }
+
+                                    const reviewData = await response.json();
+                                    console.log('Review submitted successfully:', reviewData);
+
+                                    // Update the reviews state to include the new review
+                                    setReviews((prevReviews) => [
+                                        {
+                                            id: reviewData.id,
+                                            rating: reviewData.rating,
+                                            body: reviewData.body,
+                                            created_at: reviewData.created_at,
+                                            user: reviewData.user || { name: '匿名ユーザー' },
+                                        },
+                                        ...prevReviews,
+                                    ]);
+
+                                    // Update the product ratings state
+                                    const newRatingData = {
+                                        averageRating: (productRatings.averageRating * productRatings.reviewCount + rating) / (productRatings.reviewCount + 1),
+                                        reviewCount: productRatings.reviewCount + 1,
                                     };
+                                    
+                                    setProductRatings(newRatingData);
+
+                                    // Store the updated ratings in the fresh review cache
+                                    import('@/lib/review-cache').then(({ updateProductReviewData }) => {
+                                        updateProductReviewData(product.id, productRatings.averageRating, productRatings.reviewCount, rating);
+                                    });
+
+                                    // Show success toast notification
+                                    showToast('レビューを送信しました！', 'success');
+
+                                    return reviewData;
+                                } catch (error: any) {
+                                    console.error('Error submitting review:', error);
+                                    showToast(error.message || 'レビューの送信に失敗しました。', 'error');
+                                    throw error;
                                 }
-
-                                const response = await fetch(`/products/${product.slug}/reviews`, {
-                                    method: 'POST',
-                                    headers: xsrfHeaders(),
-                                    credentials: 'same-origin',
-                                    body: JSON.stringify({
-                                        rating: rating,
-                                        body: comment,
-                                    }),
-                                });
-
-                                if (!response.ok) {
-                                    const errorData = await response.json().catch(() => ({}));
-                                    throw new Error(errorData.message || 'レビューの送信に失敗しました。');
-                                }
-
-                                const reviewData = await response.json();
-                                console.log('Review submitted successfully:', reviewData);
-
-                                // Update the reviews state to include the new review
-                                setReviews((prevReviews) => [
-                                    {
-                                        id: reviewData.id,
-                                        rating: reviewData.rating,
-                                        body: reviewData.body,
-                                        created_at: reviewData.created_at,
-                                        user: reviewData.user || { name: '匿名ユーザー' },
-                                    },
-                                    ...prevReviews,
-                                ]);
-
-                                // Update the product ratings state
-                                const newRatingData = {
-                                    averageRating: (productRatings.averageRating * productRatings.reviewCount + rating) / (productRatings.reviewCount + 1),
-                                    reviewCount: productRatings.reviewCount + 1,
-                                };
-                                
-                                setProductRatings(newRatingData);
-
-                                // Store the updated ratings in the fresh review cache
-                                import('@/lib/review-cache').then(({ updateProductReviewData }) => {
-                                    updateProductReviewData(product.id, productRatings.averageRating, productRatings.reviewCount, rating);
-                                });
-
-                                // Show success toast notification
-                                showToast('レビューを送信しました！', 'success');
-
-                                return reviewData;
-                            } catch (error: any) {
-                                console.error('Error submitting review:', error);
-                                showToast(error.message || 'レビューの送信に失敗しました。', 'error');
-                                throw error;
-                            }
-                        }}
-                    />
+                            }}
+                        />
+                    </div>
                 </div>
             </div>
 
