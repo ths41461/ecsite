@@ -240,21 +240,16 @@ function SearchWithAutocomplete({
                                 <div className="flex items-center gap-3">
                                     {suggestion.image && (
                                         <div className="h-12 w-12 flex-shrink-0">
-                                            <img
-                                                src={suggestion.image}
-                                                alt={suggestion.name}
-                                                className="h-full w-full object-cover"
-                                                loading="lazy"
-                                            />
+                                            <img src={suggestion.image} alt={suggestion.name} className="h-full w-full object-cover" loading="lazy" />
                                         </div>
                                     )}
                                     <div className="min-w-0 flex-1">
-                                        <div className="font-['Hiragino_Mincho_ProN'] truncate font-medium text-gray-900">{suggestion.name}</div>
+                                        <div className="truncate font-['Hiragino_Mincho_ProN'] font-medium text-gray-900">{suggestion.name}</div>
                                         <div className="truncate text-sm text-gray-500">
                                             {suggestion.brand?.name} • {suggestion.category?.name}
                                         </div>
                                         {suggestion.price && (
-                                            <div className="text-sm font-['Hiragino_Mincho_ProN'] font-medium text-gray-900">
+                                            <div className="font-['Hiragino_Mincho_ProN'] text-sm font-medium text-gray-900">
                                                 ¥{suggestion.price.toLocaleString()}
                                             </div>
                                         )}
@@ -383,14 +378,14 @@ export default function Index({ products, filters, facets }: Props) {
     return (
         <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
-            <div className="container mx-auto px-4 py-6">
+            <div className="mx-auto max-w-[1440px] px-4 py-6">
                 <Head title="商品" />
 
                 {/* Header Section with consistent spacing and typography */}
-                <div className="w-full border-b border-[#888888] py-8 bg-[#FCFCF7]">
-                    <div className="container mx-auto px-4">
+                <div className="w-full border-b border-[#888888] bg-[#FCFCF7] py-8">
+                    <div className="mx-auto max-w-[1440px] px-4">
                         <div className="flex flex-col items-center text-center">
-                            <h1 className="font-['Hiragino_Mincho_ProN'] text-3xl font-bold text-gray-900 mb-2">商品一覧</h1>
+                            <h1 className="mb-2 font-['Hiragino_Mincho_ProN'] text-3xl font-bold text-gray-900">商品一覧</h1>
                             <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-700">{products.meta?.total ?? 0}個の商品</p>
                         </div>
                     </div>
@@ -398,12 +393,12 @@ export default function Index({ products, filters, facets }: Props) {
 
                 {/* Filter Controls with consistent styling */}
                 <div className="py-6">
-                    <div className="container mx-auto px-4">
+                    <div className="mx-auto max-w-[1440px]">
                         <div className="flex flex-wrap items-center justify-between gap-4">
                             <div className="flex flex-wrap items-center gap-4">
                                 <button
                                     onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
-                                    className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 bg-white text-sm font-medium text-gray-700"
+                                    className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700"
                                 >
                                     <svg className="h-4 w-4 stroke-current" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path
@@ -419,7 +414,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 {hasActiveFilters && (
                                     <button
                                         onClick={handleClearAllFilters}
-                                        className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 bg-white text-sm font-medium text-gray-700"
+                                        className="flex items-center justify-center gap-2 border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700"
                                     >
                                         <span>絞り込み削除</span>
                                         <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -429,20 +424,10 @@ export default function Index({ products, filters, facets }: Props) {
                                 )}
                             </div>
 
-                            <div className="w-full sm:w-auto sm:flex-1 sm:max-w-xs">
+                            <div className="w-full sm:w-auto sm:max-w-xs sm:flex-1">
                                 <div className="relative border border-gray-300">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path
-                                                strokeLinecap="round"
-                                                strokeLinejoin="round"
-                                                strokeWidth={2}
-                                                d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"
-                                            />
-                                        </svg>
-                                    </div>
                                     <select
-                                        className="block w-full pl-10 pr-10 py-2.5 text-sm text-gray-700 font-medium bg-white border-0 focus:outline-none focus:ring-0 focus:ring-offset-0"
+                                        className="block w-full border-0 bg-white py-2.5 pr-10 pl-10 text-sm font-medium text-gray-700 focus:ring-0 focus:ring-offset-0 focus:outline-none"
                                         value={stateFilters.sort || 'alphabetical'}
                                         onChange={(e) => {
                                             const value = e.target.value === 'alphabetical' ? '' : e.target.value;
@@ -454,7 +439,7 @@ export default function Index({ products, filters, facets }: Props) {
                                         <option value="price_asc">価格の安い順</option>
                                         <option value="price_desc">価格の高い順</option>
                                     </select>
-                                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                                         <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                         </svg>
@@ -466,17 +451,14 @@ export default function Index({ products, filters, facets }: Props) {
                 </div>
 
                 {hasActiveFilters && (
-                    <div className="container mx-auto px-4 py-4">
+                    <div className="mx-auto max-w-[1440px] px-4 py-4">
                         <div className="flex flex-wrap items-center gap-3">
                             <span className="font-['Hiragino_Mincho_ProN'] text-sm text-gray-700">選択中のフィルター:</span>
                             <div className="flex flex-wrap gap-2">
                                 {stateFilters.q && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         検索: {stateFilters.q}
-                                        <button 
-                                            onClick={() => updateFilter('q', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('q', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -484,12 +466,9 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.brand && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         ブランド: {facets.brands.find((b) => b.slug === stateFilters.brand)?.name || stateFilters.brand}
-                                        <button 
-                                            onClick={() => updateFilter('brand', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('brand', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -497,12 +476,9 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.category && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         カテゴリ: {facets.categories.find((c) => c.slug === stateFilters.category)?.name || stateFilters.category}
-                                        <button 
-                                            onClick={() => updateFilter('category', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('category', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -510,12 +486,9 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.rating && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         評価: {stateFilters.rating}+
-                                        <button 
-                                            onClick={() => updateFilter('rating', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('rating', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -523,12 +496,10 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.gender && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
-                                        性別: {stateFilters.gender === 'men' ? 'メンズ' : stateFilters.gender === 'women' ? 'レディース' : 'ユニセックス'}
-                                        <button 
-                                            onClick={() => updateFilter('gender', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
+                                        性別:{' '}
+                                        {stateFilters.gender === 'men' ? 'メンズ' : stateFilters.gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                        <button onClick={() => updateFilter('gender', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -536,12 +507,9 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.size && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         容量: {stateFilters.size}ml
-                                        <button 
-                                            onClick={() => updateFilter('size', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('size', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -549,12 +517,9 @@ export default function Index({ products, filters, facets }: Props) {
                                     </span>
                                 )}
                                 {stateFilters.fragranceType && stateFilters.fragranceType.length > 0 && (
-                                    <span className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-800 text-white">
+                                    <span className="inline-flex items-center bg-gray-800 px-3 py-1 text-sm font-medium text-white">
                                         香りタイプ: {stateFilters.fragranceType.join(', ')}
-                                        <button 
-                                            onClick={() => updateFilter('fragranceType', undefined)}
-                                            className="ml-2 flex items-center"
-                                        >
+                                        <button onClick={() => updateFilter('fragranceType', undefined)} className="ml-2 flex items-center">
                                             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                             </svg>
@@ -563,7 +528,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 )}
                                 <button
                                     onClick={handleClearAllFilters}
-                                    className="inline-flex items-center px-3 py-1 text-sm font-medium bg-gray-200 text-gray-800"
+                                    className="inline-flex items-center bg-gray-200 px-3 py-1 text-sm font-medium text-gray-800"
                                 >
                                     すべてクリア
                                 </button>
@@ -575,7 +540,7 @@ export default function Index({ products, filters, facets }: Props) {
                 <div className="flex flex-col gap-6 lg:flex-row">
                     {isFilterSidebarOpen && (
                         <div className="lg:w-1/4">
-                            <div className="sticky top-4 bg-white border border-gray-200 p-4">
+                            <div className="sticky top-4 border border-gray-200 bg-[#FCFCF7] p-4">
                                 <div className="mb-6">
                                     <SearchWithAutocomplete
                                         initialQuery={stateFilters.q || ''}
@@ -585,10 +550,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 </div>
                                 <div className="mb-6 flex items-center justify-between">
                                     <h2 className="font-['Hiragino_Mincho_ProN'] text-lg font-semibold text-gray-900">フィルター</h2>
-                                    <button 
-                                        onClick={() => setFilterSidebarOpen(false)} 
-                                        className="text-gray-500 p-1"
-                                    >
+                                    <button onClick={() => setFilterSidebarOpen(false)} className="p-1 text-gray-500">
                                         <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                         </svg>
@@ -620,14 +582,18 @@ export default function Index({ products, filters, facets }: Props) {
 
                                     <GenderFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
 
-                                    <SizeFilter currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('size')} />
+                                    <SizeFilter
+                                        currentFilters={stateFilters}
+                                        onFilterChange={updateFilter}
+                                        onClearFilter={() => clearFilter('size')}
+                                    />
 
                                     <FragranceTypeFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
                                 </div>
 
                                 <div className="mt-8 flex flex-col gap-3">
                                     <button
-                                        className="w-full py-3 text-sm font-medium text-white bg-gray-800"
+                                        className="w-full border border-[#EEDDD4] bg-[#EAB308] py-3 text-sm font-medium text-gray-700"
                                         onClick={() => {
                                             // Filter search functionality is already handled by the filter state changes
                                             // This button can be used to trigger any additional search logic if needed
@@ -636,7 +602,7 @@ export default function Index({ products, filters, facets }: Props) {
                                         フィルター適用
                                     </button>
                                     <button
-                                        className="w-full py-3 text-sm font-medium text-gray-700 bg-gray-100"
+                                        className="w-full border border-gray-300 bg-white py-3 text-sm font-medium text-gray-700"
                                         onClick={handleResetConditions}
                                     >
                                         条件をリセット
@@ -647,10 +613,12 @@ export default function Index({ products, filters, facets }: Props) {
                     )}
 
                     <div className={isFilterSidebarOpen ? 'lg:w-3/4' : 'lg:w-full'}>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                             {products.data?.length === 0 && (
                                 <div className="col-span-full py-12 text-center">
-                                    <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-600">商品が見つかりません。フィルターを調整してみてください。</p>
+                                    <p className="font-['Hiragino_Mincho_ProN'] text-base text-gray-600">
+                                        商品が見つかりません。フィルターを調整してみてください。
+                                    </p>
                                 </div>
                             )}
                             {products.data?.map((p) => {
@@ -684,7 +652,7 @@ export default function Index({ products, filters, facets }: Props) {
                             {isLoading && (
                                 <>
                                     {Array.from({ length: 8 }).map((_, i) => (
-                                        <div key={i} className="w-full max-w-xs h-64 animate-pulse border border-gray-200 bg-gray-100" />
+                                        <div key={i} className="h-64 w-full max-w-xs animate-pulse border border-gray-200 bg-gray-100" />
                                     ))}
                                 </>
                             )}
@@ -718,9 +686,7 @@ export default function Index({ products, filters, facets }: Props) {
                                         key={i}
                                         href={href}
                                         className={`px-3 py-2 text-sm font-medium ${
-                                            l.active 
-                                                ? 'bg-gray-800 text-white' 
-                                                : 'text-gray-700'
+                                            l.active ? 'bg-gray-800 text-white' : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                         } ${!l.url ? 'cursor-not-allowed text-gray-400' : ''}`}
                                         disabled={!l.url || l.active}
                                     >

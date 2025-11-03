@@ -52,11 +52,10 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
     const displayRating = freshData?.averageRating ?? product.averageRating;
     const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
 
-    return (
-        <div className="group relative flex h-[392px] max-w-[288px] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans lg:mb-4 lg:mx-2">
-            {/* Favorite Button */}
-            <button
-                type="button"
+            return (
+                <div className="group relative flex h-[24.5rem] max-w-[18rem] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans lg:mb-4 lg:mx-2">
+                    {/* Favorite Button */}
+                    <button                type="button"
                 aria-label="お気に入りに追加"
                 className="absolute top-3 right-3 z-20 flex h-9 w-9 items-center justify-center bg-white/70 backdrop-blur-sm"
             >
@@ -72,11 +71,10 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
             </button>
 
             {/* Main Clickable Area */}
-            <Link href={`/products/${product.slug}`} className="flex h-full flex-col">
-                {/* Image Area */}
-                <div className="flex h-[230px] flex-shrink-0 items-center justify-center p-4">
-                    <div className="h-full w-full">
-                        {product.imageUrl ? (
+                            <Link href={`/products/${product.slug}`} className="flex h-full flex-col">
+                                {/* Image Area */}
+                                <div className="flex h-56 flex-shrink-0 items-center justify-center p-4">
+                                    <div className="h-full w-full">                        {product.imageUrl ? (
                             <img
                                 src={product.imageUrl}
                                 alt={product.imageAlt ?? product.name}
@@ -101,7 +99,7 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                                     {product.brand}
                                 </div>
                             )}
-                            <h3 className="mt-1 font-hiragino-mincho text-lg font-medium text-neutral-800">
+                            <h3 className="mt-1 font-hiragino-mincho text-base font-medium text-neutral-800">
                                 {product.name}
                             </h3>
                             {product.genders && product.genders.length > 0 && (
@@ -119,7 +117,7 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                             )}
                             <div className="mt-4 flex items-baseline justify-center gap-2 pt-2">
                                 <span
-                                    className={`font-hiragino-mincho text-lg font-semibold text-neutral-900 ${
+                                    className={`font-hiragino-mincho text-base font-semibold text-neutral-900 ${
                                         hasSale ? 'text-red-600' : ''
                                     }`}
                                 >
@@ -146,7 +144,7 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                         <button
                             type="button"
                             aria-label="カートに追加"
-                            className="mt-2 flex h-10 w-full max-w-[150px] items-center justify-center gap-2 bg-[#EAB308] px-4 text-sm font-medium text-black"
+                            className="mt-2 flex h-10 w-full max-w-[9.375rem] items-center justify-center gap-2 bg-[#EAB308] px-4 text-sm font-medium text-black"
                             onClick={(e) => {
                                 e.preventDefault(); // Prevent link navigation
                                 e.stopPropagation(); // Stop event bubbling
