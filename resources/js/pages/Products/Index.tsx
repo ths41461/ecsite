@@ -404,7 +404,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 onClick={() => setFilterSidebarOpen(!isFilterSidebarOpen)}
                                 className="flex items-center justify-center gap-[10px] border border-[#AAB4C3] px-[16px] py-[16px]"
                             >
-                                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="h-4 w-4 stroke-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
