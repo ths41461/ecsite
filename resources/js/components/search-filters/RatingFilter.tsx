@@ -31,7 +31,7 @@ export default function RatingFilter({ ratings, currentFilters, onFilterChange, 
   return (
     <div className="mb-6">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">評価</h3>
+        <h3 className="text-lg font-semibold text-black">評価</h3>
         {hasActiveRatingFilter && (
           <button
             onClick={() => onClearFilter('rating')}
@@ -41,22 +41,19 @@ export default function RatingFilter({ ratings, currentFilters, onFilterChange, 
           </button>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="space-y-1">
         {ratings.map((rating) => (
-          <button
-            key={rating.rating}
-            onClick={() => handleRatingClick(rating.rating)}
-            className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors ${
-              currentFilters.rating === rating.rating
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            <span>{rating.label}</span>
-            <span className="ml-2 rounded-full bg-gray-200 px-2 py-1 text-xs dark:bg-gray-600">
-              {rating.count}
-            </span>
-          </button>
+          <div key={rating.rating} className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={currentFilters.rating === rating.rating}
+                onChange={() => handleRatingClick(rating.rating)}
+                className="h-4 w-4 rounded border-[#888888] text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-black">{rating.label} ({rating.count})</span>
+            </label>
+          </div>
         ))}
       </div>
     </div>

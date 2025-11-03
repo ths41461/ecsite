@@ -23,19 +23,24 @@ export default function GenderFilter({ currentFilters, onFilterChange }: GenderF
 
   return (
     <div className="mb-6">
-      <h3 className="mb-3 text-lg font-semibold">性別</h3>
-      <div className="flex flex-wrap gap-2">
+      <h3 className="mb-3 text-lg font-semibold text-black">性別</h3>
+      <div className="flex flex-wrap gap-5">
         {genders.map((gender) => (
           <button
             key={gender.value}
             onClick={() => handleGenderClick(gender.value)}
-            className={`rounded-full px-3 py-1 text-sm transition-colors ${
+            className={`h-12 flex items-center justify-center ${
               (currentFilters.gender || 'all') === gender.value
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
+                ? 'border border-gray-400 text-black'
+                : 'border border-[#AAB4C3] text-black'
             }`}
+            style={{
+              width: gender.value === 'all' ? '130px' : 
+                     gender.value === 'men' ? '130px' : 
+                     gender.value === 'women' ? '118px' : '106px'
+            }}
           >
-            {gender.label}
+            <span className="text-xs text-black">{gender.label}</span>
           </button>
         ))}
       </div>

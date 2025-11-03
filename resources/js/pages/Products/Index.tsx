@@ -8,6 +8,7 @@ import RatingFilter from '@/components/search-filters/RatingFilter';
 import GenderFilter from '@/components/search-filters/GenderFilter';
 import SizeFilter from '@/components/search-filters/SizeFilter';
 import HierarchicalCategoryFilter from '@/components/search-filters/HierarchicalCategoryFilter';
+import FragranceTypeFilter from '@/components/search-filters/FragranceTypeFilter';
 import { useState, useEffect, useRef } from 'react';
 import { useFilterState } from '@/hooks/use-filter-state';
 import { HomeNavigation } from '@/components/homeNavigation';
@@ -37,7 +38,7 @@ type FacetRating = { rating: number; label: string; count: number; active?: bool
 
 type Props = {
     products: Paginated<ProductItem>;
-    filters: { q?: string; category?: string; brand?: string; sort?: string; price_min?: number; price_max?: number | null; rating?: number; gender?: string; size?: number };
+    filters: { q?: string; category?: string; brand?: string; sort?: string; price_min?: number; price_max?: number | null; rating?: number; gender?: string; size?: number; fragranceType?: string[] };
     facets: { brands: FacetBrand[]; categories: FacetCategory[]; prices: FacetPrice[]; ratings: FacetRating[] };
 };
 
@@ -140,6 +141,7 @@ function SearchWithAutocomplete({
                 if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
                 if (currentFilters.gender) params.set('gender', currentFilters.gender);
                 if (currentFilters.size) params.set('size', String(currentFilters.size));
+                if (currentFilters.fragranceType) params.set('fragranceType', currentFilters.fragranceType.join(','));
                 router.get(`/products?${params.toString()}`);
                 setShowSuggestions(false);
             }
@@ -169,6 +171,7 @@ function SearchWithAutocomplete({
         if (currentFilters.rating) params.set('rating', String(currentFilters.rating));
         if (currentFilters.gender) params.set('gender', currentFilters.gender);
         if (currentFilters.size) params.set('size', String(currentFilters.size));
+        if (currentFilters.fragranceType) params.set('fragranceType', currentFilters.fragranceType.join(','));
         const url = params.toString() ? `/products?${params.toString()}` : '/products';
         router.get(url);
         inputRef.current?.focus();
@@ -291,6 +294,7 @@ export default function Index({ products, filters, facets }: Props) {
             rating: filters.rating,
             gender: filters.gender || undefined,
             size: filters.size,
+            fragranceType: filters.fragranceType || undefined,
             sort: filters.sort || undefined,
         }
     });
@@ -308,6 +312,7 @@ export default function Index({ products, filters, facets }: Props) {
         if (stateFilters.rating) params.set('rating', String(stateFilters.rating));
         if (stateFilters.gender) params.set('gender', stateFilters.gender);
         if (stateFilters.size) params.set('size', String(stateFilters.size));
+        if (stateFilters.fragranceType) params.set('fragranceType', stateFilters.fragranceType.join(','));
         if (stateFilters.sort) params.set('sort', stateFilters.sort);
         if (stateFilters.q) params.set('q', stateFilters.q);
 
@@ -323,13 +328,26 @@ export default function Index({ products, filters, facets }: Props) {
         router.get('/products');
     };
     
+    const handleResetConditions = () => {
+        // Reset all filters except search query and sort
+        updateFilter('brand', undefined);
+        updateFilter('category', undefined);
+        updateFilter('priceMin', undefined);
+        updateFilter('priceMax', undefined);
+        updateFilter('rating', undefined);
+        updateFilter('gender', undefined);
+        updateFilter('size', undefined);
+        updateFilter('fragranceType', undefined);
+    };
+    
     const handleClearPrice = () => {
         updateFilter('priceMin', undefined);
         updateFilter('priceMax', undefined);
     };
 
     const hasActiveFilters = stateFilters.brand || stateFilters.category || stateFilters.priceMin !== undefined ||
-        stateFilters.priceMax !== undefined || stateFilters.rating || stateFilters.gender || stateFilters.size;
+        stateFilters.priceMax !== undefined || stateFilters.rating || stateFilters.gender || stateFilters.size || 
+        (stateFilters.fragranceType && stateFilters.fragranceType.length > 0);
 
     return (
         <div className="min-h-screen bg-white">
@@ -414,6 +432,11 @@ export default function Index({ products, filters, facets }: Props) {
                                 容量: {stateFilters.size}ml
                             </span>
                         )}
+                        {stateFilters.fragranceType && stateFilters.fragranceType.length > 0 && (
+                            <span className="rounded-full bg-blue-100 px-3 py-1 text-sm text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                香りタイプ: {stateFilters.fragranceType.join(', ')}
+                            </span>
+                        )}
                         <button
                             onClick={handleClearAllFilters}
                             className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600"
@@ -436,7 +459,7 @@ export default function Index({ products, filters, facets }: Props) {
                                 />
                             </div>
                             <div className="flex justify-between items-center mb-4 mt-4">
-                                <h2 className="text-lg font-semibold">フィルター</h2>
+                                <h2 className="text-lg font-semibold text-black">フィルター</h2>
                                 <button onClick={() => setFilterSidebarOpen(false)} className="text-gray-500 hover:text-gray-700">
                                     <svg className="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -455,6 +478,26 @@ export default function Index({ products, filters, facets }: Props) {
                             <GenderFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
                             
                             <SizeFilter currentFilters={stateFilters} onFilterChange={updateFilter} onClearFilter={() => clearFilter('size')} />
+
+                            <FragranceTypeFilter currentFilters={stateFilters} onFilterChange={updateFilter} />
+                            
+                            <div className="flex flex-col gap-4 mt-6">
+                                <button 
+                                    className="w-full flex items-center justify-center rounded-lg border border-[#AAB4C3] bg-[#EAB308] py-4 text-sm text-white"
+                                    onClick={() => {
+                                        // Filter search functionality is already handled by the filter state changes
+                                        // This button can be used to trigger any additional search logic if needed
+                                    }}
+                                >
+                                    フィルター検索
+                                </button>
+                                <button 
+                                    className="w-full flex items-center justify-center rounded-lg border border-[#AAB4C3] bg-[#EAB308] py-4 text-sm text-white"
+                                    onClick={handleResetConditions}
+                                >
+                                    条件をリセット
+                                </button>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -519,6 +562,7 @@ export default function Index({ products, filters, facets }: Props) {
                                           ...(stateFilters.rating ? { rating: String(stateFilters.rating) } : {}),
                                           ...(stateFilters.gender ? { gender: String(stateFilters.gender) } : {}),
                                           ...(stateFilters.size ? { size: String(stateFilters.size) } : {}),
+                                          ...(stateFilters.fragranceType ? { fragranceType: stateFilters.fragranceType.join(',') } : {}),
                                       } as Record<string, string>);
                                       if (page) params.set('page', page);
                                       return `${u.pathname}?${params.toString()}`;

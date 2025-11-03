@@ -10,52 +10,39 @@ type CategoryFacet = {
 type CategoryFilterProps = {
   categories: CategoryFacet[];
   currentFilters: {
-    q?: string;
     category?: string;
-    brand?: string;
-    sort?: string;
-    price_min?: number;
-    price_max?: number | null;
   };
+  onFilterChange: (key: string, value: any) => void;
 };
 
-export default function CategoryFilter({ categories, currentFilters }: CategoryFilterProps) {
-  const buildUrl = (categorySlug: string) => {
-    const params = new URLSearchParams();
-    
-    // Preserve existing filters
-    if (currentFilters.q) params.set('q', currentFilters.q);
-    if (currentFilters.brand) params.set('brand', currentFilters.brand);
-    if (currentFilters.sort) params.set('sort', currentFilters.sort);
-    if (currentFilters.price_min != null) params.set('price_min', String(currentFilters.price_min));
-    if (currentFilters.price_max != null) params.set('price_max', String(currentFilters.price_max));
-    
-    // Toggle category filter
-    if (!categories.find(c => c.slug === categorySlug)?.active) {
-      params.set('category', categorySlug);
+export default function CategoryFilter({ categories, currentFilters, onFilterChange }: CategoryFilterProps) {
+  const handleCategoryClick = (categorySlug: string) => {
+    if (currentFilters.category === categorySlug) {
+      onFilterChange('category', undefined);
+    } else {
+      onFilterChange('category', categorySlug);
     }
-    
-    return `?${params.toString()}`;
   };
 
   return (
     <div className="mb-6">
       <h3 className="mb-3 text-lg font-semibold">カテゴリ</h3>
-      <div className="flex flex-wrap gap-2">
-        {categories.map((category) => (
-          <Link
-            key={category.slug}
-            href={buildUrl(category.slug)}
-            className={`rounded-full px-3 py-1 text-sm transition-colors ${
-              category.active
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-            }`}
-            preserveScroll
-          >
-            {category.name} ({category.count})
-          </Link>
-        ))}
+      <div className="border border-[#888888] w-[288px] pr-[5px]">
+        <div className="max-h-40 overflow-y-auto py-1">
+          {categories.map((category) => (
+            <div key={category.slug} className="flex items-center gap-2 px-2.5 py-1">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={category.active || currentFilters.category === category.slug}
+                  onChange={() => handleCategoryClick(category.slug)}
+                  className="h-4 w-4 rounded border-[#888888] text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm">{category.name} ({category.count})</span>
+              </label>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

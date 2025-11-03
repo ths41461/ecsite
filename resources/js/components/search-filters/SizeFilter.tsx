@@ -26,7 +26,7 @@ export default function SizeFilter({ currentFilters, onFilterChange, onClearFilt
   return (
     <div className="mb-6">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-lg font-semibold">容量 (ml)</h3>
+        <h3 className="text-lg font-semibold text-black">容量 (ml)</h3>
         {hasActiveSizeFilter && (
           <button
             onClick={() => onClearFilter('size')}
@@ -36,19 +36,19 @@ export default function SizeFilter({ currentFilters, onFilterChange, onClearFilt
           </button>
         )}
       </div>
-      <div className="flex flex-wrap gap-2">
+      <div className="space-y-1">
         {sizes.map((size) => (
-          <button
-            key={size}
-            onClick={() => handleSizeClick(size)}
-            className={`rounded-full px-3 py-1 text-sm transition-colors ${
-              currentFilters.size === size
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
-            }`}
-          >
-            {size}ml
-          </button>
+          <div key={size} className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={currentFilters.size === size}
+                onChange={() => handleSizeClick(size)}
+                className="h-4 w-4 rounded border-[#888888] text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-black">{size}ml</span>
+            </label>
+          </div>
         ))}
       </div>
     </div>
