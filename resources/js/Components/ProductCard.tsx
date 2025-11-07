@@ -182,23 +182,26 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
             </Link>
 
             <div className="flex flex-grow flex-col px-2.5 pt-2 pb-4">
-                {product.brand && <div className="font-sans text-xs font-normal text-[#6B7280] mb-1">{product.brand}</div>}
-                <Link href={`/products/${product.slug}`}>
-                    <h3 className="font-serif text-lg font-bold leading-tight text-[#1F2937] hover:underline mb-1">{product.name}</h3>
+                {product.brand && <div className="font-sans text-xs font-normal text-[#6B7280] mb-1 truncate">{product.brand}</div>}
+                <Link href={`/products/${product.slug}`} className="truncate">
+                    <h3 className="font-serif text-lg font-bold leading-tight text-[#1F2937] hover:underline mb-1 truncate">{product.name}</h3>
                 </Link>
 
-                <div className="mt-1 flex gap-1">
-                    {product.genders &&
-                        product.genders.map((gender) => (
-                            <div
-                                key={gender}
-                                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D1D5DB] text-xs text-[#4B5563]"
-                                title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
-                            >
-                                {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
-                            </div>
-                        ))}
-                </div>
+                {product.genders && product.genders.length > 0 && (
+                    <div className="mt-1 flex justify-end">
+                        <div className="flex gap-1">
+                            {product.genders.map((gender) => (
+                                <div
+                                    key={gender}
+                                    className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D1D5DB] text-xs text-[#4B5563]"
+                                    title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                >
+                                    {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="mt-auto">
                     {displayRating !== undefined && displayRating > 0 && (
@@ -358,16 +361,18 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
             </div>
             <div className="flex flex-col p-3 gap-2">
                 <div className="flex items-end justify-between">
-                    <Link href={`/products/${slug}`}>
-                        <span className="font-['Hiragino_Mincho_ProN'] text-xs text-[#6B7280] hover:underline">{category}</span>
+                    <Link href={`/products/${slug}`} className="truncate">
+                        <span className="font-['Hiragino_Mincho_ProN'] text-xs text-[#6B7280] hover:underline truncate max-w-[70%]">{category}</span>
                     </Link>
                     {showRatingIcon && <img src="/icons/rating-container.svg" alt="Rating" className="h-4" />}
                 </div>
-                <div className="flex items-center justify-between">
-                    <Link href={`/products/${slug}`}>
-                        <h3 className="font-['Hiragino_Mincho_ProN'] text-base font-medium leading-tight text-[#1F2937] hover:underline">{productName}</h3>
+                <div className="flex items-center justify-between min-w-0">
+                    <Link href={`/products/${slug}`} className="truncate">
+                        <h3 className="font-['Hiragino_Mincho_ProN'] text-base font-medium leading-tight text-[#1F2937] hover:underline truncate">{productName}</h3>
                     </Link>
-                    {genders && genders.length > 0 && (
+                </div>
+                {genders && genders.length > 0 && (
+                    <div className="flex justify-end">
                         <div className="flex gap-1">
                             {genders.map((gender) => (
                                 <div
@@ -379,8 +384,8 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                                 </div>
                             ))}
                         </div>
-                    )}
-                </div>
+                    </div>
+                )}
                 <div className="flex items-center justify-center py-2">
                     <span className="font-['Hiragino_Mincho_ProN'] text-lg font-bold text-[#1F2937]">{price}</span>
                 </div>
