@@ -162,6 +162,14 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
                 </svg>
             </button>
 
+            {product.genders && product.genders.length > 0 && (
+                <div className="absolute top-4 left-4 z-10 flex items-center justify-center rounded-full bg-white border border-[#D1D5DB] text-xs text-[#4B5563] w-8 h-8">
+                    {product.genders.length === 1 ? (
+                        product.genders[0] === 'men' ? '♂' : '♀'
+                    ) : '⚥'}
+                </div>
+            )}
+
             <Link href={`/products/${product.slug}`} aria-label={`View ${product.name}`}>
                 <div className="flex h-[232px] flex-shrink-0 items-start justify-center pt-9">
                     <div className="h-[196px] w-[160px]">
@@ -356,6 +364,13 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 {showWishlistIcon && (
                     <div className="absolute top-2 right-2 rounded-full bg-white p-1 shadow-md">
                         <Heart className="h-5 w-5 text-gray-700" />
+                    </div>
+                )}
+                {genders && genders.length > 0 && (
+                    <div className="absolute top-2 left-2 flex items-center justify-center rounded-full bg-white border border-[#D1D5DB] text-xs text-[#4B5563] w-8 h-8">
+                        {genders.length === 1 ? (
+                            genders[0] === 'men' ? '♂' : '♀'
+                        ) : '⚥'}
                     </div>
                 )}
             </div>
