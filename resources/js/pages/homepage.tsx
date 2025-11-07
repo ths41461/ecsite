@@ -6,18 +6,30 @@ import NewsletterSection from '../Components/NewsletterSection';
 
 import RankingSection from '../Components/RankingSection';
 
-export default function Homepage() {
-    
+interface ProductData {
+    id: number;
+    productImageSrc: string;
+    category: string;
+    productName: string;
+    price: string;
+    slug: string;
+    rank?: number;
+    score?: number;
+}
 
+interface HomepageProps {
+    recommendedProducts?: ProductData[];
+}
+
+export default function Homepage({ recommendedProducts = [] }: HomepageProps) {
     return (
         <div className="min-h-screen bg-gray-50">
             <HomeNavigation />
             <Hero />
             <main>
-                <RecommendedSection className="mt-15" />
-                <RankingSection />
+                <RecommendedSection products={recommendedProducts} className="mt-15" />
+                <RankingSection products={recommendedProducts} />
                 <NewsletterSection />
-                
             </main>
             <Footer />
         </div>

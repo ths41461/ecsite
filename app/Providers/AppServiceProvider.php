@@ -26,7 +26,7 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 \App\Console\Commands\RecomputeProductMetrics::class,
-                \App\Console\Commands\ReplayStripeEvent::class,
+                \App\Console\Commands\ComputeRankings::class,
             ]);
         }
     }

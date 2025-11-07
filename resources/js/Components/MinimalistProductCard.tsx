@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import React from 'react';
+import React, { useState } from 'react';
 import { getFreshReviewDataForProduct } from '@/lib/review-cache';
 
 export type ProductCardData = {
@@ -47,10 +47,81 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
         return null;
     }
 
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
     const hasSale = product.salePrice != null && product.salePrice < product.price;
     const freshData = getFreshReviewDataForProduct(product.id);
     const displayRating = freshData?.averageRating ?? product.averageRating;
     const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
+
+    const postJson = (url: string, payload: Record<string, unknown>) => {
+        const getCookie = (name: string) => {
+            const parts = document.cookie.split('; ').map((c) => c.split('='));
+            const found = parts.find(([k]) => k === name);
+            return found ? decodeURIComponent(found[1] ?? '') : null;
+        };
+        const xsrf = getCookie('XSRF-TOKEN');
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+            },
+            body: JSON.stringify(payload),
+            credentials: 'same-origin',
+        });
+    };
+
+    // Function to handle adding to cart
+    const handleAddToCart = async () => {
+        setIsAddingToCart(true);
+        try {
+            // Fetch product details to get variants
+            const productResponse = await fetch(`/products/${product.slug}`);
+            if (!productResponse.ok) {
+                throw new Error('商品情報を取得できませんでした');
+            }
+            
+            const productData = await productResponse.json();
+            const variants = productData?.product?.variants || [];
+            
+            if (variants.length === 0) {
+                throw new Error('商品のバリエーションが見つかりません');
+            }
+            
+            // Use the first available variant
+            const selectedVariant = variants[0];
+            
+            // Analytics/event (non-blocking if it fails)
+            postJson('/e/add-to-cart', {
+                product_id: product.id,
+                variant_id: selectedVariant.id ?? null,
+                sku: selectedVariant.sku,
+                qty: 1,
+            }).catch(() => {});
+
+            // Actual cart mutation
+            if (selectedVariant.id == null) {
+                throw new Error('商品バリエーションIDが見つかりません');
+            }
+            const res = await postJson('/cart', {
+                variant_id: selectedVariant.id,
+                qty: 1,
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || 'カートへの追加に失敗しました');
+            }
+            
+            // Show success message
+            alert('カートに追加しました。');
+        } catch (error) {
+            console.error('カートへの追加に失敗しました:', error);
+            alert('カートへの追加に失敗しました。');
+        } finally {
+            setIsAddingToCart(false);
+        }
+    };
 
             return (
                 <div className="group relative flex h-[24.5rem] max-w-[18rem] w-full flex-col overflow-hidden border border-neutral-200 bg-white font-sans lg:mb-4 lg:mx-2">
@@ -144,18 +215,20 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                         <button
                             type="button"
                             aria-label="カートに追加"
-                            className="mt-2 flex h-10 w-full max-w-[9.375rem] items-center justify-center gap-2 bg-[#EAB308] px-4 text-sm font-medium text-black"
                             onClick={(e) => {
                                 e.preventDefault(); // Prevent link navigation
                                 e.stopPropagation(); // Stop event bubbling
-                                // Add to cart logic here
-                                alert(`${product.name}をカートに追加しました`);
+                                handleAddToCart();
                             }}
+                            disabled={isAddingToCart}
+                            className={`mt-2 flex h-10 w-full max-w-[9.375rem] items-center justify-center gap-2 px-4 text-sm font-medium ${
+                                isAddingToCart ? 'bg-gray-400' : 'bg-[#EAB308]'
+                            }`}
                         >
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.707 15.293C4.077 15.923 4.523 17 5.414 17H17M17 17C15.895 17 15 17.895 15 19C15 20.105 15.895 21 17 21C18.105 21 19 20.105 19 19C19 17.895 18.105 17 17 17ZM9 19C9 20.105 8.105 21 7 21C5.895 21 5 20.105 5 19C5 17.895 5.895 17 7 17C8.105 17 9 17.895 9 19Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                             </svg>
-                            <span>カートに追加</span>
+                            <span>{isAddingToCart ? '追加中...' : 'カートに追加'}</span>
                         </button>
                     </div>
                 </div>

@@ -13,7 +13,68 @@ use Illuminate\Support\Facades\Route;
 
 
 Route::get('/', function () {
-    return Inertia::render('homepage');
+    // Get recommended products from the ranking snapshots (top 8)
+    $recommendedProducts = \App\Models\RankingSnapshot::where('scope', 'overall')
+        ->where('computed_at', \App\Models\RankingSnapshot::where('scope', 'overall')->max('computed_at'))
+        ->join('products', 'ranking_snapshots.product_id', '=', 'products.id')
+        ->with([
+            'product.brand:id,name,slug',
+            'product.heroImage:id,product_id,path,alt,rank',
+            'product.variants:id,product_id,price_yen,sale_price_yen,option_json,is_active',
+        ])
+        ->orderBy('ranking_snapshots.rank')
+        ->limit(8)
+        ->get()
+        ->map(function ($snapshot) {
+            /** @var \App\Models\RankingSnapshot $snapshot */
+            $product = $snapshot->product;
+            $imagePath = $product->heroImage?->path;
+            $imageUrl  = $imagePath
+                ? (str_starts_with($imagePath, 'http') || str_starts_with($imagePath, '/') ? $imagePath : \Illuminate\Support\Facades\Storage::url($imagePath))
+                : null;
+
+            // Calculate the price from variants
+            $minPriceYen = $product->variants->min('price_yen') ?? 0;
+            $minSaleYen = $product->variants->whereNotNull('sale_price_yen')->min('sale_price_yen');
+
+            $finalPrice = $minSaleYen ?? $minPriceYen;
+
+            // Extract gender and size information from variants
+            $genders = collect();
+            $sizes = collect();
+            
+            foreach ($product->variants as $variant) {
+                if ($variant->option_json) {
+                    if (isset($variant->option_json['gender'])) {
+                        $genders->push($variant->option_json['gender']);
+                    }
+                    if (isset($variant->option_json['size_ml'])) {
+                        $sizes->push($variant->option_json['size_ml']);
+                    }
+                }
+            }
+            
+            $uniqueGenders = $genders->unique()->values();
+            $uniqueSizes = $sizes->unique()->values();
+
+            return [
+                'id' => $product->id,
+                'productImageSrc' => $imageUrl,
+                'category' => $product->brand?->name ?? 'ブランド名',
+                'productName' => $product->name,
+                'price' => '¥' . number_format($finalPrice),
+                'slug' => $product->slug,
+                'rank' => $snapshot->rank,
+                'score' => $snapshot->score,
+                'genders' => $uniqueGenders->toArray(),
+                'sizes' => $uniqueSizes->toArray(),
+            ];
+        })
+        ->toArray();
+
+    return Inertia::render('homepage', [
+        'recommendedProducts' => $recommendedProducts,
+    ]);
 })->name('home');
 
 Route::get('/products', [ProductController::class, 'index'])

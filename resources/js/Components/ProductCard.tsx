@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { getFreshReviewDataForProduct } from '@/lib/review-cache';
 import { Heart } from 'lucide-react';
-import React from 'react';
+import React, { useState } from 'react';
 
 // ============================================================================
 // V2 (Complex) Card: Used in Products/Index.tsx
@@ -68,10 +68,81 @@ const renderStarRating = (rating: number) => {
 };
 
 function ComplexProductCard({ product }: { product: ProductCardData }) {
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
     const hasSale = product.salePrice != null && product.salePrice < product.price;
     const freshData = getFreshReviewDataForProduct(product.id);
     const displayRating = freshData?.averageRating ?? product.averageRating;
     const displayReviewCount = freshData?.reviewCount ?? product.reviewCount;
+
+    const postJson = (url: string, payload: Record<string, unknown>) => {
+        const getCookie = (name: string) => {
+            const parts = document.cookie.split('; ').map((c) => c.split('='));
+            const found = parts.find(([k]) => k === name);
+            return found ? decodeURIComponent(found[1] ?? '') : null;
+        };
+        const xsrf = getCookie('XSRF-TOKEN');
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+            },
+            body: JSON.stringify(payload),
+            credentials: 'same-origin',
+        });
+    };
+
+    // Function to handle adding to cart
+    const handleAddToCart = async () => {
+        setIsAddingToCart(true);
+        try {
+            // Fetch product details to get variants
+            const productResponse = await fetch(`/products/${product.slug}`);
+            if (!productResponse.ok) {
+                throw new Error('商品情報を取得できませんでした');
+            }
+            
+            const productData = await productResponse.json();
+            const variants = productData?.product?.variants || [];
+            
+            if (variants.length === 0) {
+                throw new Error('商品のバリエーションが見つかりません');
+            }
+            
+            // Use the first available variant
+            const selectedVariant = variants[0];
+            
+            // Analytics/event (non-blocking if it fails)
+            postJson('/e/add-to-cart', {
+                product_id: product.id,
+                variant_id: selectedVariant.id ?? null,
+                sku: selectedVariant.sku,
+                qty: 1,
+            }).catch(() => {});
+
+            // Actual cart mutation
+            if (selectedVariant.id == null) {
+                throw new Error('商品バリエーションIDが見つかりません');
+            }
+            const res = await postJson('/cart', {
+                variant_id: selectedVariant.id,
+                qty: 1,
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || 'カートへの追加に失敗しました');
+            }
+            
+            // Show success message (in a real implementation we'd want to access a toast system)
+            alert('カートに追加しました。');
+        } catch (error) {
+            console.error('カートへの追加に失敗しました:', error);
+            alert('カートへの追加に失敗しました。');
+        } finally {
+            setIsAddingToCart(false);
+        }
+    };
 
     return (
         <div className="relative flex h-[392px] w-[288px] flex-col border border-[#D8D9E0] bg-white font-sans">
@@ -111,9 +182,9 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
             </Link>
 
             <div className="flex flex-grow flex-col px-2.5 pt-2 pb-4">
-                {product.brand && <div className="font-sans text-xs font-normal text-[#81859C] mb-1">{product.brand}</div>}
+                {product.brand && <div className="font-sans text-xs font-normal text-[#6B7280] mb-1">{product.brand}</div>}
                 <Link href={`/products/${product.slug}`}>
-                    <h3 className="font-serif text-xl font-bold leading-snug text-[#363842] hover:underline">{product.name}</h3>
+                    <h3 className="font-serif text-lg font-bold leading-tight text-[#1F2937] hover:underline mb-1">{product.name}</h3>
                 </Link>
 
                 <div className="mt-1 flex gap-1">
@@ -121,7 +192,7 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
                         product.genders.map((gender) => (
                             <div
                                 key={gender}
-                                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D8D9E0] text-xs text-[#363842]"
+                                className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D1D5DB] text-xs text-[#4B5563]"
                                 title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
                             >
                                 {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
@@ -134,23 +205,25 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
                         <div className="mb-2 flex items-center">
                             {renderStarRating(displayRating)}
                             {displayReviewCount !== undefined && displayReviewCount > 0 && (
-                                <span className="ml-2 text-xs text-gray-500">({displayReviewCount})</span>
+                                <span className="ml-2 text-xs text-[#6B7280]">({displayReviewCount})</span>
                             )}
                         </div>
                     )}
                     <div className="flex items-center justify-between">
-                        <div className="flex items-baseline gap-1">
-                            <span className="font-serif text-lg font-semibold leading-none text-[#363842]">
+                        <div className="flex flex-col">
+                            {hasSale && (
+                                <span className="font-serif text-sm font-normal text-[#6B7280] line-through">￥{yen(product.price)}</span>
+                            )}
+                            <span className="font-serif text-lg font-bold leading-none text-[#1F2937]">
                                 ￥{yen(hasSale ? product.salePrice! : product.price)}
                             </span>
-                            {hasSale && (
-                                <span className="font-serif ml-1 text-sm font-normal text-[#363842]">({product.sizes?.[0]}ml)</span>
-                            )}
                         </div>
                         <button
                             type="button"
                             aria-label="カートに追加"
-                            className="relative z-10 flex h-[52px] items-center justify-center gap-1.5 bg-[#EAB308] px-3"
+                            onClick={handleAddToCart}
+                            disabled={isAddingToCart}
+                            className={`relative z-10 flex h-[52px] items-center justify-center gap-1.5 px-3 ${isAddingToCart ? 'bg-gray-400' : 'bg-[#EAB308]'}`}
                         >
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                 <path
@@ -161,7 +234,9 @@ function ComplexProductCard({ product }: { product: ProductCardData }) {
                                     strokeLinejoin="round"
                                 />
                             </svg>
-                            <span className="text-sm font-bold text-black">カートに追加</span>
+                            <span className="text-sm font-bold text-black">
+                                {isAddingToCart ? '追加中...' : 'カートに追加'}
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -179,8 +254,10 @@ interface SimpleProductCardProps {
     category: string;
     productName: string;
     price: string;
+    slug: string;  // Add slug property for routing
+    id: number;    // Add id property for cart operations
+    genders?: string[]; // Gender information from product variants
     showRatingIcon?: boolean;
-    showGenderIcon?: boolean;
     showWishlistIcon?: boolean;
 }
 
@@ -189,35 +266,131 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
     category,
     productName,
     price,
+    slug,
+    id,
+    genders,
     showRatingIcon,
-    showGenderIcon,
     showWishlistIcon,
 }) => {
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
+
+    const postJson = (url: string, payload: Record<string, unknown>) => {
+        const getCookie = (name: string) => {
+            const parts = document.cookie.split('; ').map((c) => c.split('='));
+            const found = parts.find(([k]) => k === name);
+            return found ? decodeURIComponent(found[1] ?? '') : null;
+        };
+        const xsrf = getCookie('XSRF-TOKEN');
+        return fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(xsrf ? { 'X-XSRF-TOKEN': xsrf } : {}),
+            },
+            body: JSON.stringify(payload),
+            credentials: 'same-origin',
+        });
+    };
+
+    // Function to handle adding to cart
+    const handleAddToCart = async () => {
+        setIsAddingToCart(true);
+        try {
+            // Fetch product details to get variants
+            const productResponse = await fetch(`/products/${slug}`);
+            if (!productResponse.ok) {
+                throw new Error('商品情報を取得できませんでした');
+            }
+            
+            const productData = await productResponse.json();
+            const variants = productData?.product?.variants || [];
+            
+            if (variants.length === 0) {
+                throw new Error('商品のバリエーションが見つかりません');
+            }
+            
+            // Use the first available variant
+            const selectedVariant = variants[0];
+            
+            // Analytics/event (non-blocking if it fails)
+            postJson('/e/add-to-cart', {
+                product_id: id,
+                variant_id: selectedVariant.id ?? null,
+                sku: selectedVariant.sku,
+                qty: 1,
+            }).catch(() => {});
+
+            // Actual cart mutation
+            if (selectedVariant.id == null) {
+                throw new Error('商品バリエーションIDが見つかりません');
+            }
+            const res = await postJson('/cart', {
+                variant_id: selectedVariant.id,
+                qty: 1,
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text || 'カートへの追加に失敗しました');
+            }
+            
+            // Show success message
+            alert('カートに追加しました。');
+        } catch (error) {
+            console.error('カートへの追加に失敗しました:', error);
+            alert('カートへの追加に失敗しました。');
+        } finally {
+            setIsAddingToCart(false);
+        }
+    };
+
     return (
-        <div className="flex w-72 flex-col border border-black bg-[#FCFCF7]">
+        <div className="flex w-72 flex-col border border-gray-200 bg-white shadow-sm">
             <div className="relative flex h-60 w-full items-center justify-center overflow-hidden bg-[#FAF7EF] p-4">
-                <img src={productImageSrc} alt={productName} className="h-full w-full object-cover" />
+                <Link href={`/products/${slug}`}>
+                    <img src={productImageSrc} alt={productName} className="h-full w-full object-cover" />
+                </Link>
                 {showWishlistIcon && (
                     <div className="absolute top-2 right-2 rounded-full bg-white p-1 shadow-md">
                         <Heart className="h-5 w-5 text-gray-700" />
                     </div>
                 )}
             </div>
-            <div className="px-3 py-6">
-                <div className="mb-1 flex items-end justify-between">
-                    <span className="font-['Hiragino_Mincho_ProN'] text-sm font-normal text-gray-600">{category}</span>
+            <div className="flex flex-col p-3 gap-2">
+                <div className="flex items-end justify-between">
+                    <Link href={`/products/${slug}`}>
+                        <span className="font-['Hiragino_Mincho_ProN'] text-xs text-[#6B7280] hover:underline">{category}</span>
+                    </Link>
                     {showRatingIcon && <img src="/icons/rating-container.svg" alt="Rating" className="h-4" />}
                 </div>
-                <div className="mb-2 flex items-center justify-between">
-                    <h3 className="font-['Hiragino_Mincho_ProN'] text-lg font-normal leading-normal text-gray-800">{productName}</h3>
-                    {showGenderIcon && <img src="/icons/gender.svg" alt="Gender" className="h-5" />}
+                <div className="flex items-center justify-between">
+                    <Link href={`/products/${slug}`}>
+                        <h3 className="font-['Hiragino_Mincho_ProN'] text-base font-medium leading-tight text-[#1F2937] hover:underline">{productName}</h3>
+                    </Link>
+                    {genders && genders.length > 0 && (
+                        <div className="flex gap-1">
+                            {genders.map((gender) => (
+                                <div
+                                    key={gender}
+                                    className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D1D5DB] text-xs text-[#4B5563]"
+                                    title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
+                                >
+                                    {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
+                                </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
-                <div className="mb-4 flex items-center justify-center">
-                    <span className="font-['Hiragino_Mincho_ProN'] text-xl font-semibold leading-snug text-gray-900">{price}</span>
+                <div className="flex items-center justify-center py-2">
+                    <span className="font-['Hiragino_Mincho_ProN'] text-lg font-bold text-[#1F2937]">{price}</span>
                 </div>
-                <button className="flex h-10 w-full items-center justify-center border border-[#EEDDD4] bg-[#EAB308] px-4 py-2.5 text-sm font-medium text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EAB308]">
+                <button 
+                    onClick={handleAddToCart}
+                    disabled={isAddingToCart}
+                    className={`flex h-10 w-full items-center justify-center border border-[#EEDDD4] px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EAB308] ${isAddingToCart ? 'bg-gray-400' : 'bg-[#EAB308] text-white'}`}
+                >
                     <img src="/icons/icon-cart.svg" alt="Cart" className="mr-2 h-5 w-5" />
-                    カートに入れる
+                    {isAddingToCart ? '追加中...' : 'カートに追加'}
                 </button>
             </div>
         </div>

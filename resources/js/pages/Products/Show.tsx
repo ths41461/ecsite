@@ -728,6 +728,8 @@ export default function Show({ product, gallery, related }: Props) {
                                             category={product.brand?.name || 'ブランド名'}
                                             productName={p.name}
                                             price={yen(p.price_cents)}
+                                            slug={p.slug}
+                                            id={p.id}
                                             showRatingIcon={true}
                                             showGenderIcon={false}
                                             showWishlistIcon={true}
@@ -743,6 +745,8 @@ export default function Show({ product, gallery, related }: Props) {
                                         category={product.brand?.name || 'ブランド名'}
                                         productName={p.name}
                                         price={yen(p.price_cents)}
+                                        slug={p.slug}
+                                        id={p.id}
                                         showRatingIcon={true}
                                         showGenderIcon={false}
                                         showWishlistIcon={true}
