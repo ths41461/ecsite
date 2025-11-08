@@ -2,6 +2,20 @@ import React from 'react';
 import ProductCard from './ProductCard';
 import ImprovedCarousel from './ImprovedCarousel';
 
+type Variant = {
+    id?: number; // Prefer sending this from backend (needed for 4.3)
+    sku: string;
+    price_cents: number;
+    compare_at_cents: number | null;
+    stock?: number | null;
+    safety_stock?: number | null;
+    managed?: boolean;
+    options?: { // Add options for gender and size
+        gender?: string;
+        size_ml?: number;
+    };
+};
+
 interface ProductData {
     id: number;
     productImageSrc: string;
@@ -11,6 +25,7 @@ interface ProductData {
     slug: string;
     rank?: number;
     score?: number;
+    variants?: Variant[]; // Add variants property
     genders?: string[];
     sizes?: number[];
     showRatingIcon?: boolean;
@@ -72,6 +87,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                                     price={product.price}
                                     slug={product.slug}
                                     id={product.id}
+                                    variants={product.variants}  // Add variants prop
                                     genders={product.genders}
                                     sizes={product.sizes}
                                     showRatingIcon={product.showRatingIcon}

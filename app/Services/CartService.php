@@ -66,6 +66,13 @@ class CartService
 
         // NEW: pre-validate that the variant exists (avoid ghost writes)
         $exists = DB::table('product_variants')->where('id', $variantId)->exists();
+        \Log::info('CartService@add - Variant check', [
+            'variant_id' => $variantId,
+            'variant_exists' => $exists,
+            'session_id' => $sessionId,
+            'qty' => $qty
+        ]);
+        
         if (!$exists) {
             throw ValidationException::withMessages(['variant_id' => '選択された商品が存在しません。']);
         }
@@ -84,7 +91,21 @@ class CartService
         $this->saveRaw($sessionId, $raw, $userId);
 
         // Recompute with server pricing/stock rules
+        \Log::info('CartService@add - About to recompute cart', [
+            'session_id' => $sessionId,
+            'variant_id' => $variantId,
+            'requested_qty' => $qty,
+            'requested_total' => $requestedTotal,
+            'final_qty' => min($this->maxQty, $requestedTotal)
+        ]);
+        
         $cart = $this->get($sessionId, $userId);
+        
+        \Log::info('CartService@add - Cart recomputed', [
+            'session_id' => $sessionId,
+            'cart_lines_count' => count($cart['lines'] ?? []),
+            'cart_subtotal' => $cart['subtotal_cents'] ?? 0
+        ]);
 
         // If the requested total exceeded what was finally applied (due to stock or maxQty),
         // attach a notice to the relevant line so the UI can toast it.

@@ -45,6 +45,14 @@ class CartController extends Controller
         $sessionId = $request->session()->getId();
         $userId = $request->user()?->id;
         $data = $request->validated();
+        
+        \Log::info('CartController@store', [
+            'session_id' => $sessionId,
+            'user_id' => $userId,
+            'validated_data' => $data,
+            'raw_input' => $request->all()
+        ]);
+        
         $cart = $this->cart->add(
             $sessionId,
             (int) $data['variant_id'],

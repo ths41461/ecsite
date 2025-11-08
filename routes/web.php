@@ -94,6 +94,18 @@ Route::get('/', function () {
                 'sizes' => $uniqueSizes->toArray(),
                 'averageRating' => round($snapshot->average_rating ?? 0, 1),
                 'reviewCount' => $snapshot->review_count ?? 0,
+                'variants' => $product->variants->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'sku' => $variant->sku,
+                        'price_cents' => $variant->sale_price_yen !== null ? (int) $variant->sale_price_yen * 100 : (int) $variant->price_yen * 100,
+                        'compare_at_cents' => $variant->sale_price_yen !== null ? (int) $variant->price_yen * 100 : null,
+                        'stock' => $variant->inventory?->stock,
+                        'safety_stock' => $variant->inventory?->safety_stock,
+                        'managed' => (bool) ($variant->inventory?->managed ?? false),
+                        'options' => $variant->option_json,
+                    ];
+                })->toArray(),
             ];
         })
         ->toArray();
