@@ -270,6 +270,11 @@ interface SimpleProductCardProps {
     genders?: string[]; // Gender information from product variants
     showRatingIcon?: boolean;
     showWishlistIcon?: boolean;
+    brand?: string | null;
+    averageRating?: number;
+    reviewCount?: number;
+    salePrice?: number | null;
+    priceValue?: number;
 }
 
 const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
@@ -282,8 +287,17 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
     genders,
     showRatingIcon,
     showWishlistIcon,
+    brand,
+    averageRating,
+    reviewCount,
+    salePrice,
+    priceValue,
 }) => {
     const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const hasSale = salePrice != null && salePrice < (priceValue || 0);
+    const freshData = getFreshReviewDataForProduct(id);
+    const displayRating = freshData?.averageRating ?? averageRating;
+    const displayReviewCount = freshData?.reviewCount ?? reviewCount;
 
     const postJson = (url: string, payload: Record<string, unknown>) => {
         const getCookie = (name: string) => {
@@ -366,26 +380,36 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                         <Heart className="h-5 w-5 text-gray-700" />
                     </div>
                 )}
-                {genders && genders.length > 0 && (
-                    <div className="absolute top-2 left-2 flex items-center justify-center rounded-full bg-white border border-[#D1D5DB] text-xs text-[#4B5563] w-8 h-8">
-                        {genders.length === 1 ? (
-                            genders[0] === 'men' ? '♂' : '♀'
-                        ) : '⚥'}
-                    </div>
-                )}
             </div>
             <div className="flex flex-col p-3 gap-2">
-                <div className="flex items-end justify-between">
-                    <Link href={`/products/${slug}`} className="truncate">
-                        <span className="font-['Hiragino_Mincho_ProN'] text-xs text-[#6B7280] hover:underline truncate max-w-[70%]">{category}</span>
-                    </Link>
-                    {showRatingIcon && <img src="/icons/rating-container.svg" alt="Rating" className="h-4" />}
-                </div>
+                {/* Brand Name (using category field) */}
+                {category && (
+                    <div className="font-sans text-xs font-normal text-[#6B7280] mb-1 truncate">
+                        {category}
+                    </div>
+                )}
+                
+                {/* Product Name */}
                 <div className="flex items-center justify-between min-w-0">
                     <Link href={`/products/${slug}`} className="truncate">
                         <h3 className="font-['Hiragino_Mincho_ProN'] text-base font-medium leading-tight text-[#1F2937] hover:underline truncate">{productName}</h3>
                     </Link>
                 </div>
+                
+                {/* Rating/Review section */}
+                <div className="flex items-end justify-between">
+                    <div></div> {/* Spacer to keep ratings aligned right */}
+                    {displayRating !== undefined && displayRating > 0 && (
+                        <div className="flex items-center">
+                            {renderStarRating(displayRating)}
+                            {displayReviewCount !== undefined && displayReviewCount > 0 && (
+                                <span className="ml-1 text-xs text-[#6B7280]">({displayReviewCount})</span>
+                            )}
+                        </div>
+                    )}
+                </div>
+                
+                {/* Gender Icons */}
                 {genders && genders.length > 0 && (
                     <div className="flex justify-end">
                         <div className="flex gap-1">
@@ -401,10 +425,19 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                         </div>
                     </div>
                 )}
-                <div className="flex items-center justify-center py-2">
-                    <span className="font-['Hiragino_Mincho_ProN'] text-lg font-bold text-[#1F2937]">{price}</span>
+                
+                {/* Price Section */}
+                <div className="flex flex-col">
+                    {hasSale && (
+                        <span className="font-serif text-sm font-normal text-[#6B7280] line-through text-right">￥{priceValue?.toLocaleString()}</span>
+                    )}
+                    <span className={`font-serif text-lg font-bold leading-none text-[#1F2937] text-right ${hasSale ? 'mt-1' : ''}`}>
+                        ￥{(hasSale ? salePrice! : priceValue || price).toLocaleString()}
+                    </span>
                 </div>
-                <button 
+                
+                {/* Add to Cart Button */}
+                <button
                     onClick={handleAddToCart}
                     disabled={isAddingToCart}
                     className={`flex h-10 w-full items-center justify-center border border-[#EEDDD4] px-4 py-2 text-sm font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#EAB308] ${isAddingToCart ? 'bg-gray-400' : 'bg-[#EAB308] text-white'}`}

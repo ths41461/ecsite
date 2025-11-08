@@ -15,6 +15,11 @@ interface ProductData {
     sizes?: number[];
     showRatingIcon?: boolean;
     showWishlistIcon?: boolean;
+    brand?: string | null;
+    averageRating?: number;
+    reviewCount?: number;
+    salePrice?: number | null;
+    priceValue?: number;
 }
 
 interface RecommendedSectionProps {
@@ -51,6 +56,8 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                                         sizes={product.sizes}
                                         showRatingIcon={product.showRatingIcon}
                                         showWishlistIcon={product.showWishlistIcon}
+                                        averageRating={product.averageRating}
+                                        reviewCount={product.reviewCount}
                                     />
                                 ))}
                             </ImprovedCarousel>
@@ -69,6 +76,8 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                                     sizes={product.sizes}
                                     showRatingIcon={product.showRatingIcon}
                                     showWishlistIcon={product.showWishlistIcon}
+                                    averageRating={product.averageRating}
+                                    reviewCount={product.reviewCount}
                                 />
                             ))}
                         </div>

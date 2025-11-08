@@ -17,6 +17,30 @@ Route::get('/', function () {
     $recommendedProducts = \App\Models\RankingSnapshot::where('scope', 'overall')
         ->where('computed_at', \App\Models\RankingSnapshot::where('scope', 'overall')->max('computed_at'))
         ->join('products', 'ranking_snapshots.product_id', '=', 'products.id')
+        ->leftJoinSub(
+            \App\Models\Review::select('product_id', \DB::raw('AVG(rating) as avg_rating'))
+                ->where('approved', true)
+                ->groupBy('product_id'),
+            'review_avg',
+            'products.id',
+            '=',
+            'review_avg.product_id'
+        )
+        ->leftJoinSub(
+            \App\Models\Review::select('product_id', \DB::raw('COUNT(*) as review_count'))
+                ->where('approved', true)
+                ->groupBy('product_id'),
+            'review_count',
+            'products.id',
+            '=',
+            'review_count.product_id'
+        )
+        ->select([
+            'ranking_snapshots.*',
+            'products.*',
+            'review_avg.avg_rating as average_rating',
+            'review_count.review_count as review_count'
+        ])
         ->with([
             'product.brand:id,name,slug',
             'product.heroImage:id,product_id,path,alt,rank',
@@ -68,6 +92,8 @@ Route::get('/', function () {
                 'score' => $snapshot->score,
                 'genders' => $uniqueGenders->toArray(),
                 'sizes' => $uniqueSizes->toArray(),
+                'averageRating' => round($snapshot->average_rating ?? 0, 1),
+                'reviewCount' => $snapshot->review_count ?? 0,
             ];
         })
         ->toArray();
