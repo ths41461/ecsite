@@ -97,6 +97,7 @@ const RankingSection: React.FC<RankingSectionProps> = ({ products = [] }) => {
                                             sizes={product.sizes}
                                             showRatingIcon={product.showRatingIcon}
                                             showWishlistIcon={product.showWishlistIcon}
+                                            disableCartDrawer={true}
                                         />
                                     </div>
                                 ))}
@@ -122,6 +123,7 @@ const RankingSection: React.FC<RankingSectionProps> = ({ products = [] }) => {
                                             sizes={product.sizes}
                                             showRatingIcon={product.showRatingIcon}
                                             showWishlistIcon={product.showWishlistIcon}
+                                            disableCartDrawer={true}
                                         />
                                     </div>
                                 ))}

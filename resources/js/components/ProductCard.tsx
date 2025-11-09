@@ -21,7 +21,12 @@ function yen(n: number) {
     return n.toLocaleString(undefined, { style: 'currency', currency: 'JPY' });
 }
 
-export default function ProductCard({ product }: { product: ProductCardData }) {
+type ProductCardProps = {
+    product: ProductCardData;
+    disableCartDrawer?: boolean;
+};
+
+export default function ProductCard({ product, disableCartDrawer = false }: ProductCardProps) {
     const hasSale = product.salePrice != null && product.salePrice < product.price;
 
     // Function to render star rating based on Figma design (minimalist approach)
@@ -163,7 +168,28 @@ export default function ProductCard({ product }: { product: ProductCardData }) {
                             </svg>
                         </button>
                     </div>
-                </div>            </div>
+                </div>
+                <div className="mt-auto pt-2">
+                    {disableCartDrawer ? (
+                        <a 
+                            href={`/products/${product.slug}`}
+                            className="relative z-10 w-full h-[52px] flex items-center justify-center bg-[#EAB308] text-white font-medium"
+                        >
+                            製品を見る
+                        </a>
+                    ) : (
+                        <button
+                            type="button"
+                            aria-label="カートに追加"
+                            className="relative z-10 w-full h-[52px] flex items-center justify-center bg-[#EAB308]"
+                        >
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M3 3H5L5.4 5M7 13H17L21 5H5.4M7 13L5.4 5M7 13L4.707 15.293C4.077 15.923 4.523 17 5.414 17H17M17 17C15.895 17 15 17.895 15 19C15 20.105 15.895 21 17 21C18.105 21 19 20.105 19 19C19 17.895 18.105 17 17 17ZM9 19C9 20.105 8.105 21 7 21C5.895 21 5 20.105 5 19C5 17.895 5.895 17 7 17C8.105 17 9 17.895 9 19Z" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </button>
+                    )}
+                </div>
+            </div>
         </div>
     );
 }
