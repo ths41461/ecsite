@@ -695,6 +695,9 @@ class ProductController extends Controller
                 'image' => $imageUrl,
                 'short_desc' => $product->short_desc,
                 'long_desc' => $product->long_desc,
+                'attributes_json' => $product->attributes_json,
+                'fragrance_type' => $product->attributes_json['fragrance_type'] ?? 
+                                   ($product->attributes_json['notes']['middle'] ?? null),
                 'variants' => $variants,
                 'average_rating' => round($product->averageRating() ?? 0, 1),
                 'review_count' => $product->reviewCount(),

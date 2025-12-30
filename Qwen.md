@@ -1,52 +1,48 @@
-## Implementation Rules
+# 05 – Admin Panel (Filament)
 
-1. Only modify existing files, do not create new files to avoid confusion
-2. Maintain backward compatibility with existing search functionality
-3. Follow existing code patterns and architecture
-4. Ensure 100% alignment with current system design
-5. Write error-free, well-tested code
-6. Implement one feature completely before moving to the next
-7. Maintain Japanese language support
+## Resources
 
-## Stage 5 - Accounts & User Area Implementation
+### ProductResource
 
-### Goal
-Add a complete user-account system to the EC site so customers can register, log in, view their order history, manage personal info, and interact with products (wishlist / reviews).
+- **Form Sections**: Basic Info, Price & Sale, Inventory & SKU, Variants (volume‑based), Fragrance Profile, Images, SEO
+- **List Columns**: Thumb, Name (slug), Price/Sale, SKU, Category, Brand, Featured, Stock badge, Qty, UpdatedAt
+- **Filters**: Category, Brand, Featured, Active, Stock status, Has variants, Price range
+- **Actions**: Preview PDP, Edit, Duplicate, Delete (soft), Publish/Unpublish, Feature/Unfeature
+- **Hooks**: convert yen→cents, slugify, Meili reindex, image derivatives
 
-### Core Features to Implement
-- Authentication (Login / Register / Logout) - Already implemented with Laravel Breeze
-- My Account Dashboard - Enhance existing /dashboard to become user account center
-- Order History & Details - Create order history section in dashboard
-- Addresses & Profile Management - Create address management section; reuse existing profile settings
-- Wishlist Integration - Create wishlist management section in dashboard
-- Product Reviews - Create reviews management section in dashboard
-- Account Security - Password change section; reuse existing password settings
+### BrandResource / CategoryResource
 
-### Backend Implementation
-- Create user_addresses table and model
-- Update User model with address relationship
-- Create Address controller with CRUD operations
-- Enhance dashboard controller to fetch all account data
+- Slug unique; parent for categories; product counts; reindex on change
 
-### Frontend Implementation
-- Enhance dashboard.tsx to include all account sections
-- Create sections for profile, orders, addresses, wishlist, reviews
-- Reuse existing settings components where appropriate
-- Maintain Japanese UI language
+### OrderResource
 
-### Files to Modify
-- database/migrations/* - Add user_addresses migration
-- app/Models/User.php - Add address relationship
-- app/Http/Controllers/AddressController.php - New controller for addresses
-- app/Http/Controllers/DashboardController.php - Enhance to fetch account data
-- resources/js/pages/dashboard.tsx - Enhance to include account sections
-- resources/js/pages/settings/profile.tsx - May need integration with dashboard
-- resources/js/pages/settings/password.tsx - May need integration with dashboard
-- routes/web.php - Add any necessary routes
+- **List**: order_number, customer, totals, status, date, items_count, delivered_on
+- **View Tabs**: Items | Shipping | Payments | Timeline
+- **Transitions**: ordered→processing→shipped→delivered (cancel/refund branches)
+- **Actions**: Mark shipped/delivered, Cancel, Refund (mock)
 
-### Integration Notes
-- Reuse existing profile and password settings components
-- Ensure all user account functionality is accessible from the dashboard
-- Maintain existing settings routes initially for backward compatibility
-- Follow existing UI/UX patterns and component architecture
-- Maintain type safety with TypeScript
+### ShipmentResource (or relation manager)
+
+- carrier, tracking_number, status, shipped_at/delivered_at, timeline display
+
+### SliderResource
+
+- image, tagline, title, subtitle, link, active, schedule (starts/ends), sort
+
+### CouponResource
+
+- code, type(percent/fixed), value, active window, usage caps
+
+### UserResource
+
+- avatar+name, email (verified), phone, role, status, orders count; disable/enable, reset link
+
+### Settings Page
+
+- profile (name/mobile/email), password change, security logs
+
+## Policies & Roles
+
+- Roles: admin, staff (limited), viewer (read-only)
+- Gate sensitive actions (cancel/refund, user disable)
+- Audit trail: who edited what and when
