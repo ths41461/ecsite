@@ -4,7 +4,10 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use App\Models\Product;
+use App\Models\ProductImage;
 use App\Observers\ProductObserver;
+use App\Observers\ProductImageObserver;
+use App\Services\ImageService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -13,7 +16,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Bind ImageService to the container
+        $this->app->singleton(ImageService::class, function ($app) {
+            return new ImageService();
+        });
     }
 
     /**
@@ -22,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Product::observe(ProductObserver::class);
+        ProductImage::observe(ProductImageObserver::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

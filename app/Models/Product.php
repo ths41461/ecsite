@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 use Laravel\Scout\Searchable;
 
 class Product extends Model
@@ -31,6 +32,22 @@ class Product extends Model
         'is_active'       => 'boolean',
         'featured'        => 'boolean',
     ];
+
+    /**
+     * Set the product's name and automatically generate the slug.
+     *
+     * @param  string  $value
+     * @return void
+     */
+    public function setNameAttribute($value)
+    {
+        $this->attributes['name'] = $value;
+
+        // Only auto-generate slug if it's not already set or if the name has changed and slug is empty
+        if (empty($this->attributes['slug']) || $this->isDirty('name')) {
+            $this->attributes['slug'] = Str::slug($value);
+        }
+    }
 
     /** Route model binding uses slug instead of id */
     public function getRouteKeyName(): string
