@@ -44,6 +44,16 @@ class Coupon extends Model
         return $this->belongsToMany(Product::class, 'coupon_products');
     }
 
+    public function categories()
+    {
+        return $this->belongsToMany(Category::class, 'coupon_categories');
+    }
+
+    public function redemptions()
+    {
+        return $this->hasMany(CouponRedemption::class, 'coupon_id');
+    }
+
     public function isCurrentlyValid(): bool
     {
         $now = now();

@@ -49,7 +49,9 @@ class Order extends Model
         'details_completed_at',
         'payment_started_at',
         'stripe_checkout_session_id',
-        'stripe_payment_intent_id'
+        'stripe_payment_intent_id',
+        'coupon_code',
+        'coupon_discount_yen',
     ];
 
     public function items()
@@ -86,6 +88,16 @@ class Order extends Model
     public function statusHistory()
     {
         return $this->hasMany(OrderStatusHistory::class, 'order_id');
+    }
+
+    public function couponRedemption()
+    {
+        return $this->hasOne(CouponRedemption::class, 'order_id');
+    }
+
+    public function coupon()
+    {
+        return $this->belongsTo(Coupon::class, 'coupon_code', 'code');
     }
 
     public function getStatusTimelineAttribute()

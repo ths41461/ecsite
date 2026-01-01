@@ -351,6 +351,7 @@ class ProductResource extends Resource
         return [
             RelationManagers\ProductVariantsRelationManager::class,
             RelationManagers\ProductImagesRelationManager::class,
+            RelationManagers\ProductReviewsRelationManager::class,
         ];
     }
 
