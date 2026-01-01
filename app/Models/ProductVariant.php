@@ -27,4 +27,44 @@ class ProductVariant extends Model
     {
         return static::where('sku', $sku)->firstOrFail();
     }
+
+    /**
+     * Get the current stock level for this variant
+     */
+    public function getCurrentStock(): int
+    {
+        return $this->inventory?->stock ?? 0;
+    }
+
+    /**
+     * Check if this variant is in stock
+     */
+    public function isInStock(): bool
+    {
+        return $this->inventory?->isInStock() ?? false;
+    }
+
+    /**
+     * Check if this variant is out of stock
+     */
+    public function isOutOfStock(): bool
+    {
+        return $this->inventory?->isOutOfStock() ?? true;
+    }
+
+    /**
+     * Check if this variant has low stock
+     */
+    public function isLowStock(): bool
+    {
+        return $this->inventory?->isLowStock() ?? false;
+    }
+
+    /**
+     * Get the stock status for this variant
+     */
+    public function getStockStatus(): string
+    {
+        return $this->inventory?->stock_status ?? 'out_of_stock';
+    }
 }

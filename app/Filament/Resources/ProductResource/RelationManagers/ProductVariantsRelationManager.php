@@ -87,10 +87,10 @@ class ProductVariantsRelationManager extends RelationManager
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
 
-                Tables\Columns\TextColumn::make('inventory.qty')
+                Tables\Columns\TextColumn::make('inventory.stock')
                     ->label('Stock')
                     ->getStateUsing(function (ProductVariant $record) {
-                        return $record->inventory ? $record->inventory->qty : 'No inventory';
+                        return $record->inventory ? $record->inventory->stock : 'No inventory';
                     }),
             ])
             ->filters([
