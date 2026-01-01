@@ -2,14 +2,21 @@
 
 namespace App\Filament\Pages;
 
+use Filament\Actions;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Pages\Page;
+use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Concerns\InteractsWithForms;
+use Filament\Pages\Concerns\InteractsWithFormActions;
 use Illuminate\Support\Facades\Auth;
 
-class Settings extends Page
+class Settings extends Page implements HasForms
 {
+    use InteractsWithForms;
+    use InteractsWithFormActions;
+
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static string $view = 'filament.pages.settings';
@@ -25,10 +32,10 @@ class Settings extends Page
     public function mount(): void
     {
         $user = Auth::user();
-        $this->data = [
+        $this->form->fill([
             'name' => $user->name,
             'email' => $user->email,
-        ];
+        ]);
     }
 
     public function form(Form $form): Form
@@ -51,7 +58,22 @@ class Settings extends Page
                     ])
                     ->columns(2),
             ])
-            ->statePath('data');
+            ->statePath('data')
+            ->model(Auth::user());
+    }
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\Action::make('save')
+                ->label('Save Settings')
+                ->button()
+                ->action('save'),
+            Actions\Action::make('cancel')
+                ->label('Cancel')
+                ->color('secondary')
+                ->url(static::getUrl()),
+        ];
     }
 
     public function save(): void
