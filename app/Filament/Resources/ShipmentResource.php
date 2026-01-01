@@ -127,10 +127,11 @@ class ShipmentResource extends Resource
                     ])
                     ->placeholder('All Statuses'),
                 Tables\Filters\Filter::make('shipped_at')
-                    ->dateTime()
                     ->form([
-                        Forms\Components\DatePicker::make('shipped_from'),
-                        Forms\Components\DatePicker::make('shipped_until'),
+                        Forms\Components\DatePicker::make('shipped_from')
+                            ->label('Shipped From'),
+                        Forms\Components\DatePicker::make('shipped_until')
+                            ->label('Shipped Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -138,10 +139,11 @@ class ShipmentResource extends Resource
                             ->when($data['shipped_until'], fn ($query, $date) => $query->whereDate('shipped_at', '<=', $date));
                     }),
                 Tables\Filters\Filter::make('delivered_at')
-                    ->dateTime()
                     ->form([
-                        Forms\Components\DatePicker::make('delivered_from'),
-                        Forms\Components\DatePicker::make('delivered_until'),
+                        Forms\Components\DatePicker::make('delivered_from')
+                            ->label('Delivered From'),
+                        Forms\Components\DatePicker::make('delivered_until')
+                            ->label('Delivered Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
