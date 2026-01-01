@@ -16,11 +16,11 @@ return new class extends Migration {
 
     public function down(): void
     {
-        // We keep the same definition to avoid truncating existing "paid" rows during rollback.
+        // Revert to enum values without 'paid' (assuming no 'paid' orders exist at rollback time)
         DB::statement(<<<SQL
             ALTER TABLE `orders`
             MODIFY COLUMN `status`
-            ENUM('ordered','processing','paid','shipped','delivered','canceled','refunded')
+            ENUM('ordered','processing','shipped','delivered','canceled','refunded')
             NOT NULL DEFAULT 'ordered'
         SQL);
     }

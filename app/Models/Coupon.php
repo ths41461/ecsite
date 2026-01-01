@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,7 @@ use App\Models\Product;
 
 class Coupon extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'code',
@@ -92,5 +93,13 @@ class Coupon extends Model
                 'used_count' => DB::raw('used_count + 1'),
             ]);
         });
+    }
+
+    /**
+     * Get the name of the coupon for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->code . ' - ' . $this->description;
     }
 }

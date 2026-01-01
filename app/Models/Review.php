@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Review extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'product_id',
@@ -41,5 +42,13 @@ class Review extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the name of the review for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return 'Review by ' . ($this->user->name ?? 'Unknown') . ' for ' . ($this->product->name ?? 'Product #' . $this->product_id);
     }
 }

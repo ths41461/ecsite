@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // app/Models/Category.php
 class Category extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = ['name', 'slug', 'parent_id', 'description', 'logo'];
 
@@ -50,5 +51,13 @@ class Category extends Model
         }
 
         return implode(' > ', $path);
+    }
+
+    /**
+     * Get the name of the category for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->name;
     }
 }

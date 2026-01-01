@@ -24,10 +24,11 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Revert to original enum values without 'paid'
         DB::statement(<<<SQL
             ALTER TABLE `orders`
             MODIFY COLUMN `status`
-            ENUM('ordered','processing','paid','shipped','delivered','canceled','refunded')
+            ENUM('ordered','processing','shipped','delivered','canceled','refunded')
             NOT NULL DEFAULT 'ordered'
         SQL);
     }

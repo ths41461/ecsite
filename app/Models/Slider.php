@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Slider extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'image_path', 'tagline', 'title', 'subtitle',
@@ -32,5 +33,13 @@ class Slider extends Model
         })->where(function ($x) {
             $x->whereNull('ends_at')->orWhere('ends_at', '>=', now());
         });
+    }
+
+    /**
+     * Get the name of the slider for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->title ?? $this->tagline ?? 'Slider #' . $this->id;
     }
 }

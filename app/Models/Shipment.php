@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
 class Shipment extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $fillable = [
         'order_id',
@@ -113,5 +114,13 @@ class Shipment extends Model
     public function getLatestTrack()
     {
         return $this->shipmentTracks()->latest('event_time')->first();
+    }
+
+    /**
+     * Get the name of the shipment for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->tracking_number . ' - Order: ' . $this->order->order_number;
     }
 }

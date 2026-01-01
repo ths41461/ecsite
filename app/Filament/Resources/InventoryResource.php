@@ -198,7 +198,18 @@ class InventoryResource extends Resource
         return [
             'index' => Pages\ListInventories::route('/'),
             'create' => Pages\CreateInventory::route('/create'),
+            'view' => Pages\ViewInventory::route('/{record}'),
             'edit' => Pages\EditInventory::route('/{record}/edit'),
         ];
+    }
+
+    public static function can(string $action, $record = null): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->isAdmin();
     }
 }

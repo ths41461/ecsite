@@ -198,4 +198,14 @@ class SliderResource extends Resource
             'edit' => Pages\EditSlider::route('/{record}/edit'),
         ];
     }
+
+    public static function can(string $action, $record = null): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->isAdmin();
+    }
 }

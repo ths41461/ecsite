@@ -176,4 +176,14 @@ class ShipmentResource extends Resource
             'edit' => Pages\EditShipment::route('/{record}/edit'),
         ];
     }
+
+    public static function can(string $action, $record = null): bool
+    {
+        $user = auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        return $user->isAdmin();
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -9,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 // app/Models/Order.php
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     protected $casts = [
         'ordered_at' => 'datetime',
@@ -145,5 +146,13 @@ class Order extends Model
             // Update the order
             $this->forceFill(['order_status_id' => $toId])->save();
         });
+    }
+
+    /**
+     * Get the name of the order for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->order_number . ' - ' . $this->name;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -9,7 +10,7 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model
 {
-    use HasFactory, Searchable;
+    use HasFactory, Searchable, Auditable;
 
     protected $fillable = [
         'name',
@@ -129,12 +130,20 @@ class Product extends Model
     {
         return $this->reviews()->where('approved', true)->avg('rating');
     }
-    
+
     /**
      * Get the review count for the product.
      */
     public function reviewCount()
     {
         return $this->reviews()->where('approved', true)->count();
+    }
+
+    /**
+     * Get the name of the product for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->name;
     }
 }

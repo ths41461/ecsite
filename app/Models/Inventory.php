@@ -2,12 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Inventory extends Model
 {
-    use HasFactory;
+    use HasFactory, Auditable;
 
     public $timestamps = false;
     protected $fillable = ['product_variant_id', 'stock', 'safety_stock', 'managed'];
@@ -122,5 +123,13 @@ class Inventory extends Model
             return null;
         }
         return round(($this->stock / $this->safety_stock) * 100, 2);
+    }
+
+    /**
+     * Get the name of the inventory for audit purposes.
+     */
+    public function getNameForAudit()
+    {
+        return $this->variant->product->name . ' - ' . ($this->variant->name ?? 'Variant #' . $this->variant->id);
     }
 }
