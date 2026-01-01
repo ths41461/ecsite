@@ -196,6 +196,11 @@ Route::post('/products/{product}/reviews', [App\Http\Controllers\ReviewControlle
 Route::put('/reviews/{review}', [App\Http\Controllers\ReviewController::class, 'update'])->name('reviews.update');
 Route::delete('/reviews/{review}', [App\Http\Controllers\ReviewController::class, 'destroy'])->name('reviews.destroy');
 
+// Shipment tracking
+Route::get('/shipment/track', function () {
+    return view('shipment.tracking');
+})->name('shipment.track');
+
 // Stripe webhook (no CSRF)
 Route::post('/webhooks/stripe', [StripeWebhookController::class, 'handle'])
     ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\VerifyCsrfToken::class])

@@ -15,6 +15,7 @@ class Shipment extends Model
         'carrier',
         'tracking_number',
         'status',
+        'shipment_status_id',
         'shipped_at',
         'delivered_at',
         'timeline_json',
@@ -29,6 +30,16 @@ class Shipment extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function shipmentStatus()
+    {
+        return $this->belongsTo(ShipmentStatus::class, 'shipment_status_id');
+    }
+
+    public function shipmentTracks()
+    {
+        return $this->hasMany(ShipmentTrack::class);
     }
 
     public function scopeActive($q)
@@ -70,5 +81,37 @@ class Shipment extends Model
                 }
             }
         });
+    }
+
+    /**
+     * Get the current shipment status name
+     */
+    public function getCurrentStatusName(): string
+    {
+        return $this->shipmentStatus?->name ?? 'Unknown';
+    }
+
+    /**
+     * Check if the shipment is delivered
+     */
+    public function isDelivered(): bool
+    {
+        return $this->status === 'delivered' || ($this->shipmentStatus && $this->shipmentStatus->code === 'delivered');
+    }
+
+    /**
+     * Check if the shipment is in transit
+     */
+    public function isInTransit(): bool
+    {
+        return $this->status === 'in_transit' || ($this->shipmentStatus && in_array($this->shipmentStatus->code, ['in_transit', 'packed']));
+    }
+
+    /**
+     * Get the latest tracking event
+     */
+    public function getLatestTrack()
+    {
+        return $this->shipmentTracks()->latest('event_time')->first();
     }
 }
