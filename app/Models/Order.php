@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 class Order extends Model
 {
     use HasFactory;
+
     protected $casts = [
         'ordered_at' => 'datetime',
         'shipped_at' => 'datetime',
@@ -21,11 +22,41 @@ class Order extends Model
         'details_completed_at' => 'datetime',
         'payment_started_at' => 'datetime',
     ];
-    protected $fillable = ['order_number', 'user_id', 'email', 'name', 'phone', 'address_line1', 'address_line2', 'city', 'state', 'zip', 'subtotal_yen', 'tax_yen', 'shipping_yen', 'discount_yen', 'total_yen', 'payment_mode', 'status', 'ordered_at', 'shipped_at', 'delivered_at', 'canceled_at', 'details_completed_at', 'payment_started_at', 'stripe_checkout_session_id', 'stripe_payment_intent_id'];
+
+    protected $fillable = [
+        'order_number',
+        'user_id',
+        'email',
+        'name',
+        'phone',
+        'address_line1',
+        'address_line2',
+        'city',
+        'state',
+        'zip',
+        'subtotal_yen',
+        'tax_yen',
+        'shipping_yen',
+        'discount_yen',
+        'total_yen',
+        'payment_mode',
+        'status',
+        'order_status_id',
+        'ordered_at',
+        'shipped_at',
+        'delivered_at',
+        'canceled_at',
+        'details_completed_at',
+        'payment_started_at',
+        'stripe_checkout_session_id',
+        'stripe_payment_intent_id'
+    ];
+
     public function items()
     {
         return $this->hasMany(OrderItem::class);
     }
+
     public function payments()
     {
         return $this->hasMany(Payment::class);
@@ -36,13 +67,35 @@ class Order extends Model
     {
         return $this->hasOne(Payment::class)->latestOfMany();
     }
+
     public function shipments()
     {
         return $this->hasMany(Shipment::class);
     }
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function orderStatus()
+    {
+        return $this->belongsTo(OrderStatus::class, 'order_status_id');
+    }
+
+    public function statusHistory()
+    {
+        return $this->hasMany(OrderStatusHistory::class, 'order_id');
+    }
+
+    public function getStatusTimelineAttribute()
+    {
+        return DB::table('order_status_history as h')
+            ->join('order_statuses as s', 's.id', '=', 'h.to_status_id')
+            ->where('h.order_id', $this->id)
+            ->select('s.name as status', 'h.changed_at', 'h.changed_by', 'h.from_status_id', 'h.to_status_id')
+            ->orderBy('h.changed_at', 'asc')
+            ->get();
     }
 
     public function transitionTo(int|string $status, ?int $changedBy = null): void
