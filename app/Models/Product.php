@@ -85,6 +85,11 @@ class Product extends Model
         return $this->belongsToMany(Category::class, 'category_product');
     }
 
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_products');
+    }
+
     // --- Scout (search) payload ---
     public function toSearchableArray(): array
     {
@@ -137,6 +142,14 @@ class Product extends Model
     public function reviewCount()
     {
         return $this->reviews()->where('approved', true)->count();
+    }
+
+    /**
+     * Get the events for the product.
+     */
+    public function events()
+    {
+        return $this->hasMany(\App\Models\Event::class);
     }
 
     /**

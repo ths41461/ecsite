@@ -175,6 +175,14 @@ class User extends Authenticatable
     }
 
     /**
+     * Get the events for the user.
+     */
+    public function events()
+    {
+        return $this->hasMany(\App\Models\Event::class);
+    }
+
+    /**
      * Get the name of the user for audit purposes.
      */
     public function getNameForAudit()

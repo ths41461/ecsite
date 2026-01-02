@@ -18,6 +18,7 @@ class Payment extends Model
         'status',
         'payload_json',
         'processed_at',
+        'payment_status_id',
     ];
 
     protected $casts = [
@@ -29,6 +30,16 @@ class Payment extends Model
     public function order()
     {
         return $this->belongsTo(Order::class);
+    }
+
+    public function paymentTransactions()
+    {
+        return $this->hasMany(PaymentTransaction::class);
+    }
+
+    public function paymentStatus()
+    {
+        return $this->belongsTo(PaymentStatus::class);
     }
 
     public function recordTransaction(array $tx): void

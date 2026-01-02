@@ -53,6 +53,11 @@ class Category extends Model
         return implode(' > ', $path);
     }
 
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_categories');
+    }
+
     /**
      * Get the name of the category for audit purposes.
      */

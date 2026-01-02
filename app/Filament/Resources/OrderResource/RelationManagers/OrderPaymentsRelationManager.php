@@ -105,15 +105,17 @@ class OrderPaymentsRelationManager extends RelationManager
                     ->placeholder('All Providers'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                // Removed CreateAction to redirect to PaymentResource
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->url(fn ($record) => '/admin/payments/' . $record->id),
+                Tables\Actions\EditAction::make()
+                    ->url(fn ($record) => '/admin/payments/' . $record->id . '/edit'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    // Removed DeleteBulkAction to maintain data integrity
                 ]),
             ]);
     }

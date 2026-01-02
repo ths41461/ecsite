@@ -18,22 +18,42 @@ class ShipmentTracksRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('carrier')
-                    ->required()
-                    ->maxLength(100),
-                Forms\Components\TextInput::make('track_no')
-                    ->label('Tracking Number')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('status')
-                    ->required()
-                    ->maxLength(50),
-                Forms\Components\DateTimePicker::make('event_time')
-                    ->required(),
-                Forms\Components\Textarea::make('raw_event_json')
-                    ->label('Raw Event Data')
-                    ->rows(5)
-                    ->columnSpanFull(),
+                Forms\Components\Section::make('Tracking Information')
+                    ->description('Details about the shipment tracking event')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('carrier')
+                                    ->required()
+                                    ->maxLength(100)
+                                    ->label('Carrier'),
+                                Forms\Components\TextInput::make('track_no')
+                                    ->label('Tracking Number')
+                                    ->required()
+                                    ->maxLength(255),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('status')
+                                    ->options([
+                                        'packed' => 'Packed',
+                                        'in_transit' => 'In Transit',
+                                        'delivered' => 'Delivered',
+                                        'returned' => 'Returned',
+                                    ])
+                                    ->required()
+                                    ->label('Status'),
+                                Forms\Components\DateTimePicker::make('event_time')
+                                    ->required()
+                                    ->label('Event Time'),
+                            ]),
+                        Forms\Components\Textarea::make('raw_event_json')
+                            ->label('Raw Event Data')
+                            ->rows(5)
+                            ->columnSpanFull()
+                            ->helperText('JSON data of the tracking event'),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -79,6 +99,24 @@ class ShipmentTracksRelationManager extends RelationManager
                         'returned' => 'Returned',
                     ])
                     ->placeholder('All Statuses'),
+                Tables\Filters\Filter::make('event_time')
+                    ->form([
+                        Forms\Components\DatePicker::make('event_time_from')
+                            ->label('Event Time From'),
+                        Forms\Components\DatePicker::make('event_time_until')
+                            ->label('Event Time Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['event_time_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('event_time', '>=', $date)
+                            )
+                            ->when(
+                                $data['event_time_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('event_time', '<=', $date)
+                            );
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

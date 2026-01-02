@@ -156,6 +156,7 @@ class UserResource extends Resource
             RelationManagers\UserAddressesRelationManager::class,
             RelationManagers\UserReviewsRelationManager::class,
             RelationManagers\UserWishlistRelationManager::class,
+            RelationManagers\UserEventsRelationManager::class,
         ];
     }
 

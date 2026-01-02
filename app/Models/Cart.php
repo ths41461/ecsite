@@ -12,5 +12,10 @@ class Cart extends Model {
   protected $fillable = ['id','user_id'];
   public function items(){ return $this->hasMany(CartItem::class); }
   public function user(){ return $this->belongsTo(User::class); }
+
+  public function getTotalAmountAttribute(): int
+  {
+      return $this->items->sum('line_total_yen');
+  }
 }
 

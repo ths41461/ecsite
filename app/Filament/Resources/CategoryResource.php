@@ -144,6 +144,7 @@ class CategoryResource extends Resource
     {
         return [
             RelationManagers\CategoryProductsRelationManager::class,
+            RelationManagers\CategoryCouponsRelationManager::class,
         ];
     }
 

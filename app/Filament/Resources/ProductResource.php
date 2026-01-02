@@ -352,6 +352,7 @@ class ProductResource extends Resource
             RelationManagers\ProductVariantsRelationManager::class,
             RelationManagers\ProductImagesRelationManager::class,
             RelationManagers\ProductReviewsRelationManager::class,
+            RelationManagers\ProductEventsRelationManager::class,
         ];
     }
 
