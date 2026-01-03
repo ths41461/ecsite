@@ -353,6 +353,8 @@ class ProductResource extends Resource
             RelationManagers\ProductImagesRelationManager::class,
             RelationManagers\ProductReviewsRelationManager::class,
             RelationManagers\ProductEventsRelationManager::class,
+            RelationManagers\ProductWishlistRelationManager::class,
+            \App\Filament\Resources\OrderItemResource\RelationManagers\OrderItemsRelationManager::class,
         ];
     }
 

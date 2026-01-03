@@ -20,14 +20,14 @@ class PaymentResource extends Resource
 
     protected static ?string $navigationGroup = 'Orders';
 
-    protected static ?int $navigationSort = 15;
+    protected static ?int $navigationSort = 16;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make('Payment Information')
-                    ->description('Information about the payment transaction')
+                    ->description('Basic payment information')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -37,15 +37,6 @@ class PaymentResource extends Resource
                                     ->preload()
                                     ->required()
                                     ->label('Order'),
-                                Forms\Components\Select::make('payment_status_id')
-                                    ->relationship('paymentStatus', 'name')
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->label('Payment Status'),
-                            ]),
-                        Forms\Components\Grid::make(2)
-                            ->schema([
                                 Forms\Components\Select::make('provider')
                                     ->options([
                                         'stripe' => 'Stripe',
@@ -56,38 +47,44 @@ class PaymentResource extends Resource
                                     ])
                                     ->required()
                                     ->label('Provider'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
                                 Forms\Components\Select::make('type')
                                     ->options([
+                                        'auth' => 'Authorization',
+                                        'capture' => 'Capture',
+                                        'refund' => 'Refund',
                                         'one_time' => 'One Time',
                                         'subscription' => 'Subscription',
                                         'installment' => 'Installment',
                                     ])
                                     ->required()
+                                    ->default('auth')
                                     ->label('Type'),
-                            ]),
-                        Forms\Components\Grid::make(2)
-                            ->schema([
                                 Forms\Components\TextInput::make('amount_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
                                     ->label('Amount (¥)'),
-                                Forms\Components\Select::make('status')
-                                    ->options([
-                                        'pending' => 'Pending',
-                                        'processing' => 'Processing',
-                                        'succeeded' => 'Succeeded',
-                                        'failed' => 'Failed',
-                                        'canceled' => 'Canceled',
-                                        'refunded' => 'Refunded',
-                                    ])
-                                    ->required()
-                                    ->label('Status'),
                             ]),
+                        Forms\Components\Select::make('status')
+                            ->options([
+                                'created' => 'Created',
+                                'pending' => 'Pending',
+                                'approved' => 'Approved',
+                                'declined' => 'Declined',
+                                'refunded' => 'Refunded',
+                                'voided' => 'Voided',
+                                'expired' => 'Expired',
+                            ])
+                            ->required()
+                            ->default('pending')
+                            ->label('Status'),
                         Forms\Components\DateTimePicker::make('processed_at')
                             ->label('Processed At'),
                         Forms\Components\Textarea::make('payload_json')
-                            ->rows(5)
+                            ->rows(4)
                             ->columnSpanFull()
                             ->label('Payload Data')
                             ->helperText('Raw payment provider data'),
@@ -107,9 +104,7 @@ class PaymentResource extends Resource
                 Tables\Columns\TextColumn::make('order.order_number')
                     ->label('Order #')
                     ->searchable()
-                    ->sortable()
-                    ->url(fn ($record) => route('filament.admin.resources.orders.edit', ['record' => $record->order_id]))
-                    ->openUrlInNewTab(false),
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('provider')
                     ->searchable()
                     ->sortable()
@@ -122,28 +117,30 @@ class PaymentResource extends Resource
                     ->label('Amount')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
-                Tables\Columns\TextColumn::make('paymentStatus.name')
-                    ->label('Payment Status')
-                    ->badge()
-                    ->color(fn (string $state): string => match ($state) {
-                        'Completed', 'Confirmed', 'Verified' => 'success',
-                        'Pending', 'Processing' => 'warning',
-                        'Failed', 'Rejected', 'Cancelled' => 'danger',
-                        default => 'gray',
-                    })
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'pending' => 'warning',
-                        'processing' => 'info',
-                        'succeeded' => 'success',
-                        'failed' => 'danger',
-                        'canceled' => 'danger',
+                        'approved' => 'success',
+                        'declined' => 'danger',
                         'refunded' => 'secondary',
+                        'voided' => 'danger',
+                        'expired' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state) => ucfirst($state))
+                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('paymentStatus.name')
+                    ->label('Payment Status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Pending' => 'warning',
+                        'Authorized' => 'info',
+                        'Captured' => 'success',
+                        'Failed' => 'danger',
+                        'Refunded' => 'secondary',
+                        default => 'gray',
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('processed_at')
                     ->dateTime()
@@ -154,19 +151,15 @@ class PaymentResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('payment_status_id')
-                    ->relationship('paymentStatus', 'name')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('All Payment Statuses'),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
+                        'created' => 'Created',
                         'pending' => 'Pending',
-                        'processing' => 'Processing',
-                        'succeeded' => 'Succeeded',
-                        'failed' => 'Failed',
-                        'canceled' => 'Canceled',
+                        'approved' => 'Approved',
+                        'declined' => 'Declined',
                         'refunded' => 'Refunded',
+                        'voided' => 'Voided',
+                        'expired' => 'Expired',
                     ])
                     ->placeholder('All Statuses'),
                 Tables\Filters\SelectFilter::make('provider')
@@ -180,6 +173,9 @@ class PaymentResource extends Resource
                     ->placeholder('All Providers'),
                 Tables\Filters\SelectFilter::make('type')
                     ->options([
+                        'auth' => 'Authorization',
+                        'capture' => 'Capture',
+                        'refund' => 'Refund',
                         'one_time' => 'One Time',
                         'subscription' => 'Subscription',
                         'installment' => 'Installment',
@@ -242,7 +238,7 @@ class PaymentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PaymentTransactionsRelationManager::class,
         ];
     }
 

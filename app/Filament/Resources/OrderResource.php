@@ -350,6 +350,7 @@ class OrderResource extends Resource
             RelationManagers\OrderItemsRelationManager::class,
             RelationManagers\OrderPaymentsRelationManager::class,
             RelationManagers\OrderShipmentsRelationManager::class,
+            RelationManagers\OrderStatusHistoryRelationManager::class,
         ];
     }
 

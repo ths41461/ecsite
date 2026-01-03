@@ -145,6 +145,14 @@ class Product extends Model
     }
 
     /**
+     * Get the order items for the product.
+     */
+    public function orderItems()
+    {
+        return $this->hasMany(\App\Models\OrderItem::class);
+    }
+
+    /**
      * Get the events for the product.
      */
     public function events()

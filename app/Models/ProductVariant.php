@@ -19,8 +19,9 @@ class ProductVariant extends Model
         'option_json' => 'array',
     ];
 
-    public function product()   { return $this->belongsTo(Product::class); }
-    public function inventory() { return $this->hasOne(Inventory::class); }
+    public function product()     { return $this->belongsTo(Product::class); }
+    public function inventory()   { return $this->hasOne(Inventory::class); }
+    public function orderItems()  { return $this->hasMany(\App\Models\OrderItem::class, 'product_variant_id'); }
 
     /** Happy-path finder for PDP/cart flows */
     public static function findBySku(string $sku): self

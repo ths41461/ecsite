@@ -18,8 +18,8 @@ class ShipmentTracksRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Tracking Information')
-                    ->description('Details about the shipment tracking event')
+                Forms\Components\Section::make('Tracking Event Information')
+                    ->description('Information about the shipment tracking event')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -28,17 +28,20 @@ class ShipmentTracksRelationManager extends RelationManager
                                     ->maxLength(100)
                                     ->label('Carrier'),
                                 Forms\Components\TextInput::make('track_no')
-                                    ->label('Tracking Number')
                                     ->required()
-                                    ->maxLength(255),
+                                    ->maxLength(255)
+                                    ->label('Tracking Number'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('status')
                                     ->options([
                                         'packed' => 'Packed',
+                                        'label_created' => 'Label Created',
                                         'in_transit' => 'In Transit',
+                                        'out_for_delivery' => 'Out for Delivery',
                                         'delivered' => 'Delivered',
+                                        'exception' => 'Exception',
                                         'returned' => 'Returned',
                                     ])
                                     ->required()
@@ -48,10 +51,10 @@ class ShipmentTracksRelationManager extends RelationManager
                                     ->label('Event Time'),
                             ]),
                         Forms\Components\Textarea::make('raw_event_json')
-                            ->label('Raw Event Data')
-                            ->rows(5)
+                            ->rows(4)
                             ->columnSpanFull()
-                            ->helperText('JSON data of the tracking event'),
+                            ->label('Raw Event Data')
+                            ->helperText('JSON data from carrier webhook'),
                     ])
                     ->columns(2),
             ]);
@@ -60,7 +63,7 @@ class ShipmentTracksRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('status')
+            ->recordTitleAttribute('track_no')
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
@@ -69,51 +72,57 @@ class ShipmentTracksRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('track_no')
-                    ->label('Tracking Number')
+                    ->label('Tracking #')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'packed' => 'info',
+                        'label_created' => 'info',
                         'in_transit' => 'warning',
+                        'out_for_delivery' => 'primary',
                         'delivered' => 'success',
-                        'returned' => 'danger',
-                        default => 'secondary',
+                        'exception' => 'danger',
+                        'returned' => 'secondary',
+                        default => 'gray',
                     })
+                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('event_time')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'packed' => 'Packed',
+                        'label_created' => 'Label Created',
                         'in_transit' => 'In Transit',
+                        'out_for_delivery' => 'Out for Delivery',
                         'delivered' => 'Delivered',
+                        'exception' => 'Exception',
                         'returned' => 'Returned',
                     ])
                     ->placeholder('All Statuses'),
                 Tables\Filters\Filter::make('event_time')
                     ->form([
-                        Forms\Components\DatePicker::make('event_time_from')
-                            ->label('Event Time From'),
-                        Forms\Components\DatePicker::make('event_time_until')
-                            ->label('Event Time Until'),
+                        Forms\Components\DatePicker::make('event_from')
+                            ->label('Event From'),
+                        Forms\Components\DatePicker::make('event_until')
+                            ->label('Event Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['event_time_from'],
+                                $data['event_from'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('event_time', '>=', $date)
                             )
                             ->when(
-                                $data['event_time_until'],
+                                $data['event_until'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('event_time', '<=', $date)
                             );
                     }),

@@ -28,32 +28,13 @@ class CartItemsRelationManager extends RelationManager
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->live() // Make it reactive
                                     ->label('Product Variant')
-                                    ->helperText('Select the product variant for this cart item')
-                                    ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
-                                        if ($state) {
-                                            // Load the unit price from the selected product variant
-                                            $variant = \App\Models\ProductVariant::find($state);
-                                            if ($variant) {
-                                                $set('unit_price_yen', $variant->price_yen);
-                                            }
-                                        }
-                                    }),
+                                    ->helperText('Select the product variant for this cart item'),
                                 Forms\Components\TextInput::make('quantity')
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->live() // Make it reactive
-                                    ->label('Quantity')
-                                    ->helperText('Number of items')
-                                    ->afterStateUpdated(function (Forms\Set $set, ?int $state) {
-                                        $unitPrice = $set('unit_price_yen');
-                                        if ($state !== null && $unitPrice !== null) {
-                                            $lineTotal = $state * $unitPrice;
-                                            $set('line_total_yen', $lineTotal);
-                                        }
-                                    }),
+                                    ->label('Quantity'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -61,24 +42,14 @@ class CartItemsRelationManager extends RelationManager
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->live() // Make it reactive
                                     ->label('Unit Price (¥)')
-                                    ->helperText('Price per unit in yen')
-                                    ->afterStateUpdated(function (Forms\Set $set, ?int $state, ?array $old) {
-                                        $quantity = $set('quantity');
-                                        if ($state !== null && $quantity !== null) {
-                                            $lineTotal = $state * $quantity;
-                                            $set('line_total_yen', $lineTotal);
-                                        }
-                                    }),
+                                    ->helperText('Price per unit in yen'),
                                 Forms\Components\TextInput::make('line_total_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
                                     ->label('Line Total (¥)')
-                                    ->helperText('Total price for this line item (calculated)')
-                                    ->readOnly()
-                                    ->dehydrated(false), // Don't save this field as it's calculated
+                                    ->helperText('Calculated as quantity × unit price'),
                             ]),
                     ])
                     ->columns(2),
@@ -122,28 +93,60 @@ class CartItemsRelationManager extends RelationManager
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('created_at')
+                Tables\Filters\SelectFilter::make('product_variant_id')
+                    ->relationship('variant', 'sku')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Variants'),
+                Tables\Filters\Filter::make('quantity')
                     ->form([
-                        Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
-                        Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                        Forms\Components\TextInput::make('min_quantity')
+                            ->label('Min Quantity')
+                            ->numeric()
+                            ->minValue(1),
+                        Forms\Components\TextInput::make('max_quantity')
+                            ->label('Max Quantity')
+                            ->numeric()
+                            ->minValue(1),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['created_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date)
+                                $data['min_quantity'],
+                                fn (Builder $query, $value): Builder => $query->where('quantity', '>=', $value)
                             )
                             ->when(
-                                $data['created_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date)
+                                $data['max_quantity'],
+                                fn (Builder $query, $value): Builder => $query->where('quantity', '<=', $value)
+                            );
+                    }),
+                Tables\Filters\Filter::make('unit_price_yen')
+                    ->form([
+                        Forms\Components\TextInput::make('min_price')
+                            ->label('Min Price')
+                            ->numeric()
+                            ->prefix('¥'),
+                        Forms\Components\TextInput::make('max_price')
+                            ->label('Max Price')
+                            ->numeric()
+                            ->prefix('¥'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_price'],
+                                fn (Builder $query, $value): Builder => $query->where('unit_price_yen', '>=', $value)
+                            )
+                            ->when(
+                                $data['max_price'],
+                                fn (Builder $query, $value): Builder => $query->where('unit_price_yen', '<=', $value)
                             );
                     }),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),
-                Tables\Actions\AttachAction::make()
+                Tables\Actions\AssociateAction::make()
+                    ->multiple()
                     ->preloadRecordSelect(),
             ])
             ->actions([

@@ -67,27 +67,23 @@ class CouponProductsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Product Name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('brand.name')
                     ->label('Brand')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label('Category')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
                     ->label('Price')
-                    ->formatStateUsing(function ($record) {
-                        // Calculate min price from variants if available
-                        if ($record->variants && $record->variants->count() > 0) {
-                            $minPrice = $record->variants->min('price_yen');
-                            return '¥' . number_format($minPrice);
-                        }
-                        return '¥' . number_format($record->price ?? 0);
-                    })
+                    ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label('Active')
@@ -99,17 +95,22 @@ class CouponProductsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active Status'),
+                Tables\Filters\TernaryFilter::make('is_active'),
+                Tables\Filters\SelectFilter::make('brand_id')
+                    ->relationship('brand', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Brands'),
+                Tables\Filters\SelectFilter::make('category_id')
+                    ->relationship('category', 'name')
+                    ->searchable()
+                    ->preload()
+                    ->placeholder('All Categories'),
             ])
             ->headerActions([
-                Tables\Actions\AttachAction::make()
-                    ->preloadRecordSelect()
-                    ->multiple()
-                    ->recordSelectOptionsQuery(function (Builder $query) {
-                        return $query->whereDoesntHave('coupons'); // Only show products not already attached
-                    }),
                 Tables\Actions\CreateAction::make(),
+                Tables\Actions\AttachAction::make()
+                    ->preloadRecordSelect(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

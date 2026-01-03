@@ -16,11 +16,11 @@ class CouponRedemptionResource extends Resource
 {
     protected static ?string $model = CouponRedemption::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-arrow-down-on-square';
+    protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'Marketing';
 
-    protected static ?int $navigationSort = 13;
+    protected static ?int $navigationSort = 6;
 
     public static function form(Form $form): Form
     {
@@ -51,10 +51,15 @@ class CouponRedemptionResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->label('User (Optional)'),
-                                Forms\Components\DateTimePicker::make('redeemed_at')
+                                Forms\Components\TextInput::make('amount_yen')
                                     ->required()
-                                    ->label('Redeemed At'),
+                                    ->numeric()
+                                    ->prefix('¥')
+                                    ->label('Discount Amount (¥)'),
                             ]),
+                        Forms\Components\DateTimePicker::make('redeemed_at')
+                            ->required()
+                            ->label('Redeemed At'),
                     ])
                     ->columns(2),
             ]);
@@ -72,18 +77,18 @@ class CouponRedemptionResource extends Resource
                     ->label('Coupon Code')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('coupon.description')
-                    ->label('Coupon Description')
-                    ->searchable()
-                    ->limit(50)
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('order.order_number')
                     ->label('Order #')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('Redeemed By')
                     ->searchable()
+                    ->sortable()
+                    ->placeholder('Guest'),
+                Tables\Columns\TextColumn::make('amount_yen')
+                    ->label('Discount Amount')
+                    ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('redeemed_at')
                     ->dateTime()
@@ -144,9 +149,7 @@ class CouponRedemptionResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\CouponRedemptionCouponRelationManager::class,
-            RelationManagers\CouponRedemptionOrderRelationManager::class,
-            RelationManagers\CouponRedemptionUserRelationManager::class,
+            //
         ];
     }
 

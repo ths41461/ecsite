@@ -54,13 +54,15 @@ class CouponCategoriesRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('id')
                     ->label('ID')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('name')
                     ->label('Category Name')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('parent.name')
                     ->label('Parent Category')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label('Products')
@@ -76,8 +78,7 @@ class CouponCategoriesRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active Status'),
+                Tables\Filters\TernaryFilter::make('is_active'),
                 Tables\Filters\SelectFilter::make('parent_id')
                     ->relationship('parent', 'name')
                     ->searchable()
@@ -85,23 +86,22 @@ class CouponCategoriesRelationManager extends RelationManager
                     ->placeholder('All Parents'),
             ])
             ->headerActions([
+                Tables\Actions\CreateAction::make(),
                 Tables\Actions\AttachAction::make()
-                    ->preloadRecordSelect()
-                    ->multiple()
-                    ->recordSelectOptionsQuery(function (Builder $query) {
-                        return $query->whereDoesntHave('coupons'); // Only show categories not already attached
-                    }),
+                    ->preloadRecordSelect(),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DetachAction::make()
                     ->requiresConfirmation(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DetachBulkAction::make()
                         ->requiresConfirmation(),
+                    Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

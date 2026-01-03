@@ -9,7 +9,6 @@ use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Storage;
 
 class ProductImagesRelationManager extends RelationManager
 {
@@ -19,27 +18,42 @@ class ProductImagesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\FileUpload::make('path')
-                    ->label('Image')
-                    ->disk('public')
-                    ->directory('product-images')
-                    ->visibility('public')
-                    ->image()
-                    ->imageEditor()
-                    ->required(),
-
-                Forms\Components\TextInput::make('alt')
-                    ->label('Alt Text')
-                    ->maxLength(255),
-
-                Forms\Components\Toggle::make('is_hero')
-                    ->label('Hero Image')
-                    ->helperText('Only one image can be the hero image'),
-
-                Forms\Components\TextInput::make('rank')
-                    ->label('Rank')
-                    ->numeric()
-                    ->helperText('Lower numbers appear first'),
+                Forms\Components\Section::make('Image Information')
+                    ->description('Information about the product image')
+                    ->schema([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\FileUpload::make('path')
+                                    ->image()
+                                    ->directory('products/images')
+                                    ->visibility('public')
+                                    ->imageEditor()
+                                    ->required()
+                                    ->label('Image File'),
+                                Forms\Components\TextInput::make('alt')
+                                    ->maxLength(255)
+                                    ->label('Alt Text')
+                                    ->placeholder('Alternative text for accessibility'),
+                            ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('sort')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->label('Sort Order')
+                                    ->placeholder('Position in image sequence'),
+                                Forms\Components\TextInput::make('rank')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->label('Rank')
+                                    ->placeholder('Rank for ordering'),
+                            ]),
+                        Forms\Components\Toggle::make('is_hero')
+                            ->label('Hero Image')
+                            ->inline(false)
+                            ->helperText('Only one image per product can be the hero image'),
+                    ])
+                    ->columns(2),
             ]);
     }
 
@@ -49,50 +63,68 @@ class ProductImagesRelationManager extends RelationManager
             ->recordTitleAttribute('path')
             ->columns([
                 Tables\Columns\ImageColumn::make('path')
-                    ->disk('public')
-                    ->height(60),
-
+                    ->label('Image')
+                    ->circular()
+                    ->size(60),
                 Tables\Columns\TextColumn::make('alt')
+                    ->label('Alt Text')
                     ->searchable()
                     ->limit(50),
-
                 Tables\Columns\IconColumn::make('is_hero')
+                    ->label('Hero')
                     ->boolean()
-                    ->label('Hero'),
-
-                Tables\Columns\TextColumn::make('rank')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
+                Tables\Columns\TextColumn::make('sort')
+                    ->label('Sort')
                     ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('rank')
+                    ->label('Rank')
+                    ->numeric()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\TernaryFilter::make('is_hero'),
+                Tables\Filters\TernaryFilter::make('is_hero')
+                    ->label('Hero Image'),
+                Tables\Filters\Filter::make('created_at')
+                    ->form([
+                        Forms\Components\DatePicker::make('created_from')
+                            ->label('Created From'),
+                        Forms\Components\DatePicker::make('created_until')
+                            ->label('Created Until'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['created_from'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date)
+                            )
+                            ->when(
+                                $data['created_until'],
+                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date)
+                            );
+                    }),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()
                     ->mutateFormDataUsing(function (array $data) {
-                        // Ensure only one hero image exists
+                        // If this image is marked as hero, ensure no other image for this product is hero
                         if ($data['is_hero'] ?? false) {
-                            // Unset any existing hero images for this product
-                            $this->getOwnerRecord()->images()->update(['is_hero' => false]);
+                            \App\Models\ProductImage::where('product_id', $this->getOwnerRecord()->id)
+                                ->where('is_hero', true)
+                                ->update(['is_hero' => false]);
                         }
 
                         return $data;
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make()
-                    ->mutateFormDataUsing(function (array $data) {
-                        // Ensure only one hero image exists
-                        if ($data['is_hero'] ?? false) {
-                            // Unset any existing hero images for this product (except current record)
-                            $currentRecord = $this->getMountedTableActionRecord();
-                            $this->getOwnerRecord()->images()
-                                ->where('id', '!=', $currentRecord->id)
-                                ->update(['is_hero' => false]);
-                        }
-
-                        return $data;
-                    }),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([

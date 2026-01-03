@@ -20,7 +20,7 @@ class CartResource extends Resource
 
     protected static ?string $navigationGroup = 'E-commerce';
 
-    protected static ?int $navigationSort = 18;
+    protected static ?int $navigationSort = 19;
 
     public static function form(Form $form): Form
     {
@@ -44,6 +44,25 @@ class CartResource extends Resource
                                     ->placeholder('Select user (leave empty for guest cart)')
                                     ->label('User (Optional)'),
                             ]),
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\TextInput::make('session_id')
+                                    ->maxLength(255)
+                                    ->label('Session ID')
+                                    ->placeholder('Session identifier for guest carts'),
+                                Forms\Components\TextInput::make('currency')
+                                    ->maxLength(3)
+                                    ->default('JPY')
+                                    ->label('Currency'),
+                            ]),
+                        Forms\Components\TextInput::make('ttl_minutes')
+                            ->numeric()
+                            ->minValue(1)
+                            ->label('TTL Minutes')
+                            ->placeholder('Time-to-live for cart in minutes'),
+                        Forms\Components\Toggle::make('is_active')
+                            ->label('Active')
+                            ->default(true),
                     ])
                     ->columns(2),
             ]);
@@ -62,6 +81,13 @@ class CartResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->placeholder('Guest'),
+                Tables\Columns\TextColumn::make('session_id')
+                    ->label('Session ID')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('currency')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('items_count')
                     ->label('Items')
                     ->counts('items')
@@ -70,6 +96,11 @@ class CartResource extends Resource
                     ->label('Total Amount')
                     ->formatStateUsing(fn ($record) => '¥' . number_format($record->getTotalAmountAttribute()))
                     ->sortable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Active')
+                    ->boolean()
+                    ->trueColor('success')
+                    ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
@@ -84,6 +115,8 @@ class CartResource extends Resource
                     ->searchable()
                     ->preload()
                     ->placeholder('All Users'),
+                Tables\Filters\TernaryFilter::make('is_active')
+                    ->label('Active'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')

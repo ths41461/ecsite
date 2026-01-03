@@ -20,7 +20,7 @@ class CartItemResource extends Resource
 
     protected static ?string $navigationGroup = 'E-commerce';
 
-    protected static ?int $navigationSort = 19;
+    protected static ?int $navigationSort = 20;
 
     public static function form(Form $form): Form
     {
@@ -42,17 +42,7 @@ class CartItemResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product Variant')
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Set $set) {
-                                        if ($state) {
-                                            $variant = \App\Models\ProductVariant::find($state);
-                                            if ($variant) {
-                                                $set('unit_price_yen', $variant->price_yen);
-                                                $set('line_total_yen', $variant->price_yen); // Will be updated when quantity changes
-                                            }
-                                        }
-                                    }),
+                                    ->label('Product Variant'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -60,34 +50,19 @@ class CartItemResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->label('Quantity')
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
-                                        $unitPrice = $get('unit_price_yen');
-                                        if ($unitPrice && $state) {
-                                            $set('line_total_yen', $unitPrice * $state);
-                                        }
-                                    }),
+                                    ->label('Quantity'),
                                 Forms\Components\TextInput::make('unit_price_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Unit Price (¥)')
-                                    ->live()
-                                    ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
-                                        $quantity = $get('quantity');
-                                        if ($quantity && $state) {
-                                            $set('line_total_yen', $quantity * $state);
-                                        }
-                                    }),
+                                    ->label('Unit Price (¥)'),
                             ]),
                         Forms\Components\TextInput::make('line_total_yen')
                             ->required()
                             ->numeric()
                             ->prefix('¥')
                             ->label('Line Total (¥)')
-                            ->readOnly()
-                            ->helperText('Automatically calculated (quantity × unit price)'),
+                            ->helperText('Calculated as quantity × unit price'),
                     ])
                     ->columns(2),
             ]);
@@ -144,22 +119,48 @@ class CartItemResource extends Resource
                     ->searchable()
                     ->preload()
                     ->placeholder('All Variants'),
-                Tables\Filters\Filter::make('created_at')
+                Tables\Filters\Filter::make('quantity')
                     ->form([
-                        Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
-                        Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                        Forms\Components\TextInput::make('min_quantity')
+                            ->label('Min Quantity')
+                            ->numeric()
+                            ->minValue(1),
+                        Forms\Components\TextInput::make('max_quantity')
+                            ->label('Max Quantity')
+                            ->numeric()
+                            ->minValue(1),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['created_from'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '>=', $date)
+                                $data['min_quantity'],
+                                fn (Builder $query, $value): Builder => $query->where('quantity', '>=', $value)
                             )
                             ->when(
-                                $data['created_until'],
-                                fn (Builder $query, $date): Builder => $query->whereDate('created_at', '<=', $date)
+                                $data['max_quantity'],
+                                fn (Builder $query, $value): Builder => $query->where('quantity', '<=', $value)
+                            );
+                    }),
+                Tables\Filters\Filter::make('unit_price_yen')
+                    ->form([
+                        Forms\Components\TextInput::make('min_price')
+                            ->label('Min Price')
+                            ->numeric()
+                            ->prefix('¥'),
+                        Forms\Components\TextInput::make('max_price')
+                            ->label('Max Price')
+                            ->numeric()
+                            ->prefix('¥'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['min_price'],
+                                fn (Builder $query, $value): Builder => $query->where('unit_price_yen', '>=', $value)
+                            )
+                            ->when(
+                                $data['max_price'],
+                                fn (Builder $query, $value): Builder => $query->where('unit_price_yen', '<=', $value)
                             );
                     }),
             ])

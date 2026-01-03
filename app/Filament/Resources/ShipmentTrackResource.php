@@ -16,17 +16,17 @@ class ShipmentTrackResource extends Resource
 {
     protected static ?string $model = ShipmentTrack::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-map-pin';
+    protected static ?string $navigationIcon = 'heroicon-o-truck';
 
     protected static ?string $navigationGroup = 'Orders';
 
-    protected static ?int $navigationSort = 14;
+    protected static ?int $navigationSort = 15;
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Tracking Information')
+                Forms\Components\Section::make('Tracking Event Information')
                     ->description('Information about the shipment tracking event')
                     ->schema([
                         Forms\Components\Grid::make(2)
@@ -50,8 +50,8 @@ class ShipmentTrackResource extends Resource
                                     ->label('Tracking Number'),
                                 Forms\Components\Select::make('status')
                                     ->options([
+                                        'packed' => 'Packed',
                                         'label_created' => 'Label Created',
-                                        'picked_up' => 'Picked Up',
                                         'in_transit' => 'In Transit',
                                         'out_for_delivery' => 'Out for Delivery',
                                         'delivered' => 'Delivered',
@@ -61,24 +61,14 @@ class ShipmentTrackResource extends Resource
                                     ->required()
                                     ->label('Status'),
                             ]),
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\DateTimePicker::make('event_time')
-                                    ->required()
-                                    ->label('Event Time'),
-                                Forms\Components\TextInput::make('location')
-                                    ->maxLength(255)
-                                    ->label('Location'),
-                            ]),
-                        Forms\Components\Textarea::make('description')
-                            ->rows(3)
-                            ->maxLength(65535)
-                            ->label('Description'),
+                        Forms\Components\DateTimePicker::make('event_time')
+                            ->required()
+                            ->label('Event Time'),
                         Forms\Components\Textarea::make('raw_event_json')
-                            ->rows(5)
+                            ->rows(4)
                             ->columnSpanFull()
                             ->label('Raw Event Data')
-                            ->helperText('JSON data received from carrier webhook'),
+                            ->helperText('JSON data from carrier webhook'),
                     ])
                     ->columns(2),
             ]);
@@ -93,21 +83,21 @@ class ShipmentTrackResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('shipment.tracking_number')
-                    ->label('Shipment Tracking #')
+                    ->label('Tracking #')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('track_no')
-                    ->label('Tracking #')
+                    ->label('Track No')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'label_created' => 'gray',
-                        'picked_up' => 'info',
+                        'packed' => 'info',
+                        'label_created' => 'info',
                         'in_transit' => 'warning',
                         'out_for_delivery' => 'primary',
                         'delivered' => 'success',
@@ -115,12 +105,10 @@ class ShipmentTrackResource extends Resource
                         'returned' => 'secondary',
                         default => 'gray',
                     })
+                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('event_time')
                     ->dateTime()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('location')
-                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -130,8 +118,8 @@ class ShipmentTrackResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
+                        'packed' => 'Packed',
                         'label_created' => 'Label Created',
-                        'picked_up' => 'Picked Up',
                         'in_transit' => 'In Transit',
                         'out_for_delivery' => 'Out for Delivery',
                         'delivered' => 'Delivered',
@@ -139,26 +127,31 @@ class ShipmentTrackResource extends Resource
                         'returned' => 'Returned',
                     ])
                     ->placeholder('All Statuses'),
-                Tables\Filters\SelectFilter::make('shipment_id')
-                    ->relationship('shipment', 'tracking_number')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('All Shipments'),
+                Tables\Filters\SelectFilter::make('carrier')
+                    ->options([
+                        'fedex' => 'FedEx',
+                        'ups' => 'UPS',
+                        'dhl' => 'DHL',
+                        'usps' => 'USPS',
+                        'jp_post' => 'Japan Post',
+                        'other' => 'Other',
+                    ])
+                    ->placeholder('All Carriers'),
                 Tables\Filters\Filter::make('event_time')
                     ->form([
-                        Forms\Components\DatePicker::make('event_time_from')
-                            ->label('Event Time From'),
-                        Forms\Components\DatePicker::make('event_time_until')
-                            ->label('Event Time Until'),
+                        Forms\Components\DatePicker::make('event_from')
+                            ->label('Event From'),
+                        Forms\Components\DatePicker::make('event_until')
+                            ->label('Event Until'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when(
-                                $data['event_time_from'],
+                                $data['event_from'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('event_time', '>=', $date)
                             )
                             ->when(
-                                $data['event_time_until'],
+                                $data['event_until'],
                                 fn (Builder $query, $date): Builder => $query->whereDate('event_time', '<=', $date)
                             );
                     }),
