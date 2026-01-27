@@ -18,7 +18,9 @@ class ProductVariantResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = '商品バリエーション';
 
     protected static ?int $navigationSort = 14;
 
@@ -26,8 +28,8 @@ class ProductVariantResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
-                    ->description('Basic product variant information')
+                Forms\Components\Section::make('基本情報')
+                    ->description('基本的な商品バリエーション情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,26 +38,26 @@ class ProductVariantResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product'),
+                                    ->label('商品'),
                                 Forms\Components\TextInput::make('sku')
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
                                     ->label('SKU')
-                                    ->placeholder('Enter unique SKU for this variant'),
+                                    ->placeholder('このバリエーションのユニークSKUを入力してください'),
                             ]),
                         Forms\Components\KeyValue::make('option_json')
-                            ->label('Options')
-                            ->keyLabel('Option Type')
-                            ->valueLabel('Option Value')
+                            ->label('オプション')
+                            ->keyLabel('オプションタイプ')
+                            ->valueLabel('オプション値')
                             ->addable()
                             ->deletable()
-                            ->helperText('Product variant options (e.g., size, color, scent)'),
+                            ->helperText('商品バリエーションオプション（例：サイズ、色、香り）'),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pricing Information')
-                    ->description('Pricing information for this variant')
+                Forms\Components\Section::make('価格情報')
+                    ->description('このバリエーションの価格情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -63,31 +65,31 @@ class ProductVariantResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Price (¥)')
+                                    ->label('価格（¥）')
                                     ->placeholder('0.00')
-                                    ->helperText('Price in yen'),
+                                    ->helperText('円単位の価格'),
                                 Forms\Components\TextInput::make('sale_price_yen')
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Sale Price (¥)')
+                                    ->label('セール価格（¥）')
                                     ->placeholder('0.00')
-                                    ->helperText('Sale price in yen (optional)'),
+                                    ->helperText('セール価格（円単位）（任意）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DatePicker::make('sale_start_date')
-                                    ->label('Sale Start Date'),
+                                    ->label('セール開始日'),
                                 Forms\Components\DatePicker::make('sale_end_date')
-                                    ->label('Sale End Date'),
+                                    ->label('セール終了日'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Status Information')
-                    ->description('Status and availability settings')
+                Forms\Components\Section::make('ステータス情報')
+                    ->description('ステータスと可用性設定')
                     ->schema([
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('有効')
                             ->default(true)
                             ->inline(false),
                     ])
@@ -104,7 +106,7 @@ class ProductVariantResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sku')
@@ -112,10 +114,10 @@ class ProductVariantResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('option_json')
-                    ->label('Options')
+                    ->label('オプション')
                     ->formatStateUsing(function ($state) {
                         if (!is_array($state)) {
-                            return 'N/A';
+                            return '該当なし';
                         }
 
                         $options = [];
@@ -127,22 +129,22 @@ class ProductVariantResource extends Resource
                     })
                     ->limit(50),
                 Tables\Columns\TextColumn::make('price_yen')
-                    ->label('Price')
+                    ->label('価格')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sale_price_yen')
-                    ->label('Sale Price')
+                    ->label('セール価格')
                     ->formatStateUsing(fn ($state) => $state ? '¥' . number_format($state) : '-')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
                 Tables\Columns\TextColumn::make('inventory.qty')
-                    ->label('Stock')
+                    ->label('在庫')
                     ->getStateUsing(function (ProductVariant $record) {
-                        return $record->inventory ? $record->inventory->qty : 'No inventory';
+                        return $record->inventory ? $record->inventory->qty : '在庫なし';
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -159,22 +161,22 @@ class ProductVariantResource extends Resource
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('有効'),
                 Tables\Filters\TernaryFilter::make('on_sale')
-                    ->label('On Sale')
+                    ->label('セール中')
                     ->query(function (Builder $query) {
                         return $query->whereNotNull('sale_price_yen')->where('sale_price_yen', '>', 0);
                     }),
                 Tables\Filters\Filter::make('price_range')
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Min Price')
+                            ->label('最小価格')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Max Price')
+                            ->label('最大価格')
                             ->numeric()
                             ->prefix('¥'),
                     ])

@@ -19,7 +19,9 @@ class BrandResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-building-storefront';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'ブランド';
 
     protected static ?int $navigationSort = 2;
 
@@ -27,15 +29,15 @@ class BrandResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Brand Information')
-                    ->description('Basic brand information')
+                Forms\Components\Section::make('ブランド情報')
+                    ->description('基本的なブランド情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Enter brand name')
+                                    ->placeholder('ブランド名を入力してください')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
                                         if ($operation !== 'create') {
@@ -48,19 +50,19 @@ class BrandResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Auto-generated from name'),
+                                    ->placeholder('名前から自動生成'),
                                 Forms\Components\FileUpload::make('logo')
                                     ->image()
                                     ->directory('brands')
                                     ->visibility('public')
                                     ->imageEditor()
                                     ->maxSize(2048)
-                                    ->placeholder('Upload brand logo'),
+                                    ->placeholder('ブランドロゴをアップロード'),
                             ]),
                         Forms\Components\Textarea::make('description')
                             ->rows(4)
                             ->maxLength(65535)
-                            ->placeholder('Enter detailed brand description')
+                            ->placeholder('詳細なブランド説明を入力してください')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
@@ -72,24 +74,24 @@ class BrandResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('logo')
-                    ->label('Logo')
+                    ->label('ロゴ')
                     ->circular()
                     ->defaultImageUrl(asset('images/brand-placeholder.png'))
                     ->size(50),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label('スラッグ')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label('商品数')
                     ->counts('products')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('deleted_at')
-                    ->label('Trashed')
+                    ->label('削除済み')
                     ->boolean()
                     ->trueIcon('heroicon-o-trash')
                     ->trueColor('danger')

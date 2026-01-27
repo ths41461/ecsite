@@ -18,8 +18,8 @@ class ProductImagesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Image Information')
-                    ->description('Information about the product image')
+                Forms\Components\Section::make('画像情報')
+                    ->description('商品画像に関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -29,29 +29,29 @@ class ProductImagesRelationManager extends RelationManager
                                     ->visibility('public')
                                     ->imageEditor()
                                     ->required()
-                                    ->label('Image File'),
+                                    ->label('画像ファイル'),
                                 Forms\Components\TextInput::make('alt')
                                     ->maxLength(255)
-                                    ->label('Alt Text')
-                                    ->placeholder('Alternative text for accessibility'),
+                                    ->label('代替テキスト')
+                                    ->placeholder('アクセシビリティのための代替テキスト'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('sort')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Sort Order')
-                                    ->placeholder('Position in image sequence'),
+                                    ->label('並び順')
+                                    ->placeholder('画像シーケンスでの位置'),
                                 Forms\Components\TextInput::make('rank')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Rank')
-                                    ->placeholder('Rank for ordering'),
+                                    ->label('ランク')
+                                    ->placeholder('並び替え用のランク'),
                             ]),
                         Forms\Components\Toggle::make('is_hero')
-                            ->label('Hero Image')
+                            ->label('ヒーロー画像')
                             ->inline(false)
-                            ->helperText('Only one image per product can be the hero image'),
+                            ->helperText('商品ごとに1つの画像のみがヒーロー画像になれます'),
                     ])
                     ->columns(2),
             ]);
@@ -63,24 +63,24 @@ class ProductImagesRelationManager extends RelationManager
             ->recordTitleAttribute('path')
             ->columns([
                 Tables\Columns\ImageColumn::make('path')
-                    ->label('Image')
+                    ->label('画像')
                     ->circular()
                     ->size(60),
                 Tables\Columns\TextColumn::make('alt')
-                    ->label('Alt Text')
+                    ->label('代替テキスト')
                     ->searchable()
                     ->limit(50),
                 Tables\Columns\IconColumn::make('is_hero')
-                    ->label('Hero')
+                    ->label('ヒーロー')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('sort')
-                    ->label('Sort')
+                    ->label('並び順')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rank')
-                    ->label('Rank')
+                    ->label('ランク')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -89,13 +89,13 @@ class ProductImagesRelationManager extends RelationManager
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_hero')
-                    ->label('Hero Image'),
+                    ->label('ヒーロー画像'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

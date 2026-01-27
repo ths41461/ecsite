@@ -18,7 +18,9 @@ class UserAddressResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-map-pin';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static ?string $navigationGroup = 'ユーザー管理';
+
+    protected static ?string $navigationLabel = 'ユーザー住所';
 
     protected static ?int $navigationSort = 7;
 
@@ -26,79 +28,79 @@ class UserAddressResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Address Information')
-                    ->description('User address information')
+                Forms\Components\Section::make('住所情報')
+                    ->description('ユーザーの住所情報')
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->relationship('user', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->label('User'),
+                            ->label('ユーザー'),
                         
                         Forms\Components\TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->label('Full Name'),
+                            ->label('氏名'),
                         
                         Forms\Components\TextInput::make('phone')
                             ->tel()
                             ->maxLength(20)
-                            ->label('Phone Number'),
+                            ->label('電話番号'),
                         
                         Forms\Components\Textarea::make('address_line1')
                             ->required()
                             ->maxLength(255)
-                            ->label('Address Line 1'),
+                            ->label('住所1'),
                         
                         Forms\Components\Textarea::make('address_line2')
                             ->maxLength(255)
-                            ->label('Address Line 2 (Optional)'),
+                            ->label('住所2（任意）'),
                         
                         Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('city')
                                     ->required()
                                     ->maxLength(100)
-                                    ->label('City'),
+                                    ->label('市区町村'),
                                 
                                 Forms\Components\TextInput::make('state')
                                     ->required()
                                     ->maxLength(100)
-                                    ->label('State/Province'),
+                                    ->label('都道府県'),
                                 
                                 Forms\Components\TextInput::make('zip')
                                     ->required()
                                     ->maxLength(20)
-                                    ->label('ZIP/Postal Code'),
+                                    ->label('郵便番号'),
                             ]),
                         
                         Forms\Components\Select::make('country')
                             ->options([
-                                'JP' => 'Japan',
-                                'US' => 'United States',
-                                'CA' => 'Canada',
-                                'GB' => 'United Kingdom',
-                                'AU' => 'Australia',
-                                'DE' => 'Germany',
-                                'FR' => 'France',
-                                'IT' => 'Italy',
-                                'ES' => 'Spain',
-                                'NL' => 'Netherlands',
-                                'IN' => 'India',
-                                'CN' => 'China',
-                                'KR' => 'South Korea',
-                                'SG' => 'Singapore',
-                                'HK' => 'Hong Kong',
+                                'JP' => '日本',
+                                'US' => 'アメリカ合衆国',
+                                'CA' => 'カナダ',
+                                'GB' => 'イギリス',
+                                'AU' => 'オーストラリア',
+                                'DE' => 'ドイツ',
+                                'FR' => 'フランス',
+                                'IT' => 'イタリア',
+                                'ES' => 'スペイン',
+                                'NL' => 'オランダ',
+                                'IN' => 'インド',
+                                'CN' => '中国',
+                                'KR' => '韓国',
+                                'SG' => 'シンガポール',
+                                'HK' => '香港',
                             ])
                             ->required()
                             ->default('JP')
-                            ->label('Country'),
+                            ->label('国'),
                         
                         Forms\Components\Toggle::make('is_default')
-                            ->label('Default Address')
+                            ->label('デフォルト住所')
                             ->inline(false)
-                            ->helperText('Set as the user\'s default address'),
+                            ->helperText('ユーザーのデフォルト住所として設定'),
                     ])
                     ->columns(2),
             ]);
@@ -114,23 +116,23 @@ class UserAddressResource extends Resource
                     ->searchable(),
                 
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->searchable()
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Full Name')
+                    ->label('氏名')
                     ->searchable()
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('phone')
-                    ->label('Phone')
+                    ->label('電話')
                     ->searchable()
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('address_line1')
-                    ->label('Address')
-                    ->description(fn (UserAddress $record) => 
+                    ->label('住所')
+                    ->description(fn (UserAddress $record) =>
                         collect([$record->city, $record->state, $record->zip, $record->country])
                             ->filter()
                             ->join(', ')
@@ -147,7 +149,7 @@ class UserAddressResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('zip')
-                    ->label('ZIP')
+                    ->label('郵便番号')
                     ->searchable()
                     ->sortable(),
                 
@@ -156,7 +158,7 @@ class UserAddressResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\IconColumn::make('is_default')
-                    ->label('Default')
+                    ->label('デフォルト')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('gray'),
@@ -171,30 +173,30 @@ class UserAddressResource extends Resource
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 
                 Tables\Filters\TernaryFilter::make('is_default')
-                    ->label('Default Address'),
+                    ->label('デフォルト住所'),
                 
                 Tables\Filters\SelectFilter::make('country')
                     ->options([
-                        'JP' => 'Japan',
-                        'US' => 'United States',
-                        'CA' => 'Canada',
-                        'GB' => 'United Kingdom',
-                        'AU' => 'Australia',
-                        'DE' => 'Germany',
-                        'FR' => 'France',
-                        'IT' => 'Italy',
-                        'ES' => 'Spain',
-                        'NL' => 'Netherlands',
-                        'IN' => 'India',
-                        'CN' => 'China',
-                        'KR' => 'South Korea',
-                        'SG' => 'Singapore',
-                        'HK' => 'Hong Kong',
+                        'JP' => '日本',
+                        'US' => 'アメリカ合衆国',
+                        'CA' => 'カナダ',
+                        'GB' => 'イギリス',
+                        'AU' => 'オーストラリア',
+                        'DE' => 'ドイツ',
+                        'FR' => 'フランス',
+                        'IT' => 'イタリア',
+                        'ES' => 'スペイン',
+                        'NL' => 'オランダ',
+                        'IN' => 'インド',
+                        'CN' => '中国',
+                        'KR' => '韓国',
+                        'SG' => 'シンガポール',
+                        'HK' => '香港',
                     ])
-                    ->placeholder('All Countries'),
+                    ->placeholder('すべての国'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

@@ -18,7 +18,9 @@ class EventResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-bolt';
 
-    protected static ?string $navigationGroup = 'Analytics';
+    protected static ?string $navigationGroup = '分析';
+
+    protected static ?string $navigationLabel = 'イベント';
 
     protected static ?int $navigationSort = 16;
 
@@ -26,8 +28,8 @@ class EventResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Event Information')
-                    ->description('Information about the user behavior event')
+                Forms\Components\Section::make('イベント情報')
+                    ->description('ユーザー行動イベントに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -35,53 +37,53 @@ class EventResource extends Resource
                                     ->relationship('product', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->label('Product (Optional)')
-                                    ->placeholder('Select a product if applicable'),
+                                    ->label('商品（任意）')
+                                    ->placeholder('該当する場合は商品を選択してください'),
                                 Forms\Components\Select::make('user_id')
                                     ->relationship('user', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->label('User (Optional)')
-                                    ->placeholder('Select a user if logged in'),
+                                    ->label('ユーザー（任意）')
+                                    ->placeholder('ログインしている場合はユーザーを選択してください'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('user_hash')
                                     ->maxLength(255)
-                                    ->label('User Hash')
-                                    ->placeholder('Anonymous user identifier'),
+                                    ->label('ユーザー識別子')
+                                    ->placeholder('匿名ユーザー識別子'),
                                 Forms\Components\Select::make('event_type')
                                     ->options([
-                                        'product_view' => 'Product View',
-                                        'add_to_cart' => 'Add to Cart',
-                                        'remove_from_cart' => 'Remove from Cart',
-                                        'checkout_start' => 'Checkout Start',
-                                        'checkout_complete' => 'Checkout Complete',
-                                        'search' => 'Search',
-                                        'category_view' => 'Category View',
-                                        'brand_view' => 'Brand View',
-                                        'wishlist_add' => 'Wishlist Add',
-                                        'wishlist_remove' => 'Wishlist Remove',
+                                        'product_view' => '商品表示',
+                                        'add_to_cart' => 'カート追加',
+                                        'remove_from_cart' => 'カート削除',
+                                        'checkout_start' => 'チェックアウト開始',
+                                        'checkout_complete' => 'チェックアウト完了',
+                                        'search' => '検索',
+                                        'category_view' => 'カテゴリ表示',
+                                        'brand_view' => 'ブランド表示',
+                                        'wishlist_add' => 'ウィッシュリスト追加',
+                                        'wishlist_remove' => 'ウィッシュリスト削除',
                                     ])
                                     ->required()
-                                    ->label('Event Type'),
+                                    ->label('イベントタイプ'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('value')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Value (Optional)')
-                                    ->placeholder('Numeric value associated with event'),
+                                    ->label('値（任意）')
+                                    ->placeholder('イベントに関連する数値'),
                                 Forms\Components\DateTimePicker::make('occurred_at')
                                     ->required()
-                                    ->label('Occurred At'),
+                                    ->label('発生日時'),
                             ]),
                         Forms\Components\Textarea::make('meta_json')
                             ->rows(4)
                             ->columnSpanFull()
-                            ->label('Metadata')
-                            ->helperText('Additional event metadata in JSON format'),
+                            ->label('メタデータ')
+                            ->helperText('JSON形式の追加イベントメタデータ'),
                     ])
                     ->columns(2),
             ]);
@@ -96,15 +98,15 @@ class EventResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user_hash')
-                    ->label('User Hash')
+                    ->label('ユーザー識別子')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -124,16 +126,16 @@ class EventResource extends Resource
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'product_view' => 'Product View',
-                        'add_to_cart' => 'Add to Cart',
-                        'remove_from_cart' => 'Remove from Cart',
-                        'checkout_start' => 'Checkout Start',
-                        'checkout_complete' => 'Checkout Complete',
-                        'search' => 'Search',
-                        'category_view' => 'Category View',
-                        'brand_view' => 'Brand View',
-                        'wishlist_add' => 'Wishlist Add',
-                        'wishlist_remove' => 'Wishlist Remove',
+                        'product_view' => '商品表示',
+                        'add_to_cart' => 'カート追加',
+                        'remove_from_cart' => 'カート削除',
+                        'checkout_start' => 'チェックアウト開始',
+                        'checkout_complete' => 'チェックアウト完了',
+                        'search' => '検索',
+                        'category_view' => 'カテゴリ表示',
+                        'brand_view' => 'ブランド表示',
+                        'wishlist_add' => 'ウィッシュリスト追加',
+                        'wishlist_remove' => 'ウィッシュリスト削除',
                         default => ucfirst(str_replace('_', ' ', $state)),
                     })
                     ->sortable(),
@@ -151,34 +153,34 @@ class EventResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('event_type')
                     ->options([
-                        'product_view' => 'Product View',
-                        'add_to_cart' => 'Add to Cart',
-                        'remove_from_cart' => 'Remove from Cart',
-                        'checkout_start' => 'Checkout Start',
-                        'checkout_complete' => 'Checkout Complete',
-                        'search' => 'Search',
-                        'category_view' => 'Category View',
-                        'brand_view' => 'Brand View',
-                        'wishlist_add' => 'Wishlist Add',
-                        'wishlist_remove' => 'Wishlist Remove',
+                        'product_view' => '商品表示',
+                        'add_to_cart' => 'カート追加',
+                        'remove_from_cart' => 'カート削除',
+                        'checkout_start' => 'チェックアウト開始',
+                        'checkout_complete' => 'チェックアウト完了',
+                        'search' => '検索',
+                        'category_view' => 'カテゴリ表示',
+                        'brand_view' => 'ブランド表示',
+                        'wishlist_add' => 'ウィッシュリスト追加',
+                        'wishlist_remove' => 'ウィッシュリスト削除',
                     ])
-                    ->placeholder('All Event Types'),
+                    ->placeholder('すべてのイベントタイプ'),
                 Tables\Filters\SelectFilter::make('product_id')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 Tables\Filters\Filter::make('occurred_at')
                     ->form([
                         Forms\Components\DatePicker::make('occurred_from')
-                            ->label('Occurred From'),
+                            ->label('発生日範囲（開始）'),
                         Forms\Components\DatePicker::make('occurred_until')
-                            ->label('Occurred Until'),
+                            ->label('発生日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

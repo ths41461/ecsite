@@ -16,23 +16,25 @@ class AuditLogResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
 
-    protected static ?string $navigationGroup = 'System';
+    protected static ?string $navigationGroup = 'システム';
+
+    protected static ?string $navigationLabel = '監査ログ';
 
     protected static ?int $navigationSort = 99;
 
     public static function getNavigationLabel(): string
     {
-        return 'Audit Logs';
+        return '監査ログ';
     }
 
     public static function getModelLabel(): string
     {
-        return 'Audit Log';
+        return '監査ログ';
     }
 
     public static function getPluralModelLabel(): string
     {
-        return 'Audit Logs';
+        return '監査ログ';
     }
 
     public static function form(Form $form): Form
@@ -40,46 +42,46 @@ class AuditLogResource extends Resource
         return $form
             ->schema([
                 \Filament\Forms\Components\Select::make('user_id')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload(),
                 
                 \Filament\Forms\Components\TextInput::make('user_name')
-                    ->label('User Name')
+                    ->label('ユーザー名')
                     ->maxLength(255),
                 
                 \Filament\Forms\Components\Select::make('action')
                     ->options([
-                        'created' => 'Created',
-                        'updated' => 'Updated',
-                        'deleted' => 'Deleted',
-                        'restored' => 'Restored',
-                        'viewed' => 'Viewed',
-                        'exported' => 'Exported',
+                        'created' => '作成',
+                        'updated' => '更新',
+                        'deleted' => '削除',
+                        'restored' => '復元',
+                        'viewed' => '表示',
+                        'exported' => 'エクスポート',
                     ])
                     ->required()
                     ->searchable(),
                 
                 \Filament\Forms\Components\TextInput::make('model_type')
-                    ->label('Model Type')
+                    ->label('モデルタイプ')
                     ->maxLength(255)
                     ->required(),
                 
                 \Filament\Forms\Components\TextInput::make('model_id')
-                    ->label('Model ID')
+                    ->label('モデルID')
                     ->maxLength(255),
                 
                 \Filament\Forms\Components\TextInput::make('model_name')
-                    ->label('Model Name')
+                    ->label('モデル名')
                     ->maxLength(255),
                 
                 \Filament\Forms\Components\Textarea::make('old_values')
-                    ->label('Old Values')
+                    ->label('旧値')
                     ->columnSpanFull(),
                 
                 \Filament\Forms\Components\Textarea::make('new_values')
-                    ->label('New Values')
+                    ->label('新値')
                     ->columnSpanFull(),
                 
                 \Filament\Forms\Components\TextInput::make('url')
@@ -88,11 +90,11 @@ class AuditLogResource extends Resource
                     ->columnSpanFull(),
                 
                 \Filament\Forms\Components\TextInput::make('ip_address')
-                    ->label('IP Address')
+                    ->label('IPアドレス')
                     ->maxLength(45),
                 
                 \Filament\Forms\Components\Textarea::make('user_agent')
-                    ->label('User Agent')
+                    ->label('ユーザーエージェント')
                     ->maxLength(255)
                     ->columnSpanFull(),
             ]);
@@ -103,12 +105,12 @@ class AuditLogResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->sortable()
                     ->searchable(),
                 
                 Tables\Columns\TextColumn::make('user_name')
-                    ->label('User Name')
+                    ->label('ユーザー名')
                     ->sortable()
                     ->searchable(),
                 
@@ -125,7 +127,7 @@ class AuditLogResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('model_type')
-                    ->label('Model Type')
+                    ->label('モデルタイプ')
                     ->sortable()
                     ->searchable()
                     ->formatStateUsing(function ($state) {
@@ -133,55 +135,55 @@ class AuditLogResource extends Resource
                     }),
                 
                 Tables\Columns\TextColumn::make('model_id')
-                    ->label('Model ID')
+                    ->label('モデルID')
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('model_name')
-                    ->label('Model Name')
+                    ->label('モデル名')
                     ->sortable()
                     ->searchable(),
                 
                 Tables\Columns\TextColumn::make('created_at')
-                    ->label('Date & Time')
+                    ->label('日時')
                     ->dateTime()
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('ip_address')
-                    ->label('IP Address')
+                    ->label('IPアドレス')
                     ->sortable(),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('action')
                     ->options([
-                        'created' => 'Created',
-                        'updated' => 'Updated',
-                        'deleted' => 'Deleted',
-                        'restored' => 'Restored',
-                        'viewed' => 'Viewed',
-                        'exported' => 'Exported',
+                        'created' => '作成',
+                        'updated' => '更新',
+                        'deleted' => '削除',
+                        'restored' => '復元',
+                        'viewed' => '表示',
+                        'exported' => 'エクスポート',
                     ]),
                 
                 Tables\Filters\SelectFilter::make('model_type')
                     ->options([
-                        'App\Models\Product' => 'Product',
-                        'App\Models\User' => 'User',
-                        'App\Models\Order' => 'Order',
-                        'App\Models\Category' => 'Category',
-                        'App\Models\Brand' => 'Brand',
-                        'App\Models\Coupon' => 'Coupon',
-                        'App\Models\Shipment' => 'Shipment',
-                        'App\Models\Slider' => 'Slider',
-                        'App\Models\Review' => 'Review',
-                        'App\Models\Inventory' => 'Inventory',
+                        'App\Models\Product' => '商品',
+                        'App\Models\User' => 'ユーザー',
+                        'App\Models\Order' => '注文',
+                        'App\Models\Category' => 'カテゴリ',
+                        'App\Models\Brand' => 'ブランド',
+                        'App\Models\Coupon' => 'クーポン',
+                        'App\Models\Shipment' => '出荷',
+                        'App\Models\Slider' => 'スライダー',
+                        'App\Models\Review' => 'レビュー',
+                        'App\Models\Inventory' => '在庫',
                     ])
-                    ->label('Model Type'),
+                    ->label('モデルタイプ'),
                 
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         \Filament\Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         \Filament\Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

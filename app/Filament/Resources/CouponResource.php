@@ -21,7 +21,9 @@ class CouponResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'クーポン';
 
     protected static ?int $navigationSort = 5;
 
@@ -29,8 +31,8 @@ class CouponResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Coupon Information')
-                    ->description('Basic coupon information and settings')
+                Forms\Components\Section::make('クーポン情報')
+                    ->description('基本的なクーポン情報と設定')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -38,97 +40,97 @@ class CouponResource extends Resource
                                     ->required()
                                     ->maxLength(40)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Enter coupon code')
-                                    ->helperText('Unique code for this coupon'),
+                                    ->placeholder('クーポンコードを入力してください')
+                                    ->helperText('このクーポンのユニークコード'),
                                 Forms\Components\Select::make('type')
                                     ->options([
-                                        'percent' => 'Percentage',
-                                        'fixed' => 'Fixed Amount',
+                                        'percent' => 'パーセンテージ',
+                                        'fixed' => '固定金額',
                                     ])
                                     ->required()
                                     ->default('percent')
                                     ->live()
-                                    ->helperText('Type of discount to apply'),
+                                    ->helperText('適用する割引の種類'),
                                 Forms\Components\TextInput::make('value')
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->placeholder('Enter discount value')
-                                    ->helperText('Discount value (percentage or fixed amount in yen)'),
+                                    ->placeholder('割引値を入力してください')
+                                    ->helperText('割引値（パーセンテージまたは円単位の固定金額）'),
                                 Forms\Components\Textarea::make('description')
                                     ->maxLength(160)
                                     ->rows(2)
-                                    ->placeholder('Enter coupon description')
-                                    ->helperText('Optional description for this coupon'),
+                                    ->placeholder('クーポンの説明を入力してください')
+                                    ->helperText('このクーポンのオプション説明'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Validity Period')
-                    ->description('Set when this coupon is valid')
+                Forms\Components\Section::make('有効期間')
+                    ->description('このクーポンが有効になる時期を設定')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DatePicker::make('starts_at')
-                                    ->label('Start Date')
-                                    ->helperText('When the coupon becomes active'),
+                                    ->label('開始日')
+                                    ->helperText('クーポンが有効になる日時'),
                                 Forms\Components\DatePicker::make('ends_at')
-                                    ->label('End Date')
-                                    ->helperText('When the coupon expires'),
+                                    ->label('終了日')
+                                    ->helperText('クーポンが期限切れになる日時'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Usage Limits')
-                    ->description('Set limits on coupon usage')
+                Forms\Components\Section::make('使用制限')
+                    ->description('クーポン使用の制限を設定')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('max_uses')
-                                    ->label('Max Uses')
+                                    ->label('最大使用回数')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->placeholder('Leave empty for unlimited')
-                                    ->helperText('Maximum total uses of this coupon'),
+                                    ->placeholder('無制限の場合は空のままにしてください')
+                                    ->helperText('このクーポンの最大総使用回数'),
                                 Forms\Components\TextInput::make('max_uses_per_user')
-                                    ->label('Max Uses Per User')
+                                    ->label('ユーザーごとの最大使用回数')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->placeholder('Leave empty for unlimited')
-                                    ->helperText('Maximum times a single user can use this coupon'),
+                                    ->placeholder('無制限の場合は空のままにしてください')
+                                    ->helperText('1人のユーザーがこのクーポンを使用できる最大回数'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('min_subtotal_yen')
-                                    ->label('Minimum Subtotal (¥)')
+                                    ->label('最小小計（¥）')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->placeholder('Leave empty for no minimum')
-                                    ->helperText('Minimum cart subtotal required to use this coupon'),
+                                    ->placeholder('最小金額がない場合は空のままにしてください')
+                                    ->helperText('このクーポンを使用するために必要な最小カート小計'),
                                 Forms\Components\TextInput::make('max_discount_yen')
-                                    ->label('Max Discount (¥)')
+                                    ->label('最大割引（¥）')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->placeholder('Leave empty for no maximum')
-                                    ->helperText('Maximum discount amount for this coupon'),
+                                    ->placeholder('最大金額がない場合は空のままにしてください')
+                                    ->helperText('このクーポンの最大割引額'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Additional Settings')
-                    ->description('Additional coupon settings')
+                Forms\Components\Section::make('追加設定')
+                    ->description('追加のクーポン設定')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Toggle::make('is_active')
-                                    ->label('Active')
+                                    ->label('有効')
                                     ->default(true)
                                     ->inline(false)
-                                    ->helperText('Whether this coupon is currently active'),
+                                    ->helperText('このクーポンが現在有効かどうか'),
                                 Forms\Components\Toggle::make('exclude_sale_items')
-                                    ->label('Exclude Sale Items')
+                                    ->label('セール品を除外')
                                     ->inline(false)
-                                    ->helperText('If checked, this coupon cannot be applied to sale items'),
+                                    ->helperText('チェックした場合、このクーポンはセール品に適用できません'),
                             ]),
                     ])
                     ->columns(2),
@@ -145,15 +147,15 @@ class CouponResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Code')
+                    ->label('コード')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
-                    ->label('Description')
+                    ->label('説明')
                     ->searchable()
                     ->limit(50),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Type')
+                    ->label('タイプ')
                     ->formatStateUsing(function ($state) {
                         return ucfirst($state);
                     })
@@ -164,7 +166,7 @@ class CouponResource extends Resource
                         default => 'gray',
                     }),
                 Tables\Columns\TextColumn::make('value')
-                    ->label('Value')
+                    ->label('値')
                     ->formatStateUsing(function ($state, $record) {
                         if ($record->type === 'percent') {
                             return $state . '%';
@@ -173,27 +175,27 @@ class CouponResource extends Resource
                         }
                     }),
                 Tables\Columns\TextColumn::make('starts_at')
-                    ->label('Starts At')
+                    ->label('開始日時')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ends_at')
-                    ->label('Ends At')
+                    ->label('終了日時')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('max_uses')
-                    ->label('Max Uses')
+                    ->label('最大使用回数')
                     ->formatStateUsing(function ($state) {
-                        return $state ?? 'Unlimited';
+                        return $state ?? '無制限';
                     }),
                 Tables\Columns\TextColumn::make('used_count')
-                    ->label('Used Count')
+                    ->label('使用回数')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('redemption_count')
-                    ->label('Redemptions')
+                    ->label('償還回数')
                     ->counts('redemptions')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -209,18 +211,18 @@ class CouponResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('type')
                     ->options([
-                        'percent' => 'Percentage',
-                        'fixed' => 'Fixed Amount',
+                        'percent' => 'パーセンテージ',
+                        'fixed' => '固定金額',
                     ])
-                    ->placeholder('All Types'),
+                    ->placeholder('すべてのタイプ'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('有効'),
                 Tables\Filters\Filter::make('starts_at')
                     ->form([
                         Forms\Components\DatePicker::make('starts_after')
-                            ->label('Starts After'),
+                            ->label('開始日以降'),
                         Forms\Components\DatePicker::make('starts_before')
-                            ->label('Starts Before'),
+                            ->label('開始日前'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -236,9 +238,9 @@ class CouponResource extends Resource
                 Tables\Filters\Filter::make('ends_at')
                     ->form([
                         Forms\Components\DatePicker::make('ends_after')
-                            ->label('Ends After'),
+                            ->label('終了日以降'),
                         Forms\Components\DatePicker::make('ends_before')
-                            ->label('Ends Before'),
+                            ->label('終了日前'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

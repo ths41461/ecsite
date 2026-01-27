@@ -18,7 +18,9 @@ class ProductMetricsDailyResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static ?string $navigationGroup = 'Analytics';
+    protected static ?string $navigationGroup = '分析';
+
+    protected static ?string $navigationLabel = '商品メトリクス（日次）';
 
     protected static ?int $navigationSort = 12;
 
@@ -26,8 +28,8 @@ class ProductMetricsDailyResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Product Metrics Information')
-                    ->description('Daily metrics for the product')
+                Forms\Components\Section::make('商品メトリクス情報')
+                    ->description('商品の日次メトリクス')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,65 +38,65 @@ class ProductMetricsDailyResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product'),
+                                    ->label('商品'),
                                 Forms\Components\DatePicker::make('date')
                                     ->required()
-                                    ->label('Date'),
+                                    ->label('日付'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('views')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Views'),
+                                    ->label('表示回数'),
                                 Forms\Components\TextInput::make('atc_count')
-                                    ->label('Add-to-Cart Count')
+                                    ->label('カート追加数')
                                     ->numeric()
                                     ->minValue(0),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('orders_count')
-                                    ->label('Orders Count')
+                                    ->label('注文件数')
                                     ->numeric()
                                     ->minValue(0),
                                 Forms\Components\TextInput::make('revenue_yen')
-                                    ->label('Revenue (¥)')
+                                    ->label('収益（¥）')
                                     ->numeric()
                                     ->minValue(0)
                                     ->prefix('¥')
-                                    ->helperText('Revenue in yen'),
+                                    ->helperText('円単位の収益'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('search_impressions')
-                                    ->label('Search Impressions')
+                                    ->label('検索インプレッション')
                                     ->numeric()
                                     ->minValue(0),
                                 Forms\Components\TextInput::make('search_clicks')
-                                    ->label('Search Clicks')
+                                    ->label('検索クリック数')
                                     ->numeric()
                                     ->minValue(0),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('wishlist_adds')
-                                    ->label('Wishlist Adds')
+                                    ->label('ウィッシュリスト追加数')
                                     ->numeric()
                                     ->minValue(0),
                                 Forms\Components\TextInput::make('rating_avg')
-                                    ->label('Average Rating')
+                                    ->label('平均評価')
                                     ->numeric()
                                     ->minValue(0)
                                     ->maxValue(5)
                                     ->step(0.1)
-                                    ->helperText('Average rating on a 5-point scale'),
+                                    ->helperText('5点満点での平均評価'),
                             ]),
                         Forms\Components\TextInput::make('rating_count')
-                            ->label('Rating Count')
+                            ->label('評価件数')
                             ->numeric()
                             ->minValue(0)
-                            ->helperText('Number of ratings received'),
+                            ->helperText('受信した評価の数'),
                     ])
                     ->columns(2),
             ]);
@@ -109,7 +111,7 @@ class ProductMetricsDailyResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('date')
@@ -119,35 +121,35 @@ class ProductMetricsDailyResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('atc_count')
-                    ->label('ATC Count')
+                    ->label('カート追加数')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('orders_count')
-                    ->label('Orders')
+                    ->label('注文数')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('revenue_yen')
-                    ->label('Revenue (¥)')
+                    ->label('収益（¥）')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('search_impressions')
-                    ->label('Search Imp.')
+                    ->label('検索インプレッション')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('search_clicks')
-                    ->label('Search Clicks')
+                    ->label('検索クリック数')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('wishlist_adds')
-                    ->label('Wishlist Adds')
+                    ->label('ウィッシュリスト追加数')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rating_avg')
-                    ->label('Avg Rating')
+                    ->label('平均評価')
                     ->formatStateUsing(fn ($state) => number_format($state, 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rating_count')
-                    ->label('Rating Count')
+                    ->label('評価件数')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -159,9 +161,9 @@ class ProductMetricsDailyResource extends Resource
                 Tables\Filters\Filter::make('date')
                     ->form([
                         Forms\Components\DatePicker::make('date_from')
-                            ->label('Date From'),
+                            ->label('日付範囲（開始）'),
                         Forms\Components\DatePicker::make('date_until')
-                            ->label('Date Until'),
+                            ->label('日付範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -178,20 +180,20 @@ class ProductMetricsDailyResource extends Resource
                     ->relationship('product.category', 'name')
                     ->searchable()
                     ->preload()
-                    ->label('Category'),
+                    ->label('カテゴリ'),
                 Tables\Filters\SelectFilter::make('product.brand_id')
                     ->relationship('product.brand', 'name')
                     ->searchable()
                     ->preload()
-                    ->label('Brand'),
+                    ->label('ブランド'),
                 Tables\Filters\Filter::make('revenue_yen')
                     ->form([
                         Forms\Components\TextInput::make('min_revenue')
-                            ->label('Min Revenue')
+                            ->label('最小収益')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_revenue')
-                            ->label('Max Revenue')
+                            ->label('最大収益')
                             ->numeric()
                             ->prefix('¥'),
                     ])

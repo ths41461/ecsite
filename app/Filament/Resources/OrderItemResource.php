@@ -18,7 +18,9 @@ class OrderItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = '注文アイテム';
 
     protected static ?int $navigationSort = 5;
 
@@ -26,8 +28,8 @@ class OrderItemResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Item Information')
-                    ->description('Information about the item in the order')
+                Forms\Components\Section::make('注文アイテム情報')
+                    ->description('注文内のアイテムに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,13 +38,13 @@ class OrderItemResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Order'),
+                                    ->label('注文'),
                                 Forms\Components\Select::make('product_id')
                                     ->relationship('product', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product')
+                                    ->label('商品')
                                     ->live()
                                     ->afterStateUpdated(function ($state, Forms\Set $set) {
                                         if ($state) {
@@ -60,24 +62,24 @@ class OrderItemResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product Variant')
-                                    ->helperText('Select the specific variant of the product'),
+                                    ->label('商品バリエーション')
+                                    ->helperText('商品の特定のバリエーションを選択してください'),
                                 Forms\Components\TextInput::make('product_name_snapshot')
                                     ->required()
                                     ->maxLength(255)
-                                    ->label('Product Name (Snapshot)')
-                                    ->helperText('Name at time of order'),
+                                    ->label('商品名（スナップショット）')
+                                    ->helperText('注文時の名称'),
                             ]),
                         Forms\Components\TextInput::make('sku_snapshot')
                             ->required()
                             ->maxLength(255)
-                            ->label('SKU (Snapshot)')
-                            ->helperText('SKU at time of order'),
+                            ->label('SKU（スナップショット）')
+                            ->helperText('注文時のSKU'),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pricing Information')
-                    ->description('Pricing information for this order item')
+                Forms\Components\Section::make('価格情報')
+                    ->description('この注文アイテムの価格情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -85,8 +87,8 @@ class OrderItemResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Unit Price (¥)')
-                                    ->helperText('Price per unit at time of order')
+                                    ->label('単価（¥）')
+                                    ->helperText('注文時の単価')
                                     ->live()
                                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                                         $quantity = $get('quantity');
@@ -98,8 +100,8 @@ class OrderItemResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->label('Quantity')
-                                    ->helperText('Number of items ordered')
+                                    ->label('数量')
+                                    ->helperText('注文されたアイテム数')
                                     ->live()
                                     ->afterStateUpdated(function ($state, Forms\Get $get, Forms\Set $set) {
                                         $unitPrice = $get('unit_price_yen');
@@ -112,8 +114,8 @@ class OrderItemResource extends Resource
                             ->required()
                             ->numeric()
                             ->prefix('¥')
-                            ->label('Line Total (¥)')
-                            ->helperText('Total price for this line item (automatically calculated)')
+                            ->label('小計（¥）')
+                            ->helperText('この行アイテムの合計価格（自動計算）')
                             ->readOnly(),
                     ])
                     ->columns(2),
@@ -129,11 +131,11 @@ class OrderItemResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sku_snapshot')
@@ -141,15 +143,15 @@ class OrderItemResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unit_price_yen')
-                    ->label('Unit Price')
+                    ->label('単価')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Qty')
+                    ->label('数量')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('line_total_yen')
-                    ->label('Line Total')
+                    ->label('小計')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -166,20 +168,20 @@ class OrderItemResource extends Resource
                     ->relationship('order', 'order_number')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Orders'),
+                    ->placeholder('すべての注文'),
                 Tables\Filters\SelectFilter::make('product_id')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\Filter::make('price_range')
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Min Price')
+                            ->label('最小価格')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Max Price')
+                            ->label('最大価格')
                             ->numeric()
                             ->prefix('¥'),
                     ])
@@ -197,10 +199,10 @@ class OrderItemResource extends Resource
                 Tables\Filters\Filter::make('quantity_range')
                     ->form([
                         Forms\Components\TextInput::make('min_quantity')
-                            ->label('Min Quantity')
+                            ->label('最小数量')
                             ->numeric(),
                         Forms\Components\TextInput::make('max_quantity')
-                            ->label('Max Quantity')
+                            ->label('最大数量')
                             ->numeric(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -217,9 +219,9 @@ class OrderItemResource extends Resource
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

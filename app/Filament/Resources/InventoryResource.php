@@ -19,49 +19,49 @@ class InventoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
 
     protected static ?int $navigationSort = 4;
 
-    protected static ?string $navigationLabel = 'Inventory';
+    protected static ?string $navigationLabel = '在庫';
 
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Inventory Information')
-                    ->description('Manage product variant inventory')
+                Forms\Components\Section::make('在庫情報')
+                    ->description('商品バリエーションの在庫を管理')
                     ->schema([
                         Forms\Components\Select::make('product_variant_id')
-                            ->label('Product Variant')
+                            ->label('商品バリエーション')
                             ->relationship('variant', 'sku')
                             ->searchable()
                             ->preload()
                             ->required()
                             ->unique(ignoreRecord: true)
-                            ->helperText('Select the product variant this inventory record is for'),
+                            ->helperText('この在庫記録の対象となる商品バリエーションを選択してください'),
 
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('stock')
-                                    ->label('Current Stock')
+                                    ->label('現在の在庫')
                                     ->numeric()
                                     ->minValue(0)
                                     ->required()
-                                    ->helperText('Current available stock quantity'),
+                                    ->helperText('現在利用可能な在庫数量'),
 
                                 Forms\Components\TextInput::make('safety_stock')
-                                    ->label('Safety Stock')
+                                    ->label('安全在庫')
                                     ->numeric()
                                     ->minValue(0)
                                     ->required()
-                                    ->helperText('Minimum stock level before reordering'),
+                                    ->helperText('再注文前の最低在庫レベル'),
                             ]),
 
                         Forms\Components\Toggle::make('managed')
-                            ->label('Inventory Managed')
+                            ->label('在庫管理')
                             ->default(true)
-                            ->helperText('Whether this inventory is actively managed (stock will be decremented on order)'),
+                            ->helperText('この在庫が積極的に管理されているかどうか（注文時に在庫が減少します）'),
                     ])
                     ->columns(2),
             ]);
@@ -72,18 +72,18 @@ class InventoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('variant.sku')
-                    ->label('Variant SKU')
+                    ->label('バリエーションSKU')
                     ->searchable()
                     ->sortable()
                     ->description(fn (Inventory $record) => $record->variant?->product?->name),
 
                 Tables\Columns\TextColumn::make('variant.product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('stock')
-                    ->label('Current Stock')
+                    ->label('現在の在庫')
                     ->numeric()
                     ->sortable()
                     ->badge()
@@ -94,12 +94,12 @@ class InventoryResource extends Resource
                     }),
 
                 Tables\Columns\TextColumn::make('safety_stock')
-                    ->label('Safety Stock')
+                    ->label('安全在庫')
                     ->numeric()
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('stock_status')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'in_stock' => 'success',
@@ -117,7 +117,7 @@ class InventoryResource extends Resource
                     }),
 
                 Tables\Columns\IconColumn::make('managed')
-                    ->label('Managed')
+                    ->label('管理対象')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -130,18 +130,18 @@ class InventoryResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('managed')
                     ->options([
-                        true => 'Managed',
-                        false => 'Not Managed',
+                        true => '管理対象',
+                        false => '非管理対象',
                     ])
-                    ->label('Inventory Management Status'),
+                    ->label('在庫管理ステータス'),
 
                 Tables\Filters\SelectFilter::make('stock_status')
                     ->options([
-                        'in_stock' => 'In Stock',
-                        'low_stock' => 'Low Stock', 
-                        'out_of_stock' => 'Out of Stock',
+                        'in_stock' => '在庫あり',
+                        'low_stock' => '在庫わずか',
+                        'out_of_stock' => '在庫なし',
                     ])
-                    ->label('Stock Status')
+                    ->label('在庫ステータス')
                     ->query(function (Builder $query, array $data) {
                         return match ($data['value']) {
                             'in_stock' => $query->where('stock', '>', 0)->whereColumn('stock', '>', 'safety_stock'),
@@ -154,11 +154,11 @@ class InventoryResource extends Resource
                 Tables\Filters\Filter::make('stock')
                     ->form([
                         Forms\Components\TextInput::make('min_stock')
-                            ->label('Min Stock')
+                            ->label('最小在庫')
                             ->numeric()
                             ->placeholder('0'),
                         Forms\Components\TextInput::make('max_stock')
-                            ->label('Max Stock')
+                            ->label('最大在庫')
                             ->numeric()
                             ->placeholder('9999'),
                     ])

@@ -13,13 +13,13 @@ class RecommendationManagement extends Page
 
     protected static string $view = 'filament.pages.recommendation-management';
 
-    protected static ?string $navigationGroup = 'System';
+    protected static ?string $navigationGroup = 'システム';
 
     protected static ?int $navigationSort = 99;
 
-    protected static ?string $title = 'Recommendation System';
+    protected static ?string $title = 'レコメンデーションシステム';
 
-    protected static ?string $navigationLabel = 'Recommendations';
+    protected static ?string $navigationLabel = 'レコメンデーション';
 
     public ?string $lastRankingRun = null;
 
@@ -28,15 +28,15 @@ class RecommendationManagement extends Page
     public function mount(): void
     {
         // For now, we'll just initialize the properties
-        $this->lastRankingRun = 'Never run';
-        $this->lastMetricsRun = 'Never run';
+        $this->lastRankingRun = '実行されていません';
+        $this->lastMetricsRun = '実行されていません';
     }
 
     protected function getHeaderActions(): array
     {
         return [
             Action::make('compute-rankings')
-                ->label('Compute Rankings')
+                ->label('ランキングを計算')
                 ->button()
                 ->color('primary')
                 ->action(function (): void {
@@ -44,26 +44,26 @@ class RecommendationManagement extends Page
 
                     if ($exitCode === 0) {
                         $this->dispatch('notification', [
-                            'title' => 'Success',
-                            'message' => 'Rankings computed successfully!',
+                            'title' => '成功',
+                            'message' => 'ランキングが正常に計算されました！',
                             'status' => 'success'
                         ]);
                         $this->lastRankingRun = now()->format('Y-m-d H:i:s');
                     } else {
                         $this->dispatch('notification', [
-                            'title' => 'Error',
-                            'message' => 'Failed to compute rankings. Check logs for details.',
+                            'title' => 'エラー',
+                            'message' => 'ランキングの計算に失敗しました。詳細はログを確認してください。',
                             'status' => 'error'
                         ]);
                     }
                 })
                 ->requiresConfirmation()
-                ->modalHeading('Compute Rankings')
-                ->modalDescription('This will recompute all product rankings based on current metrics. This may take a few moments.')
-                ->modalSubmitActionLabel('Compute'),
+                ->modalHeading('ランキングを計算')
+                ->modalDescription('これは現在のメトリクスに基づいてすべての商品ランキングを再計算します。少し時間がかかる場合があります。')
+                ->modalSubmitActionLabel('計算'),
 
             Action::make('recompute-metrics')
-                ->label('Recompute Metrics')
+                ->label('メトリクスを再計算')
                 ->button()
                 ->color('warning')
                 ->action(function (): void {
@@ -71,23 +71,23 @@ class RecommendationManagement extends Page
 
                     if ($exitCode === 0) {
                         $this->dispatch('notification', [
-                            'title' => 'Success',
-                            'message' => 'Metrics recomputed successfully!',
+                            'title' => '成功',
+                            'message' => 'メトリクスが正常に再計算されました！',
                             'status' => 'success'
                         ]);
                         $this->lastMetricsRun = now()->format('Y-m-d H:i:s');
                     } else {
                         $this->dispatch('notification', [
-                            'title' => 'Error',
-                            'message' => 'Failed to recompute metrics. Check logs for details.',
+                            'title' => 'エラー',
+                            'message' => 'メトリクスの再計算に失敗しました。詳細はログを確認してください。',
                             'status' => 'error'
                         ]);
                     }
                 })
                 ->requiresConfirmation()
-                ->modalHeading('Recompute Metrics')
-                ->modalDescription('This will recompute all product metrics from recent events and orders. This may take a few moments.')
-                ->modalSubmitActionLabel('Recompute'),
+                ->modalHeading('メトリクスを再計算')
+                ->modalDescription('これは最近のイベントと注文からすべての商品メトリクスを再計算します。少し時間がかかる場合があります。')
+                ->modalSubmitActionLabel('再計算'),
         ];
     }
 }

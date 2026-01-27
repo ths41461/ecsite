@@ -18,8 +18,8 @@ class OrderStatusHistoryRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Status Change Information')
-                    ->description('Information about the status change')
+                Forms\Components\Section::make('ステータス変更情報')
+                    ->description('ステータス変更に関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -28,28 +28,28 @@ class OrderStatusHistoryRelationManager extends RelationManager
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('From Status'),
+                                    ->label('変更前ステータス'),
                                 Forms\Components\Select::make('to_status_id')
                                     ->relationship('toStatus', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('To Status'),
+                                    ->label('変更後ステータス'),
                             ]),
                         Forms\Components\Select::make('changed_by')
                             ->relationship('changedByUser', 'name')
                             ->searchable()
                             ->preload()
-                            ->label('Changed By (User ID)')
-                            ->helperText('User who changed the status'),
+                            ->label('変更者（ユーザーID）')
+                            ->helperText('ステータスを変更したユーザー'),
                         Forms\Components\DateTimePicker::make('changed_at')
                             ->required()
-                            ->label('Changed At'),
+                            ->label('変更日時'),
                         Forms\Components\Textarea::make('note')
                             ->rows(3)
                             ->maxLength(65535)
-                            ->label('Note')
-                            ->helperText('Optional note about the status change')
+                            ->label('備考')
+                            ->helperText('ステータス変更に関するオプションの備考')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
@@ -65,7 +65,7 @@ class OrderStatusHistoryRelationManager extends RelationManager
                     ->label('ID')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('fromStatus.name')
-                    ->label('From Status')
+                    ->label('変更前ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Pending' => 'gray',
@@ -78,7 +78,7 @@ class OrderStatusHistoryRelationManager extends RelationManager
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('toStatus.name')
-                    ->label('To Status')
+                    ->label('変更後ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Pending' => 'gray',
@@ -91,15 +91,15 @@ class OrderStatusHistoryRelationManager extends RelationManager
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('changedByUser.name')
-                    ->label('Changed By')
+                    ->label('変更者')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('System'),
+                    ->placeholder('システム'),
                 Tables\Columns\TextColumn::make('changed_at')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('note')
-                    ->label('Note')
+                    ->label('備考')
                     ->limit(50),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -110,18 +110,18 @@ class OrderStatusHistoryRelationManager extends RelationManager
                     ->relationship('fromStatus', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All From Statuses'),
+                    ->placeholder('すべての変更前ステータス'),
                 Tables\Filters\SelectFilter::make('to_status_id')
                     ->relationship('toStatus', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All To Statuses'),
+                    ->placeholder('すべての変更後ステータス'),
                 Tables\Filters\Filter::make('changed_at')
                     ->form([
                         Forms\Components\DatePicker::make('changed_from')
-                            ->label('Changed From'),
+                            ->label('変更日範囲（開始）'),
                         Forms\Components\DatePicker::make('changed_until')
-                            ->label('Changed Until'),
+                            ->label('変更日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

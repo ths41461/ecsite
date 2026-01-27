@@ -14,7 +14,7 @@ class OrderItemsRelationManager extends RelationManager
 {
     protected static string $relationship = 'orderItems';
 
-    protected static ?string $title = 'Order Items';
+    protected static ?string $title = '注文アイテム';
 
     public function form(Form $form): Form
     {
@@ -25,13 +25,13 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->placeholder('Select order'),
+                    ->placeholder('注文を選択'),
                 Forms\Components\Select::make('product_id')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->placeholder('Select product')
+                    ->placeholder('商品を選択')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         if ($state) {
@@ -47,7 +47,7 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->nullable()
-                    ->placeholder('Select variant (optional)')
+                    ->placeholder('バリエーションを選択（任意）')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         if ($state) {
@@ -63,18 +63,18 @@ class OrderItemsRelationManager extends RelationManager
                 Forms\Components\TextInput::make('name_snapshot')
                     ->required()
                     ->maxLength(255)
-                    ->placeholder('Product name snapshot'),
+                    ->placeholder('商品名スナップショット'),
                 Forms\Components\TextInput::make('sku_snapshot')
                     ->required()
                     ->maxLength(255)
-                    ->placeholder('SKU snapshot'),
+                    ->placeholder('SKUスナップショット'),
                 Forms\Components\TextInput::make('unit_price_yen')
-                    ->label('Unit Price (¥)')
+                    ->label('単価（¥）')
                     ->required()
                     ->numeric()
                     ->prefix('¥')
                     ->placeholder('0')
-                    ->helperText('Price per unit at time of order')
+                    ->helperText('注文時の単価')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         $quantity = $get('qty');
@@ -83,12 +83,12 @@ class OrderItemsRelationManager extends RelationManager
                         }
                     }),
                 Forms\Components\TextInput::make('qty')
-                    ->label('Quantity')
+                    ->label('数量')
                     ->required()
                     ->numeric()
                     ->minValue(1)
                     ->placeholder('1')
-                    ->helperText('Number of items ordered')
+                    ->helperText('注文されたアイテム数')
                     ->live()
                     ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
                         $unitPrice = $get('unit_price_yen');
@@ -97,12 +97,12 @@ class OrderItemsRelationManager extends RelationManager
                         }
                     }),
                 Forms\Components\TextInput::make('line_total_yen')
-                    ->label('Line Total (¥)')
+                    ->label('小計（¥）')
                     ->required()
                     ->numeric()
                     ->prefix('¥')
                     ->placeholder('0')
-                    ->helperText('Total price for this line item (unit price × quantity)')
+                    ->helperText('この行アイテムの合計価格（単価 × 数量）')
                     ->readOnly(),
             ]);
     }
@@ -113,11 +113,11 @@ class OrderItemsRelationManager extends RelationManager
             ->recordTitleAttribute('name_snapshot')
             ->columns([
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name_snapshot')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sku_snapshot')
@@ -125,17 +125,17 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unit_price_yen')
-                    ->label('Unit Price')
+                    ->label('単価')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('qty')
-                    ->label('Quantity')
+                    ->label('数量')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('line_total_yen')
-                    ->label('Line Total')
+                    ->label('小計')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })

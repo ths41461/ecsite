@@ -18,7 +18,9 @@ class ProductMetricsCurrentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-pie';
 
-    protected static ?string $navigationGroup = 'Analytics';
+    protected static ?string $navigationGroup = '分析';
+
+    protected static ?string $navigationLabel = '商品メトリクス（現在）';
 
     protected static ?int $navigationSort = 11;
 
@@ -26,25 +28,25 @@ class ProductMetricsCurrentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Product Metrics')
-                    ->description('Current metrics for the product')
+                Forms\Components\Section::make('商品メトリクス')
+                    ->description('商品の現在のメトリクス')
                     ->schema([
                         Forms\Components\Select::make('product_id')
                             ->relationship('product', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->label('Product'),
+                            ->label('商品'),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('units_7d')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Units Sold (7 Days)'),
+                                    ->label('販売数（7日間）'),
                                 Forms\Components\TextInput::make('units_30d')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Units Sold (30 Days)'),
+                                    ->label('販売数（30日間）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -53,13 +55,13 @@ class ProductMetricsCurrentResource extends Resource
                                     ->minValue(0)
                                     ->maxValue(1)
                                     ->step(0.01)
-                                    ->label('Conversion Rate (PDP)'),
+                                    ->label('コンバージョン率（PDP）'),
                                 Forms\Components\TextInput::make('atc_rate')
                                     ->numeric()
                                     ->minValue(0)
                                     ->maxValue(1)
                                     ->step(0.01)
-                                    ->label('Add-to-Cart Rate'),
+                                    ->label('カート追加率'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -68,25 +70,25 @@ class ProductMetricsCurrentResource extends Resource
                                     ->minValue(0)
                                     ->maxValue(1)
                                     ->step(0.01)
-                                    ->label('Search Click-Through Rate'),
+                                    ->label('検索クリック率'),
                                 Forms\Components\TextInput::make('revenue_30d')
                                     ->numeric()
                                     ->minValue(0)
                                     ->prefix('¥')
-                                    ->label('Revenue (30 Days)'),
+                                    ->label('収益（30日間）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('wishlist_14d')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Wishlist Additions (14 Days)'),
+                                    ->label('ウィッシュリスト追加数（14日間）'),
                                 Forms\Components\TextInput::make('rating_bayes')
                                     ->numeric()
                                     ->minValue(0)
                                     ->maxValue(5)
                                     ->step(0.1)
-                                    ->label('Bayesian Average Rating'),
+                                    ->label('ベイズ平均評価'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -95,16 +97,16 @@ class ProductMetricsCurrentResource extends Resource
                                     ->minValue(0)
                                     ->maxValue(1)
                                     ->step(0.01)
-                                    ->label('Freshness Bonus'),
+                                    ->label('新鮮度ボーナス'),
                                 Forms\Components\TextInput::make('stock')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Current Stock'),
+                                    ->label('現在の在庫'),
                             ]),
                         Forms\Components\TextInput::make('safety_stock')
                             ->numeric()
                             ->minValue(0)
-                            ->label('Safety Stock Level'),
+                            ->label('安全在庫レベル'),
                     ])
                     ->columns(2),
             ]);
@@ -119,31 +121,31 @@ class ProductMetricsCurrentResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('units_7d')
-                    ->label('Units (7d)')
+                    ->label('販売数（7日間）')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('units_30d')
-                    ->label('Units (30d)')
+                    ->label('販売数（30日間）')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('conv_rate_pdp')
-                    ->label('Conv Rate')
+                    ->label('コンバージョン率')
                     ->formatStateUsing(fn ($state) => number_format($state * 100, 2) . '%')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('atc_rate')
-                    ->label('ATC Rate')
+                    ->label('カート追加率')
                     ->formatStateUsing(fn ($state) => number_format($state * 100, 2) . '%')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rating_bayes')
-                    ->label('Rating')
+                    ->label('評価')
                     ->formatStateUsing(fn ($state) => number_format($state, 2))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('revenue_30d')
-                    ->label('Revenue (30d)')
+                    ->label('収益（30日間）')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
@@ -155,10 +157,10 @@ class ProductMetricsCurrentResource extends Resource
                 Tables\Filters\Filter::make('units_sold')
                     ->form([
                         Forms\Components\TextInput::make('min_units_7d')
-                            ->label('Min Units (7d)')
+                            ->label('最小販売数（7日間）')
                             ->numeric(),
                         Forms\Components\TextInput::make('max_units_7d')
-                            ->label('Max Units (7d)')
+                            ->label('最大販売数（7日間）')
                             ->numeric(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -174,12 +176,12 @@ class ProductMetricsCurrentResource extends Resource
                     }),
                 Tables\Filters\SelectFilter::make('product.category_id')
                     ->relationship('product.category', 'name')
-                    ->label('Category')
+                    ->label('カテゴリ')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('product.brand_id')
                     ->relationship('product.brand', 'name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->searchable()
                     ->preload(),
             ])

@@ -18,7 +18,9 @@ class ShipmentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '出荷';
 
     public static function form(Form $form): Form
     {
@@ -38,15 +40,15 @@ class ShipmentResource extends Resource
                     ->unique(ignoreRecord: true),
                 Forms\Components\Select::make('shipment_status_id')
                     ->relationship('shipmentStatus', 'name')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->required(),
                 Forms\Components\Select::make('status')
                     ->options([
-                        'label' => 'Label Created',
-                        'shipped' => 'Shipped',
-                        'in_transit' => 'In Transit',
-                        'delivered' => 'Delivered',
-                        'exception' => 'Exception',
+                        'label' => 'ラベル作成済み',
+                        'shipped' => '発送済み',
+                        'in_transit' => '輸送中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
                     ])
                     ->default('label')
                     ->required(),
@@ -65,18 +67,18 @@ class ShipmentResource extends Resource
                     ->label('ID')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.id')
-                    ->label('Order ID')
+                    ->label('注文ID')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tracking_number')
-                    ->label('Tracking #')
+                    ->label('追跡番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('shipmentStatus.name')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Pending' => 'warning',
@@ -116,22 +118,22 @@ class ShipmentResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('shipment_status_id')
                     ->relationship('shipmentStatus', 'name')
-                    ->label('Status'),
+                    ->label('ステータス'),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'label' => 'Label Created',
-                        'shipped' => 'Shipped',
-                        'in_transit' => 'In Transit',
-                        'delivered' => 'Delivered',
-                        'exception' => 'Exception',
+                        'label' => 'ラベル作成済み',
+                        'shipped' => '発送済み',
+                        'in_transit' => '輸送中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\Filter::make('shipped_at')
                     ->form([
                         Forms\Components\DatePicker::make('shipped_from')
-                            ->label('Shipped From'),
+                            ->label('発送日範囲（開始）'),
                         Forms\Components\DatePicker::make('shipped_until')
-                            ->label('Shipped Until'),
+                            ->label('発送日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -141,9 +143,9 @@ class ShipmentResource extends Resource
                 Tables\Filters\Filter::make('delivered_at')
                     ->form([
                         Forms\Components\DatePicker::make('delivered_from')
-                            ->label('Delivered From'),
+                            ->label('配達日範囲（開始）'),
                         Forms\Components\DatePicker::make('delivered_until')
-                            ->label('Delivered Until'),
+                            ->label('配達日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

@@ -18,7 +18,9 @@ class ShipmentStatusResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '出荷ステータス';
 
     protected static ?int $navigationSort = 17;
 
@@ -26,8 +28,8 @@ class ShipmentStatusResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Shipment Status Information')
-                    ->description('Information about the shipment status')
+                Forms\Components\Section::make('出荷ステータス情報')
+                    ->description('出荷ステータスに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -35,19 +37,19 @@ class ShipmentStatusResource extends Resource
                                     ->required()
                                     ->maxLength(50)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Enter status code (e.g., pending, shipped)')
-                                    ->helperText('Unique code for this status'),
+                                    ->placeholder('ステータスコードを入力してください（例：pending, shipped）')
+                                    ->helperText('このステータスのユニークコード'),
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(100)
-                                    ->placeholder('Enter status name (e.g., Pending, Shipped)')
-                                    ->helperText('Display name for this status'),
+                                    ->placeholder('ステータス名を入力してください（例：Pending, Shipped）')
+                                    ->helperText('このステータスの表示名'),
                             ]),
                         Forms\Components\Textarea::make('description')
                             ->rows(3)
                             ->maxLength(65535)
-                            ->placeholder('Enter description for this status')
-                            ->helperText('Optional description explaining this status'),
+                            ->placeholder('このステータスの説明を入力してください')
+                            ->helperText('このステータスを説明するオプションの説明'),
                     ])
                     ->columns(2),
             ]);
@@ -62,15 +64,15 @@ class ShipmentStatusResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Code')
+                    ->label('コード')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label('名前')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
-                    ->label('Description')
+                    ->label('説明')
                     ->limit(50)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -86,9 +88,9 @@ class ShipmentStatusResource extends Resource
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

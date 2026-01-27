@@ -18,9 +18,9 @@ class ReviewResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-right';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
 
-    protected static ?string $navigationLabel = 'Reviews';
+    protected static ?string $navigationLabel = 'レビュー';
 
     protected static ?int $navigationSort = 7;
 
@@ -28,8 +28,8 @@ class ReviewResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Review Information')
-                    ->description('Basic information about the review')
+                Forms\Components\Section::make('レビュー情報')
+                    ->description('レビューに関する基本情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -38,12 +38,12 @@ class ReviewResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->placeholder('Select a product'),
+                                    ->placeholder('商品を選択してください'),
                                 Forms\Components\Select::make('user_id')
                                     ->relationship('user', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->placeholder('Select a user (optional)'),
+                                    ->placeholder('ユーザーを選択してください（任意）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -52,8 +52,9 @@ class ReviewResource extends Resource
                                     ->numeric()
                                     ->minValue(1)
                                     ->maxValue(5)
-                                    ->placeholder('Rating (1-5)'),
+                                    ->placeholder('評価（1-5）'),
                                 Forms\Components\Toggle::make('approved')
+                                    ->label('承認済み')
                                     ->required()
                                     ->inline(false)
                                     ->default(true),
@@ -62,7 +63,7 @@ class ReviewResource extends Resource
                             ->required()
                             ->maxLength(65535)
                             ->rows(4)
-                            ->placeholder('Review content'),
+                            ->placeholder('レビュー内容'),
                     ])
                     ->columns(2),
             ]);
@@ -73,15 +74,15 @@ class ReviewResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable()
                     ->description(fn (Review $record): string => $record->product->brand?->name ?? ''),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('Guest'),
+                    ->placeholder('ゲスト'),
                 Tables\Columns\TextColumn::make('rating')
                     ->badge()
                     ->color(fn (int $state): string => match ($state) {
@@ -94,7 +95,7 @@ class ReviewResource extends Resource
                     })
                     ->formatStateUsing(fn (int $state): string => str_repeat('★', $state) . str_repeat('☆', 5 - $state)),
                 Tables\Columns\TextColumn::make('body')
-                    ->label('Review')
+                    ->label('レビュー')
                     ->limit(50),
                 Tables\Columns\IconColumn::make('approved')
                     ->boolean()
@@ -115,23 +116,23 @@ class ReviewResource extends Resource
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 Tables\Filters\TernaryFilter::make('approved')
-                    ->label('Approved'),
+                    ->label('承認済み'),
                 Tables\Filters\SelectFilter::make('rating')
                     ->options([
-                        '1' => '1 Star',
-                        '2' => '2 Stars',
-                        '3' => '3 Stars',
-                        '4' => '4 Stars',
-                        '5' => '5 Stars',
+                        '1' => '1つ星',
+                        '2' => '2つ星',
+                        '3' => '3つ星',
+                        '4' => '4つ星',
+                        '5' => '5つ星',
                     ])
-                    ->placeholder('All Ratings'),
+                    ->placeholder('すべての評価'),
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

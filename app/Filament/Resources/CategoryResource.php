@@ -19,7 +19,9 @@ class CategoryResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-squares-2x2';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'カテゴリ';
 
     protected static ?int $navigationSort = 3;
 
@@ -27,15 +29,15 @@ class CategoryResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Category Information')
-                    ->description('Basic category information')
+                Forms\Components\Section::make('カテゴリ情報')
+                    ->description('基本的なカテゴリ情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Enter category name')
+                                    ->placeholder('カテゴリ名を入力してください')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
                                         if ($operation !== 'create') {
@@ -48,25 +50,25 @@ class CategoryResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Auto-generated from name'),
+                                    ->placeholder('名前から自動生成'),
                                 Forms\Components\Select::make('parent_id')
-                                    ->label('Parent Category')
+                                    ->label('親カテゴリ')
                                     ->relationship('parent', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->placeholder('Select parent category (optional)'),
+                                    ->placeholder('親カテゴリを選択（任意）'),
                                 Forms\Components\FileUpload::make('logo')
                                     ->image()
                                     ->directory('categories')
                                     ->visibility('public')
                                     ->imageEditor()
                                     ->maxSize(2048)
-                                    ->placeholder('Upload category logo'),
+                                    ->placeholder('カテゴリロゴをアップロード'),
                             ]),
                         Forms\Components\Textarea::make('description')
                             ->rows(4)
                             ->maxLength(65535)
-                            ->placeholder('Enter detailed category description')
+                            ->placeholder('詳細なカテゴリ説明を入力してください')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
@@ -78,27 +80,27 @@ class CategoryResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('logo')
-                    ->label('Logo')
+                    ->label('ロゴ')
                     ->circular()
                     ->defaultImageUrl(asset('images/category-placeholder.png'))
                     ->size(50),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Category')
+                    ->label('カテゴリ')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('parent.name')
-                    ->label('Parent Category')
+                    ->label('親カテゴリ')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('slug')
-                    ->label('Slug')
+                    ->label('スラッグ')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label('商品数')
                     ->counts('products')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('deleted_at')
-                    ->label('Trashed')
+                    ->label('削除済み')
                     ->boolean()
                     ->trueIcon('heroicon-o-trash')
                     ->trueColor('danger')

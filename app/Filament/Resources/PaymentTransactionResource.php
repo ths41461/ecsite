@@ -18,7 +18,9 @@ class PaymentTransactionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '支払い取引';
 
     protected static ?int $navigationSort = 18;
 
@@ -26,8 +28,8 @@ class PaymentTransactionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Transaction Information')
-                    ->description('Information about the payment transaction')
+                Forms\Components\Section::make('取引情報')
+                    ->description('支払い取引に関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,28 +38,28 @@ class PaymentTransactionResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Payment'),
+                                    ->label('支払い'),
                                 Forms\Components\Select::make('provider')
                                     ->options([
-                                        'stripe' => 'Stripe',
-                                        'paypal' => 'PayPal',
-                                        'bank_transfer' => 'Bank Transfer',
-                                        'cash_on_delivery' => 'Cash on Delivery',
-                                        'other' => 'Other',
+                                        'stripe' => 'ストライプ',
+                                        'paypal' => 'ペイパル',
+                                        'bank_transfer' => '銀行振込',
+                                        'cash_on_delivery' => '代金引換',
+                                        'other' => 'その他',
                                     ])
                                     ->required()
-                                    ->label('Provider'),
+                                    ->label('プロバイダー'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('external_id')
                                     ->maxLength(255)
-                                    ->label('External ID')
-                                    ->placeholder('ID from payment provider'),
+                                    ->label('外部ID')
+                                    ->placeholder('支払いプロバイダーからのID'),
                                 Forms\Components\TextInput::make('currency')
                                     ->maxLength(3)
                                     ->default('JPY')
-                                    ->label('Currency'),
+                                    ->label('通貨'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -65,29 +67,29 @@ class PaymentTransactionResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Amount (¥)'),
+                                    ->label('金額（¥）'),
                                 Forms\Components\Select::make('status')
                                     ->options([
-                                        'pending' => 'Pending',
-                                        'authorized' => 'Authorized',
-                                        'captured' => 'Captured',
-                                        'failed' => 'Failed',
-                                        'refunded' => 'Refunded',
-                                        'partial_refund' => 'Partial Refund',
-                                        'voided' => 'Voided',
-                                        'expired' => 'Expired',
+                                        'pending' => '保留中',
+                                        'authorized' => '承認済み',
+                                        'captured' => 'キャプチャ済み',
+                                        'failed' => '失敗',
+                                        'refunded' => '返金済み',
+                                        'partial_refund' => '一部返金',
+                                        'voided' => '無効',
+                                        'expired' => '期限切れ',
                                     ])
                                     ->required()
-                                    ->label('Status'),
+                                    ->label('ステータス'),
                             ]),
                         Forms\Components\DateTimePicker::make('occurred_at')
                             ->required()
-                            ->label('Occurred At'),
+                            ->label('発生日時'),
                         Forms\Components\Textarea::make('payload_json')
                             ->rows(4)
                             ->columnSpanFull()
-                            ->label('Payload Data')
-                            ->helperText('Raw payment provider data'),
+                            ->label('ペイロードデータ')
+                            ->helperText('生の支払いプロバイダーデータ'),
                     ])
                     ->columns(2),
             ]);
@@ -102,7 +104,7 @@ class PaymentTransactionResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('payment.order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable()
                     ->url(fn ($record) => route('filament.admin.resources.payments.edit', ['record' => $record->payment_id]))
@@ -112,11 +114,11 @@ class PaymentTransactionResource extends Resource
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state))),
                 Tables\Columns\TextColumn::make('external_id')
-                    ->label('External ID')
+                    ->label('外部ID')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('amount_yen')
-                    ->label('Amount')
+                    ->label('金額')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('currency')
@@ -148,31 +150,31 @@ class PaymentTransactionResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'pending' => 'Pending',
-                        'authorized' => 'Authorized',
-                        'captured' => 'Captured',
-                        'failed' => 'Failed',
-                        'refunded' => 'Refunded',
-                        'partial_refund' => 'Partial Refund',
-                        'voided' => 'Voided',
-                        'expired' => 'Expired',
+                        'pending' => '保留中',
+                        'authorized' => '承認済み',
+                        'captured' => 'キャプチャ済み',
+                        'failed' => '失敗',
+                        'refunded' => '返金済み',
+                        'partial_refund' => '一部返金',
+                        'voided' => '無効',
+                        'expired' => '期限切れ',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\SelectFilter::make('provider')
                     ->options([
-                        'stripe' => 'Stripe',
-                        'paypal' => 'PayPal',
-                        'bank_transfer' => 'Bank Transfer',
-                        'cash_on_delivery' => 'Cash on Delivery',
-                        'other' => 'Other',
+                        'stripe' => 'ストライプ',
+                        'paypal' => 'ペイパル',
+                        'bank_transfer' => '銀行振込',
+                        'cash_on_delivery' => '代金引換',
+                        'other' => 'その他',
                     ])
-                    ->placeholder('All Providers'),
+                    ->placeholder('すべてのプロバイダー'),
                 Tables\Filters\Filter::make('occurred_at')
                     ->form([
                         Forms\Components\DatePicker::make('occurred_from')
-                            ->label('Occurred From'),
+                            ->label('発生日範囲（開始）'),
                         Forms\Components\DatePicker::make('occurred_until')
-                            ->label('Occurred Until'),
+                            ->label('発生日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -188,11 +190,11 @@ class PaymentTransactionResource extends Resource
                 Tables\Filters\Filter::make('amount_yen')
                     ->form([
                         Forms\Components\TextInput::make('min_amount')
-                            ->label('Min Amount')
+                            ->label('最小金額')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_amount')
-                            ->label('Max Amount')
+                            ->label('最大金額')
                             ->numeric()
                             ->prefix('¥'),
                     ])

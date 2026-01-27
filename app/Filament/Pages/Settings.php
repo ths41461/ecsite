@@ -21,9 +21,9 @@ class Settings extends Page implements HasForms
 
     protected static string $view = 'filament.pages.settings';
 
-    protected static ?string $title = 'User Settings';
+    protected static ?string $title = 'ユーザー設定';
 
-    protected static ?string $navigationLabel = 'Settings';
+    protected static ?string $navigationLabel = '設定';
 
     protected static ?string $slug = 'settings';
 
@@ -42,19 +42,19 @@ class Settings extends Page implements HasForms
     {
         return $form
             ->schema([
-                Section::make('Profile Information')
-                    ->description('Update your account profile information')
+                Section::make('プロフィール情報')
+                    ->description('アカウントプロフィール情報を更新')
                     ->schema([
                         TextInput::make('name')
                             ->required()
                             ->maxLength(255)
-                            ->label('Name'),
+                            ->label('名前'),
                         TextInput::make('email')
                             ->email()
                             ->required()
                             ->maxLength(255)
                             ->unique(table: 'users', ignorable: fn () => auth()->user())
-                            ->label('Email Address'),
+                            ->label('メールアドレス'),
                     ])
                     ->columns(2),
             ])
@@ -66,11 +66,11 @@ class Settings extends Page implements HasForms
     {
         return [
             Actions\Action::make('save')
-                ->label('Save Settings')
+                ->label('設定を保存')
                 ->button()
                 ->action('save'),
             Actions\Action::make('cancel')
-                ->label('Cancel')
+                ->label('キャンセル')
                 ->color('secondary')
                 ->url(static::getUrl()),
         ];
@@ -86,6 +86,6 @@ class Settings extends Page implements HasForms
             'email' => $data['email'],
         ]);
 
-        $this->notify('success', 'Settings saved successfully!');
+        $this->notify('success', '設定が正常に保存されました！');
     }
 }

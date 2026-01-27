@@ -18,7 +18,9 @@ class CartResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'カート';
 
     protected static ?int $navigationSort = 19;
 
@@ -26,8 +28,8 @@ class CartResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Cart Information')
-                    ->description('Basic cart information')
+                Forms\Components\Section::make('カート情報')
+                    ->description('基本的なカート情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -35,33 +37,33 @@ class CartResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->label('Cart ID')
-                                    ->placeholder('Unique identifier for the cart'),
+                                    ->label('カートID')
+                                    ->placeholder('カートの一意識別子'),
                                 Forms\Components\Select::make('user_id')
                                     ->relationship('user', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->placeholder('Select user (leave empty for guest cart)')
-                                    ->label('User (Optional)'),
+                                    ->placeholder('ユーザーを選択（ゲストカートの場合は空のままにしてください）')
+                                    ->label('ユーザー（任意）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('session_id')
                                     ->maxLength(255)
-                                    ->label('Session ID')
-                                    ->placeholder('Session identifier for guest carts'),
+                                    ->label('セッションID')
+                                    ->placeholder('ゲストカートのセッション識別子'),
                                 Forms\Components\TextInput::make('currency')
                                     ->maxLength(3)
                                     ->default('JPY')
-                                    ->label('Currency'),
+                                    ->label('通貨'),
                             ]),
                         Forms\Components\TextInput::make('ttl_minutes')
                             ->numeric()
                             ->minValue(1)
-                            ->label('TTL Minutes')
-                            ->placeholder('Time-to-live for cart in minutes'),
+                            ->label('有効期限（分）')
+                            ->placeholder('カートの有効期限（分）'),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('有効')
                             ->default(true),
                     ])
                     ->columns(2),
@@ -73,31 +75,31 @@ class CartResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('id')
-                    ->label('Cart ID')
+                    ->label('カートID')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('Guest'),
+                    ->placeholder('ゲスト'),
                 Tables\Columns\TextColumn::make('session_id')
-                    ->label('Session ID')
+                    ->label('セッションID')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('currency')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
+                    ->label('商品数')
                     ->counts('items')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_amount')
-                    ->label('Total Amount')
+                    ->label('合計金額')
                     ->formatStateUsing(fn ($record) => '¥' . number_format($record->getTotalAmountAttribute()))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -114,15 +116,15 @@ class CartResource extends Resource
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('有効'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

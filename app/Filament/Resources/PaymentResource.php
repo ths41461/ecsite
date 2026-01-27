@@ -18,7 +18,9 @@ class PaymentResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-credit-card';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '支払い';
 
     protected static ?int $navigationSort = 16;
 
@@ -26,8 +28,8 @@ class PaymentResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Payment Information')
-                    ->description('Basic payment information')
+                Forms\Components\Section::make('支払い情報')
+                    ->description('基本的な支払い情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,58 +38,58 @@ class PaymentResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Order'),
+                                    ->label('注文'),
                                 Forms\Components\Select::make('provider')
                                     ->options([
-                                        'stripe' => 'Stripe',
-                                        'paypal' => 'PayPal',
-                                        'bank_transfer' => 'Bank Transfer',
-                                        'cash_on_delivery' => 'Cash on Delivery',
-                                        'other' => 'Other',
+                                        'stripe' => 'ストライプ',
+                                        'paypal' => 'ペイパル',
+                                        'bank_transfer' => '銀行振込',
+                                        'cash_on_delivery' => '代金引換',
+                                        'other' => 'その他',
                                     ])
                                     ->required()
-                                    ->label('Provider'),
+                                    ->label('プロバイダー'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('type')
                                     ->options([
-                                        'auth' => 'Authorization',
-                                        'capture' => 'Capture',
-                                        'refund' => 'Refund',
-                                        'one_time' => 'One Time',
-                                        'subscription' => 'Subscription',
-                                        'installment' => 'Installment',
+                                        'auth' => 'オーソリゼーション',
+                                        'capture' => 'キャプチャ',
+                                        'refund' => '返金',
+                                        'one_time' => 'ワンタイム',
+                                        'subscription' => '定期購読',
+                                        'installment' => '分割払い',
                                     ])
                                     ->required()
                                     ->default('auth')
-                                    ->label('Type'),
+                                    ->label('タイプ'),
                                 Forms\Components\TextInput::make('amount_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Amount (¥)'),
+                                    ->label('金額（¥）'),
                             ]),
                         Forms\Components\Select::make('status')
                             ->options([
-                                'created' => 'Created',
-                                'pending' => 'Pending',
-                                'approved' => 'Approved',
-                                'declined' => 'Declined',
-                                'refunded' => 'Refunded',
-                                'voided' => 'Voided',
-                                'expired' => 'Expired',
+                                'created' => '作成済み',
+                                'pending' => '保留中',
+                                'approved' => '承認済み',
+                                'declined' => '拒否',
+                                'refunded' => '返金済み',
+                                'voided' => '無効',
+                                'expired' => '期限切れ',
                             ])
                             ->required()
                             ->default('pending')
-                            ->label('Status'),
+                            ->label('ステータス'),
                         Forms\Components\DateTimePicker::make('processed_at')
-                            ->label('Processed At'),
+                            ->label('処理日時'),
                         Forms\Components\Textarea::make('payload_json')
                             ->rows(4)
                             ->columnSpanFull()
-                            ->label('Payload Data')
-                            ->helperText('Raw payment provider data'),
+                            ->label('ペイロードデータ')
+                            ->helperText('生の支払いプロバイダーデータ'),
                     ])
                     ->columns(2),
             ]);
@@ -102,7 +104,7 @@ class PaymentResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('provider')
@@ -114,7 +116,7 @@ class PaymentResource extends Resource
                     ->sortable()
                     ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state))),
                 Tables\Columns\TextColumn::make('amount_yen')
-                    ->label('Amount')
+                    ->label('金額')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -131,7 +133,7 @@ class PaymentResource extends Resource
                     ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paymentStatus.name')
-                    ->label('Payment Status')
+                    ->label('支払いステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Pending' => 'warning',
@@ -153,40 +155,40 @@ class PaymentResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'created' => 'Created',
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'declined' => 'Declined',
-                        'refunded' => 'Refunded',
-                        'voided' => 'Voided',
-                        'expired' => 'Expired',
+                        'created' => '作成済み',
+                        'pending' => '保留中',
+                        'approved' => '承認済み',
+                        'declined' => '拒否',
+                        'refunded' => '返金済み',
+                        'voided' => '無効',
+                        'expired' => '期限切れ',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\SelectFilter::make('provider')
                     ->options([
-                        'stripe' => 'Stripe',
-                        'paypal' => 'PayPal',
-                        'bank_transfer' => 'Bank Transfer',
-                        'cash_on_delivery' => 'Cash on Delivery',
-                        'other' => 'Other',
+                        'stripe' => 'ストライプ',
+                        'paypal' => 'ペイパル',
+                        'bank_transfer' => '銀行振込',
+                        'cash_on_delivery' => '代金引換',
+                        'other' => 'その他',
                     ])
-                    ->placeholder('All Providers'),
+                    ->placeholder('すべてのプロバイダー'),
                 Tables\Filters\SelectFilter::make('type')
                     ->options([
-                        'auth' => 'Authorization',
-                        'capture' => 'Capture',
-                        'refund' => 'Refund',
-                        'one_time' => 'One Time',
-                        'subscription' => 'Subscription',
-                        'installment' => 'Installment',
+                        'auth' => 'オーソリゼーション',
+                        'capture' => 'キャプチャ',
+                        'refund' => '返金',
+                        'one_time' => 'ワンタイム',
+                        'subscription' => '定期購読',
+                        'installment' => '分割払い',
                     ])
-                    ->placeholder('All Types'),
+                    ->placeholder('すべてのタイプ'),
                 Tables\Filters\Filter::make('processed_at')
                     ->form([
                         Forms\Components\DatePicker::make('processed_from')
-                            ->label('Processed From'),
+                            ->label('処理日範囲（開始）'),
                         Forms\Components\DatePicker::make('processed_until')
-                            ->label('Processed Until'),
+                            ->label('処理日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -202,11 +204,11 @@ class PaymentResource extends Resource
                 Tables\Filters\Filter::make('amount_yen')
                     ->form([
                         Forms\Components\TextInput::make('min_amount')
-                            ->label('Min Amount')
+                            ->label('最小金額')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_amount')
-                            ->label('Max Amount')
+                            ->label('最大金額')
                             ->numeric()
                             ->prefix('¥'),
                     ])

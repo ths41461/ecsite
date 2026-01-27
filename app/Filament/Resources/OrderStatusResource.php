@@ -18,7 +18,9 @@ class OrderStatusResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-tag';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '注文ステータス';
 
     protected static ?int $navigationSort = 16;
 
@@ -26,8 +28,8 @@ class OrderStatusResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Status Information')
-                    ->description('Information about the order status')
+                Forms\Components\Section::make('ステータス情報')
+                    ->description('注文ステータスに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -35,19 +37,19 @@ class OrderStatusResource extends Resource
                                     ->required()
                                     ->maxLength(50)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Enter status code (e.g., pending, paid)')
-                                    ->helperText('Unique code for this status'),
+                                    ->placeholder('ステータスコードを入力してください（例：pending, paid）')
+                                    ->helperText('このステータスのユニークコード'),
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(100)
-                                    ->placeholder('Enter status name (e.g., Pending, Paid)')
-                                    ->helperText('Display name for this status'),
+                                    ->placeholder('ステータス名を入力してください（例：Pending, Paid）')
+                                    ->helperText('このステータスの表示名'),
                             ]),
                         Forms\Components\Textarea::make('description')
                             ->rows(3)
                             ->maxLength(65535)
-                            ->placeholder('Enter description for this status')
-                            ->helperText('Optional description explaining this status'),
+                            ->placeholder('このステータスの説明を入力してください')
+                            ->helperText('このステータスを説明するオプションの説明'),
                     ])
                     ->columns(2),
             ]);
@@ -62,19 +64,19 @@ class OrderStatusResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Code')
+                    ->label('コード')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Name')
+                    ->label('名前')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
-                    ->label('Description')
+                    ->label('説明')
                     ->limit(50)
                     ->sortable(),
                 Tables\Columns\TextColumn::make('orders_count')
-                    ->label('Orders')
+                    ->label('注文数')
                     ->counts('orders')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -90,9 +92,9 @@ class OrderStatusResource extends Resource
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

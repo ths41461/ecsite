@@ -18,7 +18,9 @@ class WishlistResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-heart';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'ウィッシュリスト';
 
     protected static ?int $navigationSort = 8;
 
@@ -26,8 +28,8 @@ class WishlistResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Wishlist Information')
-                    ->description('Information about the wishlist item')
+                Forms\Components\Section::make('ウィッシュリスト情報')
+                    ->description('ウィッシュリストアイテムに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,13 +38,13 @@ class WishlistResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('User'),
+                                    ->label('ユーザー'),
                                 Forms\Components\Select::make('product_id')
                                     ->relationship('product', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product'),
+                                    ->label('商品'),
                             ]),
                     ])
                     ->columns(2),
@@ -58,12 +60,12 @@ class WishlistResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('User')
+                    ->label('ユーザー')
                     ->description(fn (Wishlist $record) => $record->user->email)
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->description(fn (Wishlist $record) => '¥' . number_format($record->product->price ?? 0))
                     ->searchable()
                     ->sortable(),
@@ -80,18 +82,18 @@ class WishlistResource extends Resource
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 Tables\Filters\SelectFilter::make('product_id')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

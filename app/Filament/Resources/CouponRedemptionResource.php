@@ -18,7 +18,9 @@ class CouponRedemptionResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path';
 
-    protected static ?string $navigationGroup = 'Marketing';
+    protected static ?string $navigationGroup = 'マーケティング';
+
+    protected static ?string $navigationLabel = 'クーポン使用記録';
 
     protected static ?int $navigationSort = 6;
 
@@ -26,8 +28,8 @@ class CouponRedemptionResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Redemption Information')
-                    ->description('Information about the coupon redemption')
+                Forms\Components\Section::make('使用記録情報')
+                    ->description('クーポン使用記録に関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -50,16 +52,16 @@ class CouponRedemptionResource extends Resource
                                     ->relationship('user', 'name')
                                     ->searchable()
                                     ->preload()
-                                    ->label('User (Optional)'),
+                                    ->label('ユーザー（任意）'),
                                 Forms\Components\TextInput::make('amount_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Discount Amount (¥)'),
+                                    ->label('割引額（¥）'),
                             ]),
                         Forms\Components\DateTimePicker::make('redeemed_at')
                             ->required()
-                            ->label('Redeemed At'),
+                            ->label('使用日時'),
                     ])
                     ->columns(2),
             ]);
@@ -74,20 +76,20 @@ class CouponRedemptionResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('coupon.code')
-                    ->label('Coupon Code')
+                    ->label('クーポンコード')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Redeemed By')
+                    ->label('使用者')
                     ->searchable()
                     ->sortable()
-                    ->placeholder('Guest'),
+                    ->placeholder('ゲスト'),
                 Tables\Columns\TextColumn::make('amount_yen')
-                    ->label('Discount Amount')
+                    ->label('割引額')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('redeemed_at')
@@ -103,23 +105,23 @@ class CouponRedemptionResource extends Resource
                     ->relationship('coupon', 'code')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Coupons'),
+                    ->placeholder('すべてのクーポン'),
                 Tables\Filters\SelectFilter::make('order_id')
                     ->relationship('order', 'order_number')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Orders'),
+                    ->placeholder('すべての注文'),
                 Tables\Filters\SelectFilter::make('user_id')
                     ->relationship('user', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Users'),
+                    ->placeholder('すべてのユーザー'),
                 Tables\Filters\Filter::make('redeemed_at')
                     ->form([
                         Forms\Components\DatePicker::make('redeemed_from')
-                            ->label('Redeemed From'),
+                            ->label('使用日範囲（開始）'),
                         Forms\Components\DatePicker::make('redeemed_until')
-                            ->label('Redeemed Until'),
+                            ->label('使用日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

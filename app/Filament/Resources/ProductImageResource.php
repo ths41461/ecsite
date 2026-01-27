@@ -18,7 +18,9 @@ class ProductImageResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-photo';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = '商品画像';
 
     protected static ?int $navigationSort = 15;
 
@@ -26,8 +28,8 @@ class ProductImageResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Image Information')
-                    ->description('Information about the product image')
+                Forms\Components\Section::make('画像情報')
+                    ->description('商品画像に関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,36 +38,36 @@ class ProductImageResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product'),
+                                    ->label('商品'),
                                 Forms\Components\FileUpload::make('path')
                                     ->image()
                                     ->directory('products/images')
                                     ->visibility('public')
                                     ->imageEditor()
                                     ->required()
-                                    ->label('Image File'),
+                                    ->label('画像ファイル'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('alt')
                                     ->maxLength(255)
-                                    ->label('Alt Text')
-                                    ->placeholder('Alternative text for accessibility'),
+                                    ->label('代替テキスト')
+                                    ->placeholder('アクセシビリティのための代替テキスト'),
                                 Forms\Components\TextInput::make('sort')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->label('Sort Order')
-                                    ->placeholder('Position in image sequence'),
+                                    ->label('並び順')
+                                    ->placeholder('画像シーケンスでの位置'),
                             ]),
                         Forms\Components\Toggle::make('is_hero')
-                            ->label('Hero Image')
+                            ->label('ヒーロー画像')
                             ->inline(false)
-                            ->helperText('Only one image per product can be the hero image'),
+                            ->helperText('商品ごとに1つの画像のみがヒーロー画像になれます'),
                         Forms\Components\TextInput::make('rank')
                             ->numeric()
                             ->minValue(0)
-                            ->label('Rank')
-                            ->placeholder('Rank for ordering'),
+                            ->label('ランク')
+                            ->placeholder('並び替え用のランク'),
                     ])
                     ->columns(2),
             ]);
@@ -76,28 +78,28 @@ class ProductImageResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('path')
-                    ->label('Image')
+                    ->label('画像')
                     ->circular()
                     ->size(60),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('alt')
-                    ->label('Alt Text')
+                    ->label('代替テキスト')
                     ->searchable()
                     ->limit(50),
                 Tables\Columns\IconColumn::make('is_hero')
-                    ->label('Hero')
+                    ->label('ヒーロー')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('gray'),
                 Tables\Columns\TextColumn::make('sort')
-                    ->label('Sort')
+                    ->label('並び順')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rank')
-                    ->label('Rank')
+                    ->label('ランク')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -114,15 +116,15 @@ class ProductImageResource extends Resource
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\TernaryFilter::make('is_hero')
-                    ->label('Hero Image'),
+                    ->label('ヒーロー画像'),
                 Tables\Filters\Filter::make('created_at')
                     ->form([
                         Forms\Components\DatePicker::make('created_from')
-                            ->label('Created From'),
+                            ->label('作成日範囲（開始）'),
                         Forms\Components\DatePicker::make('created_until')
-                            ->label('Created Until'),
+                            ->label('作成日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

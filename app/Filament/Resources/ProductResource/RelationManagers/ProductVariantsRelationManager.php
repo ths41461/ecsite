@@ -24,27 +24,27 @@ class ProductVariantsRelationManager extends RelationManager
                     ->unique(ignoreRecord: true),
 
                 Forms\Components\KeyValue::make('option_json')
-                    ->label('Options')
-                    ->keyLabel('Option Type')
-                    ->valueLabel('Option Value')
+                    ->label('オプション')
+                    ->keyLabel('オプションタイプ')
+                    ->valueLabel('オプション値')
                     ->addable()
                     ->deletable()
-                    ->helperText('For volume-based variants, use "size_ml" as the key and the volume in ml as the value'),
+                    ->helperText('容量ベースのバリエーションには、「size_ml」をキーとして、ml単位の容量を値として使用してください'),
 
                 Forms\Components\TextInput::make('price_yen')
-                    ->label('Price (¥)')
+                    ->label('価格（¥）')
                     ->numeric()
                     ->required()
                     ->minValue(0),
 
                 Forms\Components\TextInput::make('sale_price_yen')
-                    ->label('Sale Price (¥)')
+                    ->label('セール価格（¥）')
                     ->numeric()
                     ->minValue(0)
-                    ->helperText('Leave empty if not on sale'),
+                    ->helperText('セールでない場合は空のままにしてください'),
 
                 Forms\Components\Toggle::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->default(true),
             ]);
     }
@@ -59,10 +59,10 @@ class ProductVariantsRelationManager extends RelationManager
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('option_json')
-                    ->label('Options')
+                    ->label('オプション')
                     ->formatStateUsing(function ($state) {
                         if (!is_array($state)) {
-                            return 'N/A';
+                            return '該当なし';
                         }
 
                         $options = [];
@@ -75,29 +75,29 @@ class ProductVariantsRelationManager extends RelationManager
                     ->limit(50),
 
                 Tables\Columns\TextColumn::make('price_yen')
-                    ->label('Price (¥)')
+                    ->label('価格（¥）')
                     ->formatStateUsing(fn($state) => '¥' . number_format($state))
                     ->sortable(),
 
                 Tables\Columns\TextColumn::make('sale_price_yen')
-                    ->label('Sale Price (¥)')
-                    ->formatStateUsing(fn($state) => $state > 0 ? '¥' . number_format($state) : 'Not on sale')
+                    ->label('セール価格（¥）')
+                    ->formatStateUsing(fn($state) => $state > 0 ? '¥' . number_format($state) : 'セール対象外')
                     ->sortable(),
 
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
 
                 Tables\Columns\TextColumn::make('inventory.stock')
-                    ->label('Stock')
+                    ->label('在庫')
                     ->getStateUsing(function (ProductVariant $record) {
-                        return $record->inventory ? $record->inventory->stock : 'No inventory';
+                        return $record->inventory ? $record->inventory->stock : '在庫なし';
                     }),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('is_active')
                     ->options([
-                        true => 'Active',
-                        false => 'Inactive',
+                        true => '有効',
+                        false => '無効',
                     ]),
                 Tables\Filters\TernaryFilter::make('on_sale'),
             ])

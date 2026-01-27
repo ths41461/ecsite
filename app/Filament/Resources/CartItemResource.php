@@ -18,7 +18,9 @@ class CartItemResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = 'カートアイテム';
 
     protected static ?int $navigationSort = 20;
 
@@ -26,8 +28,8 @@ class CartItemResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Cart Item Information')
-                    ->description('Information about the item in the cart')
+                Forms\Components\Section::make('カートアイテム情報')
+                    ->description('カート内のアイテムに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,13 +38,13 @@ class CartItemResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Cart'),
+                                    ->label('カート'),
                                 Forms\Components\Select::make('product_variant_id')
                                     ->relationship('variant', 'sku')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Product Variant'),
+                                    ->label('商品バリエーション'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -50,19 +52,19 @@ class CartItemResource extends Resource
                                     ->required()
                                     ->numeric()
                                     ->minValue(1)
-                                    ->label('Quantity'),
+                                    ->label('数量'),
                                 Forms\Components\TextInput::make('unit_price_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Unit Price (¥)'),
+                                    ->label('単価（¥）'),
                             ]),
                         Forms\Components\TextInput::make('line_total_yen')
                             ->required()
                             ->numeric()
                             ->prefix('¥')
-                            ->label('Line Total (¥)')
-                            ->helperText('Calculated as quantity × unit price'),
+                            ->label('小計（¥）')
+                            ->helperText('数量 × 単価で計算されます'),
                     ])
                     ->columns(2),
             ]);
@@ -77,7 +79,7 @@ class CartItemResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('cart.id')
-                    ->label('Cart ID')
+                    ->label('カートID')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('variant.sku')
@@ -85,19 +87,19 @@ class CartItemResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('variant.product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Qty')
+                    ->label('数量')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unit_price_yen')
-                    ->label('Unit Price')
+                    ->label('単価')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('line_total_yen')
-                    ->label('Line Total')
+                    ->label('小計')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -113,20 +115,20 @@ class CartItemResource extends Resource
                     ->relationship('cart', 'id')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Carts'),
+                    ->placeholder('すべてのカート'),
                 Tables\Filters\SelectFilter::make('product_variant_id')
                     ->relationship('variant', 'sku')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Variants'),
+                    ->placeholder('すべてのバリエーション'),
                 Tables\Filters\Filter::make('quantity')
                     ->form([
                         Forms\Components\TextInput::make('min_quantity')
-                            ->label('Min Quantity')
+                            ->label('最小数量')
                             ->numeric()
                             ->minValue(1),
                         Forms\Components\TextInput::make('max_quantity')
-                            ->label('Max Quantity')
+                            ->label('最大数量')
                             ->numeric()
                             ->minValue(1),
                     ])
@@ -144,11 +146,11 @@ class CartItemResource extends Resource
                 Tables\Filters\Filter::make('unit_price_yen')
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Min Price')
+                            ->label('最小価格')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Max Price')
+                            ->label('最大価格')
                             ->numeric()
                             ->prefix('¥'),
                     ])

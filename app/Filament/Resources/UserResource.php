@@ -19,7 +19,9 @@ class UserResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
 
-    protected static ?string $navigationGroup = 'User Management';
+    protected static ?string $navigationGroup = 'ユーザー管理';
+
+    protected static ?string $navigationLabel = 'ユーザー';
 
     protected static ?int $navigationSort = 6;
 
@@ -27,21 +29,21 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('User Information')
-                    ->description('Basic user information')
+                Forms\Components\Section::make('ユーザー情報')
+                    ->description('基本的なユーザー情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Enter user name'),
+                                    ->placeholder('ユーザー名を入力してください'),
                                 Forms\Components\TextInput::make('email')
                                     ->email()
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Enter user email'),
+                                    ->placeholder('ユーザーのメールアドレスを入力してください'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -50,25 +52,25 @@ class UserResource extends Resource
                                     ->required()
                                     ->confirmed()
                                     ->maxLength(255)
-                                    ->placeholder('Enter password'),
+                                    ->placeholder('パスワードを入力してください'),
                                 Forms\Components\TextInput::make('password_confirmation')
                                     ->password()
                                     ->required()
-                                    ->placeholder('Confirm password'),
+                                    ->placeholder('パスワードを確認してください'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Select::make('role')
                                     ->options([
-                                        'admin' => 'Admin',
-                                        'staff' => 'Staff',
-                                        'viewer' => 'Viewer',
+                                        'admin' => '管理者',
+                                        'staff' => 'スタッフ',
+                                        'viewer' => '閲覧者',
                                     ])
                                     ->required()
                                     ->default('viewer')
-                                    ->placeholder('Select role'),
+                                    ->placeholder('役割を選択してください'),
                                 Forms\Components\Toggle::make('is_active')
-                                    ->label('Active')
+                                    ->label('有効')
                                     ->default(true)
                                     ->inline(false),
                             ]),
@@ -98,7 +100,7 @@ class UserResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger')
@@ -117,20 +119,20 @@ class UserResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('role')
                     ->options([
-                        'admin' => 'Admin',
-                        'staff' => 'Staff',
-                        'viewer' => 'Viewer',
+                        'admin' => '管理者',
+                        'staff' => 'スタッフ',
+                        'viewer' => '閲覧者',
                     ])
-                    ->placeholder('All Roles'),
+                    ->placeholder('すべての役割'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('有効'),
                 Tables\Filters\Filter::make('email_verified_at')
-                    ->label('Verified')
+                    ->label('認証済み')
                     ->query(fn (Builder $query) => $query->whereNotNull('email_verified_at')),
             ])
             ->actions([
                 Action::make('toggle_active')
-                    ->label(fn (User $record) => $record->is_active ? 'Disable' : 'Enable')
+                    ->label(fn (User $record) => $record->is_active ? '無効にする' : '有効にする')
                     ->icon(fn (User $record) => $record->is_active ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle')
                     ->color(fn (User $record) => $record->is_active ? 'danger' : 'success')
                     ->requiresConfirmation()

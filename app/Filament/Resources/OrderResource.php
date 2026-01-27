@@ -21,7 +21,9 @@ class OrderResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-cart';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = '注文';
 
     protected static ?int $navigationSort = 4;
 
@@ -29,24 +31,24 @@ class OrderResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Information')
-                    ->description('Basic order information')
+                Forms\Components\Section::make('注文情報')
+                    ->description('基本的な注文情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('order_number')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Order number'),
+                                    ->placeholder('注文番号'),
                                 Forms\Components\Select::make('order_status_id')
-                                    ->label('Status')
+                                    ->label('ステータス')
                                     ->options(
                                         \App\Models\OrderStatus::pluck('name', 'id')->toArray()
                                     )
                                     ->required()
                                     ->searchable()
                                     ->preload()
-                                    ->placeholder('Select status'),
+                                    ->placeholder('ステータスを選択'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -54,66 +56,66 @@ class OrderResource extends Resource
                                     ->email()
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Customer email'),
+                                    ->placeholder('顧客メールアドレス'),
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Customer name'),
+                                    ->placeholder('顧客名'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('phone')
                                     ->maxLength(20)
-                                    ->placeholder('Customer phone'),
+                                    ->placeholder('顧客電話番号'),
                                 Forms\Components\TextInput::make('user_id')
-                                    ->label('User ID')
+                                    ->label('ユーザーID')
                                     ->numeric()
-                                    ->placeholder('Leave empty if guest order'),
+                                    ->placeholder('ゲスト注文の場合は空のままにしてください'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Address Information')
-                    ->description('Shipping address information')
+                Forms\Components\Section::make('住所情報')
+                    ->description('配送先住所情報')
                     ->schema([
                         Forms\Components\TextInput::make('address_line1')
                             ->required()
                             ->maxLength(255)
-                            ->placeholder('Street address'),
+                            ->placeholder('番地住所'),
                         Forms\Components\TextInput::make('address_line2')
                             ->maxLength(255)
-                            ->placeholder('Apartment, suite, etc. (optional)'),
+                            ->placeholder('アパートメント、スイート等（任意）'),
                         Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('city')
                                     ->required()
                                     ->maxLength(100)
-                                    ->placeholder('City'),
+                                    ->placeholder('市区町村'),
                                 Forms\Components\TextInput::make('state')
                                     ->required()
                                     ->maxLength(100)
-                                    ->placeholder('State/Province'),
+                                    ->placeholder('都道府県'),
                                 Forms\Components\TextInput::make('zip')
                                     ->required()
                                     ->maxLength(20)
-                                    ->placeholder('ZIP/Postal code'),
+                                    ->placeholder('郵便番号'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pricing Information')
-                    ->description('Order pricing details')
+                Forms\Components\Section::make('価格情報')
+                    ->description('注文価格の詳細')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('subtotal_yen')
-                                    ->label('Subtotal (¥)')
+                                    ->label('小計（¥）')
                                     ->numeric()
                                     ->required()
                                     ->prefix('¥')
                                     ->placeholder('0'),
                                 Forms\Components\TextInput::make('tax_yen')
-                                    ->label('Tax (¥)')
+                                    ->label('税金（¥）')
                                     ->numeric()
                                     ->required()
                                     ->prefix('¥')
@@ -122,13 +124,13 @@ class OrderResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('shipping_yen')
-                                    ->label('Shipping (¥)')
+                                    ->label('配送料（¥）')
                                     ->numeric()
                                     ->required()
                                     ->prefix('¥')
                                     ->placeholder('0'),
                                 Forms\Components\TextInput::make('discount_yen')
-                                    ->label('Discount (¥)')
+                                    ->label('割引（¥）')
                                     ->numeric()
                                     ->required()
                                     ->prefix('¥')
@@ -137,47 +139,47 @@ class OrderResource extends Resource
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('total_yen')
-                                    ->label('Total (¥)')
+                                    ->label('合計（¥）')
                                     ->numeric()
                                     ->required()
                                     ->prefix('¥')
                                     ->placeholder('0'),
                                 Forms\Components\Select::make('payment_mode')
                                     ->options([
-                                        'stripe' => 'Stripe',
-                                        'cash_on_delivery' => 'Cash on Delivery',
-                                        'bank_transfer' => 'Bank Transfer',
-                                        'other' => 'Other',
+                                        'stripe' => 'ストライプ',
+                                        'cash_on_delivery' => '代金引換',
+                                        'bank_transfer' => '銀行振込',
+                                        'other' => 'その他',
                                     ])
                                     ->required()
-                                    ->placeholder('Select payment mode'),
+                                    ->placeholder('支払い方法を選択'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Timestamps')
-                    ->description('Order lifecycle timestamps')
+                Forms\Components\Section::make('タイムスタンプ')
+                    ->description('注文ライフサイクルのタイムスタンプ')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DateTimePicker::make('ordered_at')
-                                    ->label('Ordered At'),
+                                    ->label('注文日時'),
                                 Forms\Components\DateTimePicker::make('shipped_at')
-                                    ->label('Shipped At'),
+                                    ->label('発送日時'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DateTimePicker::make('delivered_at')
-                                    ->label('Delivered At'),
+                                    ->label('配達日時'),
                                 Forms\Components\DateTimePicker::make('canceled_at')
-                                    ->label('Canceled At'),
+                                    ->label('キャンセル日時'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DateTimePicker::make('details_completed_at')
-                                    ->label('Details Completed At'),
+                                    ->label('詳細完了日時'),
                                 Forms\Components\DateTimePicker::make('payment_started_at')
-                                    ->label('Payment Started At'),
+                                    ->label('支払い開始日時'),
                             ]),
                     ])
                     ->columns(2),
@@ -189,11 +191,11 @@ class OrderResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Customer')
+                    ->label('顧客')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
@@ -201,13 +203,13 @@ class OrderResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('total_yen')
-                    ->label('Total')
+                    ->label('合計')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('orderStatus.name')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'Pending' => 'warning',
@@ -219,18 +221,18 @@ class OrderResource extends Resource
                     })
                     ->sortable()
                     ->getStateUsing(function ($record) {
-                        return $record->orderStatus?->name ?? 'Unknown';
+                        return $record->orderStatus?->name ?? '不明';
                     }),
                 Tables\Columns\TextColumn::make('ordered_at')
-                    ->label('Date')
+                    ->label('日付')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('items_count')
-                    ->label('Items')
+                    ->label('商品数')
                     ->counts('items')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('delivered_at')
-                    ->label('Delivered On')
+                    ->label('配達日')
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')
@@ -245,13 +247,13 @@ class OrderResource extends Resource
                     )
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\Filter::make('ordered_at')
                     ->form([
                         Forms\Components\DatePicker::make('ordered_from')
-                            ->label('Ordered From'),
+                            ->label('注文日範囲（開始）'),
                         Forms\Components\DatePicker::make('ordered_until')
-                            ->label('Ordered Until'),
+                            ->label('注文日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -267,11 +269,11 @@ class OrderResource extends Resource
                 Tables\Filters\Filter::make('total_yen')
                     ->form([
                         Forms\Components\TextInput::make('min_total')
-                            ->label('Min Total')
+                            ->label('最小合計')
                             ->numeric()
                             ->placeholder('¥0'),
                         Forms\Components\TextInput::make('max_total')
-                            ->label('Max Total')
+                            ->label('最大合計')
                             ->numeric()
                             ->placeholder('¥999999'),
                     ])
@@ -293,7 +295,7 @@ class OrderResource extends Resource
                 Tables\Actions\EditAction::make()
                     ->icon('heroicon-o-pencil'),
                 Action::make('mark_shipped')
-                    ->label('Mark Shipped')
+                    ->label('発送済みにする')
                     ->icon('heroicon-o-truck')
                     ->requiresConfirmation()
                     ->color('info')
@@ -304,7 +306,7 @@ class OrderResource extends Resource
                     })
                     ->visible(fn (Order $record) => $record->orderStatus?->code === 'paid'),
                 Action::make('mark_delivered')
-                    ->label('Mark Delivered')
+                    ->label('配達済みにする')
                     ->icon('heroicon-o-check-circle')
                     ->requiresConfirmation()
                     ->color('success')
@@ -315,7 +317,7 @@ class OrderResource extends Resource
                     })
                     ->visible(fn (Order $record) => $record->orderStatus?->code === 'fulfilled'),
                 Action::make('cancel')
-                    ->label('Cancel Order')
+                    ->label('注文をキャンセル')
                     ->icon('heroicon-o-x-circle')
                     ->requiresConfirmation()
                     ->color('danger')
@@ -326,7 +328,7 @@ class OrderResource extends Resource
                     })
                     ->visible(fn (Order $record) => !in_array($record->orderStatus?->code, ['cancelled', 'refunded'])),
                 Action::make('refund')
-                    ->label('Refund Order')
+                    ->label('注文を返金')
                     ->icon('heroicon-o-arrow-path')
                     ->requiresConfirmation()
                     ->color('warning')

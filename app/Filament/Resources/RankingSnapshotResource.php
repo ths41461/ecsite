@@ -18,7 +18,9 @@ class RankingSnapshotResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
 
-    protected static ?string $navigationGroup = 'Analytics';
+    protected static ?string $navigationGroup = '分析';
+
+    protected static ?string $navigationLabel = 'ランキングスナップショット';
 
     protected static ?int $navigationSort = 10;
 
@@ -26,33 +28,33 @@ class RankingSnapshotResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Ranking Information')
-                    ->description('Information about the product ranking')
+                Forms\Components\Section::make('ランキング情報')
+                    ->description('商品ランキングに関する情報')
                     ->schema([
                         Forms\Components\Select::make('product_id')
                             ->relationship('product', 'name')
                             ->searchable()
                             ->preload()
                             ->required()
-                            ->label('Product'),
+                            ->label('商品'),
                         Forms\Components\TextInput::make('scope')
                             ->required()
                             ->maxLength(255)
                             ->default('overall')
-                            ->label('Scope'),
+                            ->label('範囲'),
                         Forms\Components\TextInput::make('rank')
                             ->required()
                             ->numeric()
                             ->minValue(1)
-                            ->label('Rank'),
+                            ->label('順位'),
                         Forms\Components\TextInput::make('score')
                             ->required()
                             ->numeric()
                             ->step(0.01)
-                            ->label('Score'),
+                            ->label('スコア'),
                         Forms\Components\DateTimePicker::make('computed_at')
                             ->required()
-                            ->label('Computed At'),
+                            ->label('計算日時'),
                     ])
                     ->columns(2),
             ]);
@@ -67,19 +69,19 @@ class RankingSnapshotResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('scope')
-                    ->label('Scope')
+                    ->label('範囲')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rank')
-                    ->label('Rank')
+                    ->label('順位')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('score')
-                    ->label('Score')
+                    ->label('スコア')
                     ->numeric()
                     ->formatStateUsing(fn ($state) => number_format($state, 2))
                     ->sortable(),
@@ -98,17 +100,17 @@ class RankingSnapshotResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('scope')
                     ->options([
-                        'overall' => 'Overall',
-                        'category' => 'By Category',
-                        'brand' => 'By Brand',
+                        'overall' => '全体',
+                        'category' => 'カテゴリ別',
+                        'brand' => 'ブランド別',
                     ])
-                    ->placeholder('All Scopes'),
+                    ->placeholder('すべての範囲'),
                 Tables\Filters\Filter::make('computed_at')
                     ->form([
                         Forms\Components\DatePicker::make('computed_from')
-                            ->label('Computed From'),
+                            ->label('計算日範囲（開始）'),
                         Forms\Components\DatePicker::make('computed_until')
-                            ->label('Computed Until'),
+                            ->label('計算日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -123,12 +125,12 @@ class RankingSnapshotResource extends Resource
                     }),
                 Tables\Filters\SelectFilter::make('product.category_id')
                     ->relationship('product.category', 'name')
-                    ->label('Category')
+                    ->label('カテゴリ')
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('product.brand_id')
                     ->relationship('product.brand', 'name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->searchable()
                     ->preload(),
             ])

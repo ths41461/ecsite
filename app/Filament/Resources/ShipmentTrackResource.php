@@ -18,7 +18,9 @@ class ShipmentTrackResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-truck';
 
-    protected static ?string $navigationGroup = 'Orders';
+    protected static ?string $navigationGroup = '注文';
+
+    protected static ?string $navigationLabel = '出荷追跡';
 
     protected static ?int $navigationSort = 15;
 
@@ -26,8 +28,8 @@ class ShipmentTrackResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Tracking Event Information')
-                    ->description('Information about the shipment tracking event')
+                Forms\Components\Section::make('追跡イベント情報')
+                    ->description('出荷追跡イベントに関する情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -36,39 +38,39 @@ class ShipmentTrackResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Shipment'),
+                                    ->label('出荷'),
                                 Forms\Components\TextInput::make('carrier')
                                     ->required()
                                     ->maxLength(100)
-                                    ->label('Carrier'),
+                                    ->label('運送会社'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('track_no')
                                     ->required()
                                     ->maxLength(255)
-                                    ->label('Tracking Number'),
+                                    ->label('追跡番号'),
                                 Forms\Components\Select::make('status')
                                     ->options([
-                                        'packed' => 'Packed',
-                                        'label_created' => 'Label Created',
-                                        'in_transit' => 'In Transit',
-                                        'out_for_delivery' => 'Out for Delivery',
-                                        'delivered' => 'Delivered',
-                                        'exception' => 'Exception',
-                                        'returned' => 'Returned',
+                                        'packed' => '梱包済み',
+                                        'label_created' => 'ラベル作成済み',
+                                        'in_transit' => '輸送中',
+                                        'out_for_delivery' => '配達準備中',
+                                        'delivered' => '配達済み',
+                                        'exception' => '例外',
+                                        'returned' => '返品',
                                     ])
                                     ->required()
-                                    ->label('Status'),
+                                    ->label('ステータス'),
                             ]),
                         Forms\Components\DateTimePicker::make('event_time')
                             ->required()
-                            ->label('Event Time'),
+                            ->label('イベント日時'),
                         Forms\Components\Textarea::make('raw_event_json')
                             ->rows(4)
                             ->columnSpanFull()
-                            ->label('Raw Event Data')
-                            ->helperText('JSON data from carrier webhook'),
+                            ->label('生イベントデータ')
+                            ->helperText('運送会社ウェブフックからのJSONデータ'),
                     ])
                     ->columns(2),
             ]);
@@ -83,14 +85,14 @@ class ShipmentTrackResource extends Resource
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('shipment.tracking_number')
-                    ->label('Tracking #')
+                    ->label('追跡番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('track_no')
-                    ->label('Track No')
+                    ->label('追跡番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -118,31 +120,31 @@ class ShipmentTrackResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'packed' => 'Packed',
-                        'label_created' => 'Label Created',
-                        'in_transit' => 'In Transit',
-                        'out_for_delivery' => 'Out for Delivery',
-                        'delivered' => 'Delivered',
-                        'exception' => 'Exception',
-                        'returned' => 'Returned',
+                        'packed' => '梱包済み',
+                        'label_created' => 'ラベル作成済み',
+                        'in_transit' => '輸送中',
+                        'out_for_delivery' => '配達準備中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
+                        'returned' => '返品',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\SelectFilter::make('carrier')
                     ->options([
                         'fedex' => 'FedEx',
                         'ups' => 'UPS',
                         'dhl' => 'DHL',
                         'usps' => 'USPS',
-                        'jp_post' => 'Japan Post',
-                        'other' => 'Other',
+                        'jp_post' => '日本郵便',
+                        'other' => 'その他',
                     ])
-                    ->placeholder('All Carriers'),
+                    ->placeholder('すべての運送会社'),
                 Tables\Filters\Filter::make('event_time')
                     ->form([
                         Forms\Components\DatePicker::make('event_from')
-                            ->label('Event From'),
+                            ->label('イベント日範囲（開始）'),
                         Forms\Components\DatePicker::make('event_until')
-                            ->label('Event Until'),
+                            ->label('イベント日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query

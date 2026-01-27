@@ -22,7 +22,9 @@ class ProductResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-shopping-bag';
 
-    protected static ?string $navigationGroup = 'E-commerce';
+    protected static ?string $navigationGroup = 'ECサイト';
+
+    protected static ?string $navigationLabel = '商品';
 
     protected static ?int $navigationSort = 1;
 
@@ -30,15 +32,15 @@ class ProductResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
-                    ->description('Basic product information')
+                Forms\Components\Section::make('基本情報')
+                    ->description('基本的な商品情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Enter product name')
+                                    ->placeholder('商品名を入力してください')
                                     ->live(onBlur: true)
                                     ->afterStateUpdated(function (string $operation, $state, Forms\Set $set) {
                                         if ($operation !== 'create') {
@@ -51,45 +53,45 @@ class ProductResource extends Resource
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Auto-generated from name'),
+                                    ->placeholder('名前から自動生成'),
                                 Forms\Components\Select::make('brand_id')
                                     ->relationship('brand', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->placeholder('Select a brand'),
+                                    ->placeholder('ブランドを選択'),
                                 Forms\Components\Select::make('category_id')
                                     ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->placeholder('Select a category'),
+                                    ->placeholder('カテゴリを選択'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\Toggle::make('is_active')
-                                    ->label('Active')
+                                    ->label('有効')
                                     ->default(true)
                                     ->inline(false),
                                 Forms\Components\Toggle::make('is_featured')
-                                    ->label('Featured')
+                                    ->label('特集')
                                     ->default(false)
                                     ->inline(false),
                             ]),
                         Forms\Components\Textarea::make('short_description')
                             ->rows(2)
                             ->maxLength(255)
-                            ->placeholder('Brief description of the product'),
+                            ->placeholder('商品の簡単な説明'),
                         Forms\Components\Textarea::make('description')
                             ->rows(4)
                             ->maxLength(65535)
-                            ->placeholder('Detailed description of the product')
+                            ->placeholder('商品の詳細な説明')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Pricing')
-                    ->description('Set product pricing and sale information')
+                Forms\Components\Section::make('価格設定')
+                    ->description('商品の価格と販売情報を設定')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -98,34 +100,34 @@ class ProductResource extends Resource
                                     ->prefix('¥')
                                     ->required()
                                     ->placeholder('0.00')
-                                    ->helperText('Base price in yen'),
+                                    ->helperText('基本価格（円）'),
                                 Forms\Components\TextInput::make('sale_price')
                                     ->numeric()
                                     ->prefix('¥')
                                     ->placeholder('0.00')
-                                    ->helperText('Sale price in yen (optional)'),
+                                    ->helperText('セール価格（円）（オプション）'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\DatePicker::make('sale_start_date')
-                                    ->label('Sale Start Date'),
+                                    ->label('セール開始日'),
                                 Forms\Components\DatePicker::make('sale_end_date')
-                                    ->label('Sale End Date'),
+                                    ->label('セール終了日'),
                             ]),
                     ])
                     ->columns(2),
 
-                Forms\Components\Section::make('Inventory & SKU')
-                    ->description('Product inventory and SKU information')
+                Forms\Components\Section::make('在庫とSKU')
+                    ->description('商品の在庫とSKU情報')
                     ->schema([
                         Forms\Components\TextInput::make('sku')
                             ->maxLength(255)
-                            ->placeholder('Enter base SKU for this product')
-                            ->helperText('Base SKU for this product'),
+                            ->placeholder('この商品の基本SKUを入力')
+                            ->helperText('この商品の基本SKU'),
                     ]),
 
-                Forms\Components\Section::make('Variants (volume-based)')
-                    ->description('Manage product variants with different sizes or options')
+                Forms\Components\Section::make('バリエーション（容量ベース）')
+                    ->description('異なるサイズやオプションを持つ商品バリエーションを管理')
                     ->schema([
                         Forms\Components\Repeater::make('variants')
                             ->relationship('variants')
@@ -135,55 +137,55 @@ class ProductResource extends Resource
                                         Forms\Components\TextInput::make('sku')
                                             ->required()
                                             ->maxLength(255)
-                                            ->placeholder('Enter variant SKU'),
+                                            ->placeholder('バリエーションSKUを入力'),
                                         Forms\Components\KeyValue::make('option_json')
-                                            ->label('Options')
-                                            ->keyLabel('Option Type')
-                                            ->valueLabel('Option Value')
+                                            ->label('オプション')
+                                            ->keyLabel('オプションタイプ')
+                                            ->valueLabel('オプション値')
                                             ->addable()
                                             ->deletable()
-                                            ->helperText('For volume-based variants, use "size_ml" as the key and the volume in ml as the value'),
+                                            ->helperText('容量ベースのバリエーションには、キーとして「size_ml」、値としてml単位の容量を使用してください'),
                                     ]),
                                 Forms\Components\Grid::make(2)
                                     ->schema([
                                         Forms\Components\TextInput::make('price_yen')
-                                            ->label('Price (¥)')
+                                            ->label('価格（¥）')
                                             ->numeric()
                                             ->required()
                                             ->minValue(0)
                                             ->placeholder('0.00'),
                                         Forms\Components\TextInput::make('sale_price_yen')
-                                            ->label('Sale Price (¥)')
+                                            ->label('セール価格（¥）')
                                             ->numeric()
                                             ->minValue(0)
                                             ->placeholder('0.00')
-                                            ->helperText('Leave empty if not on sale'),
+                                            ->helperText('セールでない場合は空のままにしてください'),
                                     ]),
                                 Forms\Components\Toggle::make('is_active')
-                                    ->label('Active')
+                                    ->label('有効')
                                     ->default(true)
                                     ->inline(false),
                             ])
-                            ->createItemButtonLabel('Add Variant')
+                            ->createItemButtonLabel('バリエーション追加')
                             ->collapsible()
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Fragrance Profile')
-                    ->description('Fragrance-specific attributes like notes, concentration, etc.')
+                Forms\Components\Section::make('香りプロファイル')
+                    ->description('ノート、濃度などの香り固有の属性')
                     ->schema([
                         Forms\Components\KeyValue::make('attributes_json')
-                            ->label('Attributes')
-                            ->keyLabel('Attribute')
-                            ->valueLabel('Value')
+                            ->label('属性')
+                            ->keyLabel('属性')
+                            ->valueLabel('値')
                             ->addable()
                             ->deletable()
-                            ->helperText('Fragrance-specific attributes like notes, concentration, etc.')
+                            ->helperText('ノート、濃度などの香り固有の属性')
                             ->columnSpanFull(),
                     ]),
 
-                Forms\Components\Section::make('Images')
-                    ->description('Upload product images')
+                Forms\Components\Section::make('画像')
+                    ->description('商品画像をアップロード')
                     ->schema([
                         Forms\Components\FileUpload::make('images')
                             ->multiple()
@@ -192,24 +194,24 @@ class ProductResource extends Resource
                             ->image()
                             ->imageEditor()
                             ->maxFiles(10)
-                            ->placeholder('Upload product images')
-                            ->helperText('Upload up to 10 product images'),
+                            ->placeholder('商品画像をアップロード')
+                            ->helperText('最大10枚の商品画像をアップロード'),
                     ]),
 
-                Forms\Components\Section::make('SEO Information')
-                    ->description('Search engine optimization information')
+                Forms\Components\Section::make('SEO情報')
+                    ->description('検索エンジン最適化情報')
                     ->schema([
                         Forms\Components\TextInput::make('meta_title')
                             ->maxLength(255)
-                            ->placeholder('SEO title for this product'),
+                            ->placeholder('この商品のSEOタイトル'),
                         Forms\Components\Textarea::make('meta_description')
                             ->rows(3)
                             ->maxLength(255)
-                            ->placeholder('SEO description for this product'),
+                            ->placeholder('この商品のSEO説明'),
                         Forms\Components\TextInput::make('meta_keywords')
                             ->maxLength(255)
-                            ->placeholder('Comma separated keywords')
-                            ->helperText('Comma separated keywords'),
+                            ->placeholder('カンマ区切りのキーワード')
+                            ->helperText('カンマ区切りのキーワード'),
                     ])
                     ->columns(2),
             ]);
@@ -220,25 +222,25 @@ class ProductResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\ImageColumn::make('images')
-                    ->label('Image')
+                    ->label('画像')
                     ->circular()
                     ->defaultImageUrl(asset('images/product-placeholder.png'))
                     ->size(50),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Product')
+                    ->label('商品')
                     ->description(fn (Product $record): ?string => $record->slug)
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('brand.name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('カテゴリ')
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('price')
-                    ->label('Price')
+                    ->label('価格')
                     ->formatStateUsing(function (Product $record) {
                         if ($record->sale_price) {
                             return '¥' . number_format($record->price) . ' → ¥' . number_format($record->sale_price);
@@ -247,7 +249,7 @@ class ProductResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('variants.sku')
-                    ->label('Variants')
+                    ->label('バリエーション')
                     ->badge()
                     ->separator(',')
                     ->limit(3)
@@ -258,12 +260,12 @@ class ProductResource extends Resource
                         return null;
                     }),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
                 Tables\Columns\IconColumn::make('is_featured')
-                    ->label('Featured')
+                    ->label('特集')
                     ->boolean()
                     ->trueColor('warning')
                     ->falseColor('gray'),
@@ -285,33 +287,33 @@ class ProductResource extends Resource
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Categories'),
+                    ->placeholder('すべてのカテゴリ'),
                 Tables\Filters\SelectFilter::make('brand_id')
                     ->relationship('brand', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Brands'),
+                    ->placeholder('すべてのブランド'),
                 Tables\Filters\TernaryFilter::make('is_featured')
-                    ->label('Featured'),
+                    ->label('特集'),
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active'),
+                    ->label('有効'),
                 Tables\Filters\SelectFilter::make('stock_status')
                     ->options([
-                        'in_stock' => 'In Stock',
-                        'low_stock' => 'Low Stock',
-                        'out_of_stock' => 'Out of Stock',
+                        'in_stock' => '在庫あり',
+                        'low_stock' => '在庫わずか',
+                        'out_of_stock' => '在庫なし',
                     ])
-                    ->placeholder('All Stock Statuses'),
+                    ->placeholder('すべての在庫状況'),
                 Tables\Filters\TernaryFilter::make('has_variants')
-                    ->label('Has Variants'),
+                    ->label('バリエーションあり'),
                 Tables\Filters\Filter::make('price')
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Min Price')
+                            ->label('最小価格')
                             ->numeric()
                             ->placeholder('¥0'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Max Price')
+                            ->label('最大価格')
                             ->numeric()
                             ->placeholder('¥999999'),
                     ])
@@ -329,7 +331,7 @@ class ProductResource extends Resource
             ])
             ->actions([
                 Action::make('preview')
-                    ->label('Preview')
+                    ->label('プレビュー')
                     ->icon('heroicon-o-eye')
                     ->url(fn (Product $record): string => route('products.show', $record))
                     ->openUrlInNewTab(),
