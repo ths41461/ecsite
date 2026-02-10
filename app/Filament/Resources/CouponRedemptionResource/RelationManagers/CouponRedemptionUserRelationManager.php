@@ -18,7 +18,7 @@ class CouponRedemptionUserRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('User Information')
+                Forms\Components\Section::make('ユーザー情報')
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->required()
@@ -30,9 +30,9 @@ class CouponRedemptionUserRelationManager extends RelationManager
                             ->unique(ignoreRecord: true),
                         Forms\Components\Select::make('role')
                             ->options([
-                                'admin' => 'Admin',
-                                'staff' => 'Staff',
-                                'viewer' => 'Viewer',
+                                'admin' => '管理者',
+                                'staff' => 'スタッフ',
+                                'viewer' => '閲覧者',
                             ])
                             ->required(),
                         Forms\Components\Toggle::make('is_active')
@@ -48,18 +48,27 @@ class CouponRedemptionUserRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('名前')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('メール')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('role')
+                    ->label('役割')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'admin' => 'success',
                         'staff' => 'warning',
                         'viewer' => 'gray',
                         default => 'secondary',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'admin' => '管理者',
+                        'staff' => 'スタッフ',
+                        'viewer' => '閲覧者',
+                        default => $state,
                     }),
                 Tables\Columns\IconColumn::make('is_active')
                     ->boolean(),
@@ -71,19 +80,27 @@ class CouponRedemptionUserRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
-                Tables\Actions\AttachAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
+                Tables\Actions\AttachAction::make()
+                    ->label('関連付け'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DetachAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DetachAction::make()
+                    ->label('解除'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DetachBulkAction::make(),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DetachBulkAction::make()
+                        ->label('解除'),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

@@ -55,7 +55,7 @@ class OrderItemsRelationManager extends RelationManager
             ->recordTitleAttribute('name_snapshot')
             ->columns([
                 Tables\Columns\TextColumn::make('name_snapshot')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sku_snapshot')
@@ -63,17 +63,17 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unit_price_yen')
-                    ->label('Unit Price')
+                    ->label('単価')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('qty')
-                    ->label('Quantity')
+                    ->label('数量')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('line_total_yen')
-                    ->label('Line Total')
+                    ->label('小計')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })

@@ -110,9 +110,17 @@ class PaymentTransactionResource extends Resource
                     ->url(fn ($record) => route('filament.admin.resources.payments.edit', ['record' => $record->payment_id]))
                     ->openUrlInNewTab(false),
                 Tables\Columns\TextColumn::make('provider')
+                    ->label('プロバイダー')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state))),
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'stripe' => 'ストライプ',
+                        'paypal' => 'ペイパル',
+                        'bank_transfer' => '銀行振込',
+                        'cash_on_delivery' => '代金引換',
+                        'other' => 'その他',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    }),
                 Tables\Columns\TextColumn::make('external_id')
                     ->label('外部ID')
                     ->searchable()
@@ -137,7 +145,17 @@ class PaymentTransactionResource extends Resource
                         'expired' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'pending' => '保留中',
+                        'authorized' => '承認済み',
+                        'captured' => 'キャプチャ済み',
+                        'failed' => '失敗',
+                        'refunded' => '返金済み',
+                        'partial_refund' => '一部返金',
+                        'voided' => '無効',
+                        'expired' => '期限切れ',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('occurred_at')
                     ->dateTime()
@@ -238,6 +256,16 @@ class PaymentTransactionResource extends Resource
             'view' => Pages\ViewPaymentTransaction::route('/{record}'),
             'edit' => Pages\EditPaymentTransaction::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '支払い取引';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '支払い取引';
     }
 
     public static function can(string $action, $record = null): bool

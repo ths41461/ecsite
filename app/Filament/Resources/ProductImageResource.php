@@ -168,6 +168,16 @@ class ProductImageResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return '商品画像';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '商品画像';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

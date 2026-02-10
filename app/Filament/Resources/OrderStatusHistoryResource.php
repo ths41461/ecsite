@@ -90,26 +90,44 @@ class OrderStatusHistoryResource extends Resource
                     ->label('変更前ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'gray',
-                        'Processing' => 'info',
-                        'Shipped' => 'warning',
-                        'Delivered' => 'success',
-                        'Cancelled' => 'danger',
-                        'Refunded' => 'secondary',
+                        '保留中' => 'gray',
+                        '処理中' => 'info',
+                        '発送済み' => 'warning',
+                        '配達済み' => 'success',
+                        'キャンセル' => 'danger',
+                        '返金済み' => 'secondary',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Processing' => '処理中',
+                        'Shipped' => '発送済み',
+                        'Delivered' => '配達済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('toStatus.name')
                     ->label('変更後ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'gray',
-                        'Processing' => 'info',
-                        'Shipped' => 'warning',
-                        'Delivered' => 'success',
-                        'Cancelled' => 'danger',
-                        'Refunded' => 'secondary',
+                        '保留中' => 'gray',
+                        '処理中' => 'info',
+                        '発送済み' => 'warning',
+                        '配達済み' => 'success',
+                        'キャンセル' => 'danger',
+                        '返金済み' => 'secondary',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Processing' => '処理中',
+                        'Shipped' => '発送済み',
+                        'Delivered' => '配達済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('changedByUser.name')
@@ -161,13 +179,17 @@ class OrderStatusHistoryResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ])
             ->defaultSort('changed_at', 'desc');
@@ -188,6 +210,16 @@ class OrderStatusHistoryResource extends Resource
             'view' => Pages\ViewOrderStatusHistory::route('/{record}'),
             'edit' => Pages\EditOrderStatusHistory::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '注文ステータス履歴';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '注文ステータス履歴';
     }
 
     public static function can(string $action, $record = null): bool

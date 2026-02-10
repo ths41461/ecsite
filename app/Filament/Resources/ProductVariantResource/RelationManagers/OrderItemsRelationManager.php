@@ -23,25 +23,25 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->preload()
                     ->required()
-                    ->label('Order'),
+                    ->label('注文'),
                 Forms\Components\TextInput::make('product_name_snapshot')
                     ->required()
                     ->maxLength(255)
-                    ->label('Product Name (Snapshot)'),
+                    ->label('商品名（スナップショット）'),
                 Forms\Components\TextInput::make('sku_snapshot')
                     ->required()
                     ->maxLength(255)
-                    ->label('SKU (Snapshot)'),
+                    ->label('SKU（スナップショット）'),
                 Forms\Components\TextInput::make('unit_price_yen')
                     ->required()
                     ->numeric()
                     ->prefix('¥')
-                    ->label('Unit Price (¥)'),
+                    ->label('単価（¥）'),
                 Forms\Components\TextInput::make('quantity')
                     ->required()
                     ->numeric()
                     ->minValue(1)
-                    ->label('Quantity'),
+                    ->label('数量'),
             ]);
     }
 
@@ -55,11 +55,11 @@ class OrderItemsRelationManager extends RelationManager
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('order.order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('product_name_snapshot')
-                    ->label('Product Name')
+                    ->label('商品名')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sku_snapshot')
@@ -67,15 +67,15 @@ class OrderItemsRelationManager extends RelationManager
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('unit_price_yen')
-                    ->label('Unit Price')
+                    ->label('単価')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('quantity')
-                    ->label('Qty')
+                    ->label('数量')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('line_total_yen')
-                    ->label('Line Total')
+                    ->label('小計')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -87,15 +87,15 @@ class OrderItemsRelationManager extends RelationManager
                     ->relationship('order', 'order_number')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Orders'),
+                    ->placeholder('すべての注文'),
                 Tables\Filters\Filter::make('price_range')
                     ->form([
                         Forms\Components\TextInput::make('min_price')
-                            ->label('Min Price')
+                            ->label('最小価格')
                             ->numeric()
                             ->prefix('¥'),
                         Forms\Components\TextInput::make('max_price')
-                            ->label('Max Price')
+                            ->label('最大価格')
                             ->numeric()
                             ->prefix('¥'),
                     ])
@@ -113,10 +113,10 @@ class OrderItemsRelationManager extends RelationManager
                 Tables\Filters\Filter::make('quantity_range')
                     ->form([
                         Forms\Components\TextInput::make('min_quantity')
-                            ->label('Min Quantity')
+                            ->label('最小数量')
                             ->numeric(),
                         Forms\Components\TextInput::make('max_quantity')
-                            ->label('Max Quantity')
+                            ->label('最大数量')
                             ->numeric(),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -132,16 +132,21 @@ class OrderItemsRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

@@ -33,29 +33,37 @@ class UserOrdersRelationManager extends RelationManager
             ->recordTitleAttribute('order_number')
             ->columns([
                 Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_yen')
-                    ->label('Total')
+                    ->label('合計')
                     ->formatStateUsing(function ($state) {
                         return '¥' . number_format($state);
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('orderStatus.name')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'warning',
-                        'Paid' => 'success',
-                        'Fulfilled' => 'info',
-                        'Cancelled' => 'danger',
-                        'Refunded' => 'gray',
+                        '保留中' => 'warning',
+                        '支払済み' => 'success',
+                        '履行済み' => 'info',
+                        'キャンセル' => 'danger',
+                        '返金済み' => 'gray',
                         default => 'secondary',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Paid' => '支払済み',
+                        'Fulfilled' => '履行済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ordered_at')
-                    ->label('Date')
+                    ->label('日付')
                     ->dateTime()
                     ->sortable(),
             ])
@@ -64,7 +72,7 @@ class UserOrdersRelationManager extends RelationManager
                     ->relationship('orderStatus', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

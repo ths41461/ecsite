@@ -89,8 +89,18 @@ class ShipmentTrackResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
+                    ->label('運送会社')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'fedex' => 'フェデックス',
+                        'ups' => 'ユーピーエス',
+                        'dhl' => 'ディーエチエル',
+                        'usps' => 'ユーエエスプス',
+                        'jp_post' => '日本郵便',
+                        'other' => 'その他',
+                        default => $state,
+                    }),
                 Tables\Columns\TextColumn::make('track_no')
                     ->label('追跡番号')
                     ->searchable()
@@ -107,9 +117,19 @@ class ShipmentTrackResource extends Resource
                         'returned' => 'secondary',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'packed' => '梱包済み',
+                        'label_created' => 'ラベル作成済み',
+                        'in_transit' => '輸送中',
+                        'out_for_delivery' => '配達準備中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
+                        'returned' => '返品',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('event_time')
+                    ->label('イベント日時')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -131,10 +151,10 @@ class ShipmentTrackResource extends Resource
                     ->placeholder('すべてのステータス'),
                 Tables\Filters\SelectFilter::make('carrier')
                     ->options([
-                        'fedex' => 'FedEx',
-                        'ups' => 'UPS',
-                        'dhl' => 'DHL',
-                        'usps' => 'USPS',
+                        'fedex' => 'フェデックス',
+                        'ups' => 'ユーピーエス',
+                        'dhl' => 'ディーエチエル',
+                        'usps' => 'ユーエエスプス',
                         'jp_post' => '日本郵便',
                         'other' => 'その他',
                     ])
@@ -159,9 +179,12 @@ class ShipmentTrackResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -186,6 +209,16 @@ class ShipmentTrackResource extends Resource
             'view' => Pages\ViewShipmentTrack::route('/{record}'),
             'edit' => Pages\EditShipmentTrack::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '出荷追跡';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '出荷追跡';
     }
 
     public static function can(string $action, $record = null): bool

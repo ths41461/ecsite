@@ -203,6 +203,16 @@ class InventoryResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return '在庫';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '在庫';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

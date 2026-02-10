@@ -22,39 +22,39 @@ class UserEventsRelationManager extends RelationManager
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('Select product'),
+                    ->placeholder('商品を選択'),
                 Forms\Components\TextInput::make('user_hash')
                     ->maxLength(255)
-                    ->placeholder('Enter user hash (for anonymous users)'),
+                    ->placeholder('ユーザーのハッシュを入力（匿名ユーザー用）'),
                 Forms\Components\Select::make('event_type')
                     ->options([
-                        'view' => 'View',
-                        'add_to_cart' => 'Add to Cart',
-                        'remove_from_cart' => 'Remove from Cart',
-                        'checkout_start' => 'Checkout Start',
-                        'checkout_complete' => 'Checkout Complete',
-                        'search' => 'Search',
-                        'filter' => 'Filter',
-                        'sort' => 'Sort',
-                        'wishlist_add' => 'Wishlist Add',
-                        'wishlist_remove' => 'Wishlist Remove',
-                        'review' => 'Review',
-                        'share' => 'Share',
+                        'view' => '表示',
+                        'add_to_cart' => 'カート追加',
+                        'remove_from_cart' => 'カート削除',
+                        'checkout_start' => '購入手続き開始',
+                        'checkout_complete' => '購入完了',
+                        'search' => '検索',
+                        'filter' => 'フィルター',
+                        'sort' => 'ソート',
+                        'wishlist_add' => 'ウィッシュリスト追加',
+                        'wishlist_remove' => 'ウィッシュリスト削除',
+                        'review' => 'レビュー',
+                        'share' => '共有',
                     ])
                     ->required()
                     ->searchable()
-                    ->placeholder('Select event type'),
+                    ->placeholder('イベントタイプを選択'),
                 Forms\Components\TextInput::make('value')
                     ->numeric()
                     ->step('0.01')
-                    ->placeholder('Enter value (optional)'),
+                    ->placeholder('値を入力（任意）'),
                 Forms\Components\DateTimePicker::make('occurred_at')
                     ->required()
-                    ->placeholder('Select occurrence time'),
+                    ->placeholder('発生日時を選択'),
                 Forms\Components\Textarea::make('meta_json')
                     ->columnSpanFull()
                     ->rows(4)
-                    ->placeholder('Enter metadata as JSON (optional)'),
+                    ->placeholder('メタデータをJSON形式で入力（任意）'),
             ]);
     }
 
@@ -64,7 +64,7 @@ class UserEventsRelationManager extends RelationManager
             ->recordTitleAttribute('event_type')
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user_hash')
@@ -99,31 +99,31 @@ class UserEventsRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('event_type')
                     ->options([
-                        'view' => 'View',
-                        'add_to_cart' => 'Add to Cart',
-                        'remove_from_cart' => 'Remove from Cart',
-                        'checkout_start' => 'Checkout Start',
-                        'checkout_complete' => 'Checkout Complete',
-                        'search' => 'Search',
-                        'filter' => 'Filter',
-                        'sort' => 'Sort',
-                        'wishlist_add' => 'Wishlist Add',
-                        'wishlist_remove' => 'Wishlist Remove',
-                        'review' => 'Review',
-                        'share' => 'Share',
+                        'view' => '表示',
+                        'add_to_cart' => 'カート追加',
+                        'remove_from_cart' => 'カート削除',
+                        'checkout_start' => '購入手続き開始',
+                        'checkout_complete' => '購入完了',
+                        'search' => '検索',
+                        'filter' => 'フィルター',
+                        'sort' => 'ソート',
+                        'wishlist_add' => 'ウィッシュリスト追加',
+                        'wishlist_remove' => 'ウィッシュリスト削除',
+                        'review' => 'レビュー',
+                        'share' => '共有',
                     ])
-                    ->placeholder('All Event Types'),
+                    ->placeholder('すべてのイベントタイプ'),
                 Tables\Filters\SelectFilter::make('product_id')
                     ->relationship('product', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Products'),
+                    ->placeholder('すべての商品'),
                 Tables\Filters\Filter::make('occurred_at')
                     ->form([
                         Forms\Components\DatePicker::make('occurred_from')
-                            ->label('Occurred from'),
+                            ->label('発生日範囲（開始）'),
                         Forms\Components\DatePicker::make('occurred_until')
-                            ->label('Occurred until'),
+                            ->label('発生日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -138,16 +138,21 @@ class UserEventsRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ])
             ->defaultSort('occurred_at', 'desc');

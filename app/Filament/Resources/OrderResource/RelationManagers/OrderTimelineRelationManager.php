@@ -12,21 +12,21 @@ class OrderTimelineRelationManager extends RelationManager
 {
     protected static string $relationship = 'statusHistory';
 
-    protected static ?string $title = 'Timeline';
+    protected static ?string $title = 'タイムライン';
 
     public function table(Table $table): Table
     {
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('status_name')
-                    ->label('Status')
+                    ->label('ステータス')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('changed_at')
-                    ->label('Date')
+                    ->label('日付')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('changed_by')
-                    ->label('Changed By')
+                    ->label('変更者')
                     ->sortable(),
             ])
             ->filters([
@@ -56,6 +56,6 @@ class OrderTimelineRelationManager extends RelationManager
 
     public function getTableHeading(): string
     {
-        return 'Timeline';
+        return 'タイムライン';
     }
 }

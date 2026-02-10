@@ -18,35 +18,35 @@ class CategoryProductsRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Basic Information')
-                    ->description('Basic product information')
+                Forms\Components\Section::make('基本情報')
+                    ->description('基本的な商品情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->placeholder('Enter product name'),
+                                    ->placeholder('商品名を入力してください'),
                                 Forms\Components\TextInput::make('slug')
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->placeholder('Auto-generated slug'),
+                                    ->placeholder('自動生成スラッグ'),
                                 Forms\Components\Select::make('brand_id')
                                     ->relationship('brand', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->placeholder('Select a brand'),
+                                    ->placeholder('ブランドを選択'),
                             ]),
                         Forms\Components\Textarea::make('short_description')
                             ->rows(2)
                             ->maxLength(255)
-                            ->placeholder('Brief description of the product'),
+                            ->placeholder('商品の簡単な説明'),
                         Forms\Components\Textarea::make('description')
                             ->rows(4)
                             ->maxLength(65535)
-                            ->placeholder('Detailed description of the product')
+                            ->placeholder('商品の詳細な説明')
                             ->columnSpanFull(),
                     ])
                     ->columns(2),
@@ -59,14 +59,14 @@ class CategoryProductsRelationManager extends RelationManager
             ->recordTitleAttribute('name')
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Product Name')
+                    ->label('商品名')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('brand.name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
-                    ->label('Price')
+                    ->label('価格')
                     ->formatStateUsing(function ($record) {
                         if ($record->sale_price) {
                             return '¥' . number_format($record->price) . ' → ¥' . number_format($record->sale_price);
@@ -75,7 +75,7 @@ class CategoryProductsRelationManager extends RelationManager
                     })
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -87,21 +87,29 @@ class CategoryProductsRelationManager extends RelationManager
                 Tables\Filters\TernaryFilter::make('is_active'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
                 Tables\Actions\AssociateAction::make()
+                    ->label('関連付け')
                     ->multiple()
                     ->preloadRecordSelect(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DissociateAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DissociateAction::make()
+                    ->label('解除'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DissociateBulkAction::make(),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DissociateBulkAction::make()
+                        ->label('解除'),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

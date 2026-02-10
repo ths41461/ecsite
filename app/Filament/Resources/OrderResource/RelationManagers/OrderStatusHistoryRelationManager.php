@@ -68,26 +68,44 @@ class OrderStatusHistoryRelationManager extends RelationManager
                     ->label('変更前ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'gray',
-                        'Processing' => 'info',
-                        'Shipped' => 'warning',
-                        'Delivered' => 'success',
-                        'Cancelled' => 'danger',
-                        'Refunded' => 'secondary',
+                        '保留中' => 'gray',
+                        '処理中' => 'info',
+                        '発送済み' => 'warning',
+                        '配達済み' => 'success',
+                        'キャンセル' => 'danger',
+                        '返金済み' => 'secondary',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Processing' => '処理中',
+                        'Shipped' => '発送済み',
+                        'Delivered' => '配達済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('toStatus.name')
                     ->label('変更後ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'gray',
-                        'Processing' => 'info',
-                        'Shipped' => 'warning',
-                        'Delivered' => 'success',
-                        'Cancelled' => 'danger',
-                        'Refunded' => 'secondary',
+                        '保留中' => 'gray',
+                        '処理中' => 'info',
+                        '発送済み' => 'warning',
+                        '配達済み' => 'success',
+                        'キャンセル' => 'danger',
+                        '返金済み' => 'secondary',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Processing' => '処理中',
+                        'Shipped' => '発送済み',
+                        'Delivered' => '配達済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('changedByUser.name')

@@ -285,6 +285,16 @@ class CouponResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'クーポン';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'クーポン';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

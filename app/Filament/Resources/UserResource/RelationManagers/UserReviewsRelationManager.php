@@ -41,7 +41,7 @@ class UserReviewsRelationManager extends RelationManager
             ->recordTitleAttribute('product.name')
             ->columns([
                 Tables\Columns\TextColumn::make('product.name')
-                    ->label('Product')
+                    ->label('商品')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('rating')
@@ -67,16 +67,16 @@ class UserReviewsRelationManager extends RelationManager
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_approved')
-                    ->label('Approved'),
+                    ->label('承認済み'),
                 Tables\Filters\SelectFilter::make('rating')
                     ->options([
-                        '1' => '1 Star',
-                        '2' => '2 Stars',
-                        '3' => '3 Stars',
-                        '4' => '4 Stars',
-                        '5' => '5 Stars',
+                        '1' => '1 星',
+                        '2' => '2 星',
+                        '3' => '3 星',
+                        '4' => '4 星',
+                        '5' => '5 星',
                     ])
-                    ->placeholder('All Ratings'),
+                    ->placeholder('すべての評価'),
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make(),

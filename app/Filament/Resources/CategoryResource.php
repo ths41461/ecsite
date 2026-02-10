@@ -160,6 +160,16 @@ class CategoryResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'カテゴリ';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'カテゴリ';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

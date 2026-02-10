@@ -27,9 +27,9 @@ class UserRelationManager extends RelationManager
                     ->maxLength(255),
                 Forms\Components\Select::make('role')
                     ->options([
-                        'admin' => 'Admin',
-                        'staff' => 'Staff',
-                        'viewer' => 'Viewer',
+                        'admin' => '管理者',
+                        'staff' => 'スタッフ',
+                        'viewer' => '閲覧者',
                     ])
                     ->required(),
             ]);

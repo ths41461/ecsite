@@ -108,13 +108,30 @@ class PaymentResource extends Resource
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('provider')
+                    ->label('プロバイダー')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state))),
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'stripe' => 'ストライプ',
+                        'paypal' => 'ペイパル',
+                        'bank_transfer' => '銀行振込',
+                        'cash_on_delivery' => '代金引換',
+                        'other' => 'その他',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    }),
                 Tables\Columns\TextColumn::make('type')
+                    ->label('タイプ')
                     ->searchable()
                     ->sortable()
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state))),
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'auth' => 'オーソリゼーション',
+                        'capture' => 'キャプチャ',
+                        'refund' => '返金',
+                        'one_time' => 'ワンタイム',
+                        'subscription' => '定期購読',
+                        'installment' => '分割払い',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    }),
                 Tables\Columns\TextColumn::make('amount_yen')
                     ->label('金額')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
@@ -130,18 +147,35 @@ class PaymentResource extends Resource
                         'expired' => 'gray',
                         default => 'gray',
                     })
-                    ->formatStateUsing(fn (string $state) => ucfirst(str_replace('_', ' ', $state)))
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'created' => '作成済み',
+                        'pending' => '保留中',
+                        'approved' => '承認済み',
+                        'declined' => '拒否',
+                        'refunded' => '返金済み',
+                        'voided' => '無効',
+                        'expired' => '期限切れ',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('paymentStatus.name')
                     ->label('支払いステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
-                        'Pending' => 'warning',
-                        'Authorized' => 'info',
-                        'Captured' => 'success',
-                        'Failed' => 'danger',
-                        'Refunded' => 'secondary',
+                        '保留中' => 'warning',
+                        '承認済み' => 'info',
+                        'キャプチャ済み' => 'success',
+                        '失敗' => 'danger',
+                        '返金済み' => 'secondary',
                         default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Authorized' => '承認済み',
+                        'Captured' => 'キャプチャ済み',
+                        'Failed' => '失敗',
+                        'Refunded' => '返金済み',
+                        default => $state,
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('processed_at')
@@ -252,6 +286,16 @@ class PaymentResource extends Resource
             'view' => Pages\ViewPayment::route('/{record}'),
             'edit' => Pages\EditPayment::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '支払い';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '支払い';
     }
 
     public static function can(string $action, $record = null): bool

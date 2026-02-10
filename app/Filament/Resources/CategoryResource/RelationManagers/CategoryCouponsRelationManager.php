@@ -27,14 +27,14 @@ class CategoryCouponsRelationManager extends RelationManager
             ->recordTitleAttribute('code')
             ->columns([
                 Tables\Columns\TextColumn::make('code')
-                    ->label('Coupon Code')
+                    ->label('クーポンコード')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('description')
-                    ->label('Description')
+                    ->label('説明')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('type')
-                    ->label('Type')
+                    ->label('タイプ')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'percentage' => 'warning',
@@ -43,7 +43,7 @@ class CategoryCouponsRelationManager extends RelationManager
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('value')
-                    ->label('Value')
+                    ->label('値')
                     ->formatStateUsing(function ($record) {
                         if ($record->type === 'percentage') {
                             return $record->value . '%';
@@ -53,7 +53,7 @@ class CategoryCouponsRelationManager extends RelationManager
                     })
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -66,15 +66,15 @@ class CategoryCouponsRelationManager extends RelationManager
             ])
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Active Status'),
+                    ->label('有効状態'),
                 Tables\Filters\Filter::make('type')
                     ->form([
                         Forms\Components\Select::make('type')
                             ->options([
-                                'percentage' => 'Percentage',
-                                'fixed_amount' => 'Fixed Amount',
+                                'percentage' => 'パーセンテージ',
+                                'fixed_amount' => '固定金額',
                             ])
-                            ->placeholder('Select type'),
+                            ->placeholder('タイプを選択'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query->when(
@@ -85,6 +85,7 @@ class CategoryCouponsRelationManager extends RelationManager
             ])
             ->headerActions([
                 Tables\Actions\AssociateAction::make()
+                    ->label('関連付け')
                     ->multiple()
                     ->preloadRecordSelect()
                     ->recordSelectOptionsQuery(function (Builder $query) use ($table) {
@@ -95,11 +96,13 @@ class CategoryCouponsRelationManager extends RelationManager
             ])
             ->actions([
                 Tables\Actions\DissociateAction::make()
+                    ->label('解除')
                     ->requiresConfirmation(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DissociateBulkAction::make()
+                        ->label('解除')
                         ->requiresConfirmation(),
                 ]),
             ]);

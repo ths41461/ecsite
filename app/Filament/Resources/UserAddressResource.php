@@ -154,8 +154,27 @@ class UserAddressResource extends Resource
                     ->sortable(),
                 
                 Tables\Columns\TextColumn::make('country')
+                    ->label('国')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'JP' => '日本',
+                        'US' => 'アメリカ合衆国',
+                        'CA' => 'カナダ',
+                        'GB' => 'イギリス',
+                        'AU' => 'オーストラリア',
+                        'DE' => 'ドイツ',
+                        'FR' => 'フランス',
+                        'IT' => 'イタリア',
+                        'ES' => 'スペイン',
+                        'NL' => 'オランダ',
+                        'IN' => 'インド',
+                        'CN' => '中国',
+                        'KR' => '韓国',
+                        'SG' => 'シンガポール',
+                        'HK' => '香港',
+                        default => $state,
+                    }),
                 
                 Tables\Columns\IconColumn::make('is_default')
                     ->label('デフォルト')
@@ -226,6 +245,16 @@ class UserAddressResource extends Resource
             'view' => Pages\ViewUserAddress::route('/{record}'),
             'edit' => Pages\EditUserAddress::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'ユーザー住所';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'ユーザー住所';
     }
 
     public static function can(string $action, $record = null): bool

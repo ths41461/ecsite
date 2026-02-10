@@ -38,12 +38,28 @@ class OrderStatusResource extends Resource
                                     ->maxLength(50)
                                     ->unique(ignoreRecord: true)
                                     ->placeholder('ステータスコードを入力してください（例：pending, paid）')
-                                    ->helperText('このステータスのユニークコード'),
+                                    ->helperText('このステータスのユニークコード')
+                                    ->formatStateUsing(fn (string $state) => match ($state) {
+                                        'pending' => '保留中',
+                                        'paid' => '支払済み',
+                                        'fulfilled' => '履行済み',
+                                        'cancelled' => 'キャンセル',
+                                        'refunded' => '返金済み',
+                                        default => $state,
+                                    }),
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(100)
                                     ->placeholder('ステータス名を入力してください（例：Pending, Paid）')
-                                    ->helperText('このステータスの表示名'),
+                                    ->helperText('このステータスの表示名')
+                                    ->formatStateUsing(fn (string $state) => match ($state) {
+                                        'Pending' => '保留中',
+                                        'Paid' => '支払済み',
+                                        'Fulfilled' => '履行済み',
+                                        'Cancelled' => 'キャンセル',
+                                        'Refunded' => '返金済み',
+                                        default => $state,
+                                    }),
                             ]),
                         Forms\Components\Textarea::make('description')
                             ->rows(3)
@@ -66,11 +82,27 @@ class OrderStatusResource extends Resource
                 Tables\Columns\TextColumn::make('code')
                     ->label('コード')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'pending' => '保留中',
+                        'paid' => '支払済み',
+                        'fulfilled' => '履行済み',
+                        'cancelled' => 'キャンセル',
+                        'refunded' => '返金済み',
+                        default => $state,
+                    }),
                 Tables\Columns\TextColumn::make('name')
                     ->label('名前')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Paid' => '支払済み',
+                        'Fulfilled' => '履行済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
+                    }),
                 Tables\Columns\TextColumn::make('description')
                     ->label('説明')
                     ->limit(50)
@@ -109,13 +141,17 @@ class OrderStatusResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ])
             ->defaultSort('name', 'asc');
@@ -138,6 +174,16 @@ class OrderStatusResource extends Resource
             'view' => Pages\ViewOrderStatus::route('/{record}'),
             'edit' => Pages\EditOrderStatus::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '注文ステータス';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '注文ステータス';
     }
 
     public static function can(string $action, $record = null): bool

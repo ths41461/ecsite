@@ -201,6 +201,16 @@ class SliderResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'スライダー';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'スライダー';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

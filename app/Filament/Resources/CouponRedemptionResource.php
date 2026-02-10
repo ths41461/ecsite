@@ -38,13 +38,13 @@ class CouponRedemptionResource extends Resource
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Coupon'),
+                                    ->label('クーポン'),
                                 Forms\Components\Select::make('order_id')
                                     ->relationship('order', 'order_number')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Order'),
+                                    ->label('注文'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -163,6 +163,16 @@ class CouponRedemptionResource extends Resource
             'view' => Pages\ViewCouponRedemption::route('/{record}'),
             'edit' => Pages\EditCouponRedemption::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return 'クーポン使用記録';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'クーポン使用記録';
     }
 
     public static function can(string $action, $record = null): bool

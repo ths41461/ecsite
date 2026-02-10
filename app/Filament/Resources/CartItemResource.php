@@ -196,6 +196,16 @@ class CartItemResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'カートアイテム';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'カートアイテム';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();

@@ -18,29 +18,29 @@ class CouponCategoriesRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Category Information')
-                    ->description('Basic category information')
+                Forms\Components\Section::make('カテゴリ情報')
+                    ->description('基本的なカテゴリ情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->label('Name'),
+                                    ->label('名前'),
                                 Forms\Components\TextInput::make('slug')
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->label('Slug'),
+                                    ->label('スラッグ'),
                             ]),
                         Forms\Components\Select::make('parent_id')
                             ->relationship('parent', 'name')
                             ->searchable()
                             ->preload()
-                            ->placeholder('Select parent category (optional)')
-                            ->label('Parent Category'),
+                            ->placeholder('親カテゴリを選択（任意）')
+                            ->label('親カテゴリ'),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('有効')
                             ->default(true),
                     ])
                     ->columns(2),
@@ -57,19 +57,19 @@ class CouponCategoriesRelationManager extends RelationManager
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Category Name')
+                    ->label('カテゴリ名')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('parent.name')
-                    ->label('Parent Category')
+                    ->label('親カテゴリ')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('products_count')
-                    ->label('Products')
+                    ->label('商品数')
                     ->counts('products')
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -83,25 +83,33 @@ class CouponCategoriesRelationManager extends RelationManager
                     ->relationship('parent', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Parents'),
+                    ->placeholder('すべての親'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
                 Tables\Actions\AttachAction::make()
+                    ->label('関連付け')
                     ->preloadRecordSelect(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
                 Tables\Actions\DetachAction::make()
+                    ->label('解除')
                     ->requiresConfirmation(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DetachBulkAction::make()
+                        ->label('解除')
                         ->requiresConfirmation(),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

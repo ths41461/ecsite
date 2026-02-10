@@ -18,20 +18,20 @@ class CouponProductsRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Product Information')
-                    ->description('Basic product information')
+                Forms\Components\Section::make('商品情報')
+                    ->description('基本的な商品情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->required()
                                     ->maxLength(255)
-                                    ->label('Name'),
+                                    ->label('商品名'),
                                 Forms\Components\TextInput::make('slug')
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->label('Slug'),
+                                    ->label('スラッグ'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -40,21 +40,21 @@ class CouponProductsRelationManager extends RelationManager
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Brand'),
+                                    ->label('ブランド'),
                                 Forms\Components\Select::make('category_id')
                                     ->relationship('category', 'name')
                                     ->searchable()
                                     ->preload()
                                     ->required()
-                                    ->label('Category'),
+                                    ->label('カテゴリ'),
                             ]),
                         Forms\Components\Toggle::make('is_active')
-                            ->label('Active')
+                            ->label('有効')
                             ->default(true),
                         Forms\Components\Textarea::make('short_description')
                             ->rows(2)
                             ->maxLength(255)
-                            ->label('Short Description'),
+                            ->label('短い説明'),
                     ])
                     ->columns(2),
             ]);
@@ -70,23 +70,23 @@ class CouponProductsRelationManager extends RelationManager
                     ->sortable()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('name')
-                    ->label('Product Name')
+                    ->label('商品名')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('brand.name')
-                    ->label('Brand')
+                    ->label('ブランド')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('category.name')
-                    ->label('Category')
+                    ->label('カテゴリ')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('price')
-                    ->label('Price')
+                    ->label('価格')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
-                    ->label('Active')
+                    ->label('有効')
                     ->boolean()
                     ->trueColor('success')
                     ->falseColor('danger'),
@@ -100,30 +100,38 @@ class CouponProductsRelationManager extends RelationManager
                     ->relationship('brand', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Brands'),
+                    ->placeholder('すべてのブランド'),
                 Tables\Filters\SelectFilter::make('category_id')
                     ->relationship('category', 'name')
                     ->searchable()
                     ->preload()
-                    ->placeholder('All Categories'),
+                    ->placeholder('すべてのカテゴリ'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
                 Tables\Actions\AttachAction::make()
+                    ->label('関連付け')
                     ->preloadRecordSelect(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
                 Tables\Actions\DetachAction::make()
+                    ->label('解除')
                     ->requiresConfirmation(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DetachBulkAction::make()
+                        ->label('解除')
                         ->requiresConfirmation(),
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

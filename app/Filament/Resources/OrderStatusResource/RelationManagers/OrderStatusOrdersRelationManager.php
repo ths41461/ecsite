@@ -18,8 +18,8 @@ class OrderStatusOrdersRelationManager extends RelationManager
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Order Information')
-                    ->description('Basic order information')
+                Forms\Components\Section::make('注文情報')
+                    ->description('基本的な注文情報')
                     ->schema([
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -27,18 +27,18 @@ class OrderStatusOrdersRelationManager extends RelationManager
                                     ->required()
                                     ->maxLength(255)
                                     ->unique(ignoreRecord: true)
-                                    ->label('Order Number'),
+                                    ->label('注文番号'),
                                 Forms\Components\Select::make('status')
                                     ->options([
-                                        'ordered' => 'Ordered',
-                                        'processing' => 'Processing',
-                                        'shipped' => 'Shipped',
-                                        'delivered' => 'Delivered',
-                                        'canceled' => 'Canceled',
-                                        'refunded' => 'Refunded',
+                                        'ordered' => '注文済み',
+                                        'processing' => '処理中',
+                                        'shipped' => '発送済み',
+                                        'delivered' => '配達済み',
+                                        'canceled' => 'キャンセル',
+                                        'refunded' => '返金済み',
                                     ])
                                     ->required()
-                                    ->label('Status'),
+                                    ->label('ステータス'),
                             ]),
                         Forms\Components\Grid::make(2)
                             ->schema([
@@ -46,18 +46,18 @@ class OrderStatusOrdersRelationManager extends RelationManager
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Total (¥)'),
+                                    ->label('合計（¥）'),
                                 Forms\Components\TextInput::make('subtotal_yen')
                                     ->required()
                                     ->numeric()
                                     ->prefix('¥')
-                                    ->label('Subtotal (¥)'),
+                                    ->label('小計（¥）'),
                             ]),
                         Forms\Components\Textarea::make('cancel_reason')
                             ->rows(2)
                             ->maxLength(65535)
-                            ->label('Cancel Reason')
-                            ->helperText('Reason for cancellation (if applicable)'),
+                            ->label('キャンセル理由')
+                            ->helperText('キャンセルの理由（該当する場合）'),
                     ])
                     ->columns(2),
             ]);
@@ -72,15 +72,15 @@ class OrderStatusOrdersRelationManager extends RelationManager
                     ->label('ID')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_number')
-                    ->label('Order #')
+                    ->label('注文番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('user.name')
-                    ->label('Customer')
+                    ->label('顧客')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_yen')
-                    ->label('Total')
+                    ->label('合計')
                     ->formatStateUsing(fn ($state) => '¥' . number_format($state))
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -94,6 +94,15 @@ class OrderStatusOrdersRelationManager extends RelationManager
                         'refunded' => 'secondary',
                         default => 'gray',
                     })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'ordered' => '注文済み',
+                        'processing' => '処理中',
+                        'shipped' => '発送済み',
+                        'delivered' => '配達済み',
+                        'canceled' => 'キャンセル',
+                        'refunded' => '返金済み',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('ordered_at')
                     ->dateTime()
@@ -105,20 +114,20 @@ class OrderStatusOrdersRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'ordered' => 'Ordered',
-                        'processing' => 'Processing',
-                        'shipped' => 'Shipped',
-                        'delivered' => 'Delivered',
-                        'canceled' => 'Canceled',
-                        'refunded' => 'Refunded',
+                        'ordered' => '注文済み',
+                        'processing' => '処理中',
+                        'shipped' => '発送済み',
+                        'delivered' => '配達済み',
+                        'canceled' => 'キャンセル',
+                        'refunded' => '返金済み',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
                 Tables\Filters\Filter::make('ordered_at')
                     ->form([
                         Forms\Components\DatePicker::make('ordered_from')
-                            ->label('Ordered From'),
+                            ->label('注文日範囲（開始）'),
                         Forms\Components\DatePicker::make('ordered_until')
-                            ->label('Ordered Until'),
+                            ->label('注文日範囲（終了）'),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
@@ -133,18 +142,25 @@ class OrderStatusOrdersRelationManager extends RelationManager
                     }),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
-                Tables\Actions\AssociateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
+                Tables\Actions\AssociateAction::make()
+                    ->label('関連付け'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
+                Tables\Actions\DeleteAction::make()
+                    ->label('削除'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\DetachBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
+                    Tables\Actions\DetachBulkAction::make()
+                        ->label('解除'),
                 ]),
             ]);
     }

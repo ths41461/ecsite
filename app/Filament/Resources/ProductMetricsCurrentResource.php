@@ -213,4 +213,14 @@ class ProductMetricsCurrentResource extends Resource
             'edit' => Pages\EditProductMetricsCurrent::route('/{record}/edit'),
         ];
     }
+
+    public static function getModelLabel(): string
+    {
+        return '商品メトリクス（現在）';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '商品メトリクス（現在）';
+    }
 }

@@ -24,25 +24,31 @@ class ShipmentStatusShipmentRelationManager extends RelationManager
                     ->relationship('order', 'id')
                     ->required()
                     ->searchable()
-                    ->preload(),
+                    ->preload()
+                    ->label('注文'),
                 Forms\Components\TextInput::make('carrier')
                     ->required()
-                    ->maxLength(100),
+                    ->maxLength(100)
+                    ->label('運送会社'),
                 Forms\Components\TextInput::make('tracking_number')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->label('追跡番号'),
                 Forms\Components\Select::make('status')
                     ->options([
-                        'label' => 'Label Created',
-                        'shipped' => 'Shipped',
-                        'in_transit' => 'In Transit',
-                        'delivered' => 'Delivered',
-                        'exception' => 'Exception',
+                        'label' => 'ラベル作成済み',
+                        'shipped' => '発送済み',
+                        'in_transit' => '輸送中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
                     ])
                     ->default('label')
-                    ->required(),
-                Forms\Components\DateTimePicker::make('shipped_at'),
-                Forms\Components\DateTimePicker::make('delivered_at'),
+                    ->required()
+                    ->label('ステータス'),
+                Forms\Components\DateTimePicker::make('shipped_at')
+                    ->label('発送日時'),
+                Forms\Components\DateTimePicker::make('delivered_at')
+                    ->label('配達日時'),
             ]);
     }
 
@@ -54,14 +60,15 @@ class ShipmentStatusShipmentRelationManager extends RelationManager
                     ->label('ID')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order.id')
-                    ->label('Order ID')
+                    ->label('注文ID')
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
+                    ->label('運送会社')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tracking_number')
-                    ->label('Tracking #')
+                    ->label('追跡番号')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
@@ -74,11 +81,21 @@ class ShipmentStatusShipmentRelationManager extends RelationManager
                         'exception' => 'danger',
                         default => 'secondary',
                     })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'label' => 'ラベル作成済み',
+                        'shipped' => '発送済み',
+                        'in_transit' => '輸送中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
+                        default => ucfirst(str_replace('_', ' ', $state)),
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('shipped_at')
+                    ->label('発送日時')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('delivered_at')
+                    ->label('配達日時')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -89,24 +106,28 @@ class ShipmentStatusShipmentRelationManager extends RelationManager
             ->filters([
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
-                        'label' => 'Label Created',
-                        'shipped' => 'Shipped',
-                        'in_transit' => 'In Transit',
-                        'delivered' => 'Delivered',
-                        'exception' => 'Exception',
+                        'label' => 'ラベル作成済み',
+                        'shipped' => '発送済み',
+                        'in_transit' => '輸送中',
+                        'delivered' => '配達済み',
+                        'exception' => '例外',
                     ])
-                    ->placeholder('All Statuses'),
+                    ->placeholder('すべてのステータス'),
             ])
             ->headerActions([
-                Tables\Actions\CreateAction::make(),
+                Tables\Actions\CreateAction::make()
+                    ->label('作成'),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->label('表示'),
+                Tables\Actions\EditAction::make()
+                    ->label('編集'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('削除'),
                 ]),
             ]);
     }

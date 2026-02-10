@@ -71,6 +71,7 @@ class ShipmentResource extends Resource
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('carrier')
+                    ->label('運送会社')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tracking_number')
@@ -88,8 +89,17 @@ class ShipmentResource extends Resource
                         'Returned' => 'danger',
                         default => 'secondary',
                     })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Packed' => '梱包済み',
+                        'In Transit' => '輸送中',
+                        'Delivered' => '配達済み',
+                        'Returned' => '返品',
+                        default => $state,
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
+                    ->label('ステータス')
                     ->badge()
                     ->color(fn (string $state): string => match ($state) {
                         'label' => 'info',
@@ -101,9 +111,11 @@ class ShipmentResource extends Resource
                     })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('shipped_at')
+                    ->label('発送日時')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('delivered_at')
+                    ->label('配達日時')
                     ->dateTime()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -179,6 +191,16 @@ class ShipmentResource extends Resource
             'view' => Pages\ViewShipment::route('/{record}'),
             'edit' => Pages\EditShipment::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '出荷';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '出荷';
     }
 
     public static function can(string $action, $record = null): bool

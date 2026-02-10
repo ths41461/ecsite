@@ -219,6 +219,14 @@ class OrderResource extends Resource
                         'Refunded' => 'gray',
                         default => 'secondary',
                     })
+                    ->formatStateUsing(fn (string $state) => match ($state) {
+                        'Pending' => '保留中',
+                        'Paid' => '支払済み',
+                        'Fulfilled' => '履行済み',
+                        'Cancelled' => 'キャンセル',
+                        'Refunded' => '返金済み',
+                        default => $state,
+                    })
                     ->sortable()
                     ->getStateUsing(function ($record) {
                         return $record->orderStatus?->name ?? '不明';
@@ -369,6 +377,16 @@ class OrderResource extends Resource
             'view' => Pages\ViewOrder::route('/{record}'),
             'edit' => Pages\EditOrder::route('/{record}/edit'),
         ];
+    }
+
+    public static function getModelLabel(): string
+    {
+        return '注文';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return '注文';
     }
 
     public static function can(string $action, $record = null): bool

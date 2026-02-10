@@ -162,4 +162,14 @@ class RankingSnapshotResource extends Resource
             'edit' => Pages\EditRankingSnapshot::route('/{record}/edit'),
         ];
     }
+
+    public static function getModelLabel(): string
+    {
+        return 'ランキングスナップショット';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'ランキングスナップショット';
+    }
 }

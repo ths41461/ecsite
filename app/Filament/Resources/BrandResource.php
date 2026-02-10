@@ -150,6 +150,16 @@ class BrandResource extends Resource
         ];
     }
 
+    public static function getModelLabel(): string
+    {
+        return 'ブランド';
+    }
+
+    public static function getPluralModelLabel(): string
+    {
+        return 'ブランド';
+    }
+
     public static function can(string $action, $record = null): bool
     {
         $user = auth()->user();
