@@ -28,49 +28,37 @@ const Hero = () => {
                     </div>
                 </div>{' '}
             </div>
-            <div className="flex flex-wrap items-center justify-center gap-20 py-6">
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-                <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-                <div className="hidden h-16 w-16 items-center justify-center rounded-full bg-gray-200 sm:flex">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
-                <div className="hidden h-16 w-16 items-center justify-center rounded-full bg-gray-200 sm:flex">
-                    <img
-                        src="https://dummyimage.com/50x50/ccc/000.png&text=Logo"
-                        alt="Trusted Brand Logo"
-                        className="h-full w-full rounded-full object-cover"
-                    />
-                </div>
+            <div className="flex flex-nowrap items-center justify-center gap-16 overflow-x-auto px-4 py-6 sm:gap-24 sm:py-8">
+                <img
+                    src="/logo/chanel-logo.svg"
+                    alt="Chanel"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
+                <img
+                    src="/logo/chloe-logo.svg"
+                    alt="Chloe"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
+                <img
+                    src="/logo/dior-logo.svg"
+                    alt="Dior"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
+                <img
+                    src="/logo/gucci-logo.svg"
+                    alt="Gucci"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
+                <img
+                    src="/logo/shiro-logo.svg"
+                    alt="Shiro"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
+                <img
+                    src="/logo/versace-logo.svg"
+                    alt="Versace"
+                    className="h-10 w-auto max-w-[80px] flex-shrink-0 cursor-pointer object-contain sm:h-12 sm:max-w-[100px]"
+                />
             </div>
         </section>
     );

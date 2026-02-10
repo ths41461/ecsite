@@ -8,8 +8,8 @@ const Footer: React.FC = () => {
                 <div className="flex flex-col items-center justify-between gap-4 py-3 sm:gap-6 sm:py-4 md:flex-row">
                     {/* Logo */}
                     <div>
-                        <a href="/" className="flex h-12 items-center justify-center bg-red-500">
-                            <span className="font-['Hiragino_Mincho_ProN'] text-xl font-bold text-white">LOGO</span>
+                        <a href="/" className="flex items-center justify-center">
+                            <img src="/logo/F5RA—Logo.svg" alt="F5RA Logo" className="h-8 w-auto" />
                         </a>
                     </div>
 
