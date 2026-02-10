@@ -313,10 +313,12 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
             </div>
             <div className="flex flex-col gap-2 p-3">
                 {/* Brand Name (using category field) */}
-                {category && (
+                {category ? (
                     <div className="mb-1 truncate font-['Hiragino_Mincho_ProN'] text-xs font-normal tracking-wider text-red-600 uppercase">
                         {category}
                     </div>
+                ) : (
+                    <div className="mb-1 h-[18px]" />
                 )}
 
                 {/* Product Name */}
@@ -329,21 +331,23 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 </div>
 
                 {/* Rating/Review section */}
-                <div className="flex items-end justify-between">
+                <div className="flex h-[24px] items-end justify-between">
                     <div></div> {/* Spacer to keep ratings aligned right */}
-                    {displayRating !== undefined && displayRating > 0 && (
+                    {displayRating !== undefined && displayRating > 0 ? (
                         <div className="flex items-center">
                             {renderStarRating(displayRating)}
                             {displayReviewCount !== undefined && displayReviewCount > 0 && (
                                 <span className="ml-1 text-xs text-gray-500">({displayReviewCount})</span>
                             )}
                         </div>
+                    ) : (
+                        <div className="h-[20px]" />
                     )}
                 </div>
 
                 {/* Gender Icons */}
-                {genders && genders.length > 0 && (
-                    <div className="flex justify-end">
+                {genders && genders.length > 0 ? (
+                    <div className="flex h-[28px] justify-end">
                         <div className="flex gap-1">
                             {genders.map((gender) => (
                                 <div
@@ -356,6 +360,8 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                             ))}
                         </div>
                     </div>
+                ) : (
+                    <div className="h-[28px]" />
                 )}
 
                 {/* Price Section */}
@@ -373,8 +379,8 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 </div>
 
                 {/* Variant Selector */}
-                {variants && variants.length > 1 && (
-                    <div className="mb-2 flex flex-wrap justify-center gap-1">
+                {variants && variants.length > 1 ? (
+                    <div className="mb-2 flex h-[28px] flex-wrap justify-center gap-1">
                         {variants.map((variant, index) => (
                             <button
                                 key={index}
@@ -396,6 +402,8 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                             </button>
                         ))}
                     </div>
+                ) : (
+                    <div className="mb-2 h-[28px]" />
                 )}
 
                 {/* Add to Cart Button or View Product Button based on disableCartDrawer prop */}

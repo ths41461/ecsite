@@ -159,10 +159,16 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                     {/* Default View */}
                     <div className="absolute inset-0 flex flex-col justify-center opacity-100 group-hover:opacity-0">
                         <div>
-                            {product.brand && <div className="text-xs font-medium tracking-wider text-neutral-600 uppercase">{product.brand}</div>}
+                            {product.brand ? (
+                                <div className="h-[18px]">
+                                    <div className="text-xs font-medium tracking-wider text-neutral-600 uppercase">{product.brand}</div>
+                                </div>
+                            ) : (
+                                <div className="h-[18px]" />
+                            )}
                             <h3 className="font-hiragino-mincho mt-1 text-base font-medium text-neutral-800">{product.name}</h3>
-                            {product.genders && product.genders.length > 0 && (
-                                <div className="mt-2 flex justify-center gap-1">
+                            {product.genders && product.genders.length > 0 ? (
+                                <div className="mt-2 flex h-[28px] justify-center gap-1">
                                     {product.genders.map((gender) => (
                                         <div
                                             key={gender}
@@ -173,6 +179,8 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                                         </div>
                                     ))}
                                 </div>
+                            ) : (
+                                <div className="mt-2 h-[28px]" />
                             )}
                             <div className="mt-4 flex items-baseline justify-center gap-2 pt-2">
                                 <span className={`font-hiragino-mincho text-base font-semibold text-neutral-900 ${hasSale ? 'text-red-600' : ''}`}>
@@ -185,14 +193,16 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
 
                     {/* Hover Reveal View */}
                     <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-white opacity-0 group-hover:opacity-100">
-                        {displayRating !== undefined && displayRating > 0 && displayReviewCount !== undefined && displayReviewCount > 0 && (
-                            <div className="flex items-center gap-1 text-sm text-neutral-600">
+                        {displayRating !== undefined && displayRating > 0 && displayReviewCount !== undefined && displayReviewCount > 0 ? (
+                            <div className="flex h-[24px] items-center gap-1 text-sm text-neutral-600">
                                 {renderStarRating(displayRating)}
                                 <span>({displayReviewCount} レビュー)</span>
                             </div>
+                        ) : (
+                            <div className="h-[24px]" />
                         )}
-                        {product.sizes && product.sizes.length > 0 && (
-                            <div className="text-sm font-medium text-gray-700">
+                        {product.sizes && product.sizes.length > 0 ? (
+                            <div className="h-[24px] text-sm font-medium text-gray-700">
                                 サイズ:{' '}
                                 {product.sizes
                                     .map((s, i) => (
@@ -202,6 +212,8 @@ export default function MinimalistProductCard({ product }: { product: ProductCar
                                     ))
                                     .reduce((prev, curr) => [prev, ', ', curr] as any)}
                             </div>
+                        ) : (
+                            <div className="h-[24px]" />
                         )}
                         <button
                             type="button"
