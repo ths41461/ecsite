@@ -151,10 +151,6 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
         });
     };
 
-
-
-
-
     // Function to handle adding to cart
     const handleAddToCart = async () => {
         setIsAddingToCart(true);
@@ -272,7 +268,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
             } catch (error) {
                 console.error('Failed to parse cart response as JSON:', error);
                 console.error('Response status:', res.status, 'Response headers:', [...res.headers.entries()]);
-                
+
                 // Attempt to get the raw response text to understand what we received
                 try {
                     const responseText = await res.text();
@@ -280,12 +276,10 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 } catch (textError) {
                     console.error('Could not read raw response text:', textError);
                 }
-                
+
                 // Fallback to a basic cart object to prevent breaking the rest of the application
                 cart = { message: 'Cart updated with non-JSON response' };
             }
-
-
 
             // Update localStorage to notify other tabs/components
             try {
@@ -319,12 +313,16 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
             </div>
             <div className="flex flex-col gap-2 p-3">
                 {/* Brand Name (using category field) */}
-                {category && <div className="mb-1 truncate font-sans text-xs font-normal text-[#6B7280]">{category}</div>}
+                {category && (
+                    <div className="mb-1 truncate font-['Hiragino_Mincho_ProN'] text-xs font-normal tracking-wider text-red-600 uppercase">
+                        {category}
+                    </div>
+                )}
 
                 {/* Product Name */}
                 <div className="flex min-w-0 items-center justify-between">
                     <Link href={`/products/${slug}`} className="truncate">
-                        <h3 className="truncate font-['Hiragino_Mincho_ProN'] text-base leading-tight font-medium text-[#1F2937] hover:underline">
+                        <h3 className="truncate font-['Hiragino_Mincho_ProN'] text-base leading-tight font-semibold text-gray-800 transition-colors hover:text-gray-600">
                             {productName}
                         </h3>
                     </Link>
@@ -337,7 +335,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                         <div className="flex items-center">
                             {renderStarRating(displayRating)}
                             {displayReviewCount !== undefined && displayReviewCount > 0 && (
-                                <span className="ml-1 text-xs text-[#6B7280]">({displayReviewCount})</span>
+                                <span className="ml-1 text-xs text-gray-500">({displayReviewCount})</span>
                             )}
                         </div>
                     )}
@@ -350,7 +348,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                             {genders.map((gender) => (
                                 <div
                                     key={gender}
-                                    className="flex h-5 w-5 items-center justify-center rounded-full border border-[#D1D5DB] text-xs text-[#4B5563]"
+                                    className="flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-xs text-gray-700"
                                     title={gender === 'men' ? 'メンズ' : gender === 'women' ? 'レディース' : 'ユニセックス'}
                                 >
                                     {gender === 'men' ? '♂' : gender === 'women' ? '♀' : '⚥'}
@@ -361,13 +359,15 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 )}
 
                 {/* Price Section */}
-                <div className="flex flex-col">
+                <div className="mt-1 flex flex-col">
                     {hasSale && (
-                        <span className="text-right font-serif text-sm font-normal text-[#6B7280] line-through">
+                        <span className="text-right font-['Hiragino_Mincho_ProN'] text-sm font-normal text-gray-400 line-through">
                             ￥{priceValue?.toLocaleString()}
                         </span>
                     )}
-                    <span className={`text-right font-serif text-lg leading-none font-bold text-[#1F2937] ${hasSale ? 'mt-1' : ''}`}>
+                    <span
+                        className={`text-right font-['Hiragino_Mincho_ProN'] text-lg leading-none font-bold ${hasSale ? 'mt-0.5 text-[#EAB308]' : 'text-gray-900'}`}
+                    >
                         ￥{(hasSale ? salePrice! : priceValue || price).toLocaleString()}
                     </span>
                 </div>
@@ -380,8 +380,10 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                                 key={index}
                                 type="button"
                                 onClick={() => setSelectedVariantIndex(index)}
-                                className={`rounded border px-2 py-1 text-xs ${
-                                    selectedVariantIndex === index ? 'border-gray-800 bg-gray-800 text-white' : 'border-gray-300 hover:bg-gray-100'
+                                className={`rounded border px-2 py-1 text-xs font-medium ${
+                                    selectedVariantIndex === index
+                                        ? 'border-gray-800 bg-gray-800 text-white'
+                                        : 'border-gray-400 text-gray-700 hover:border-gray-600 hover:bg-gray-50 hover:text-gray-900'
                                 }`}
                             >
                                 {variant.options?.size_ml
@@ -400,7 +402,7 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                 {disableCartDrawer ? (
                     <Link
                         href={`/products/${slug}`}
-                        className="flex h-10 w-full items-center justify-center border border-[#EEDDD4] px-4 py-2 text-sm font-medium shadow-sm focus:ring-2 focus:ring-[#EAB308] focus:ring-offset-2 focus:outline-none bg-[#EAB308] text-white"
+                        className="flex h-10 w-full items-center justify-center border border-[#EEDDD4] bg-[#EAB308] px-4 py-2 text-sm font-medium text-white shadow-sm focus:ring-2 focus:ring-[#EAB308] focus:ring-offset-2 focus:outline-none"
                     >
                         <img src="/icons/icon-eye.svg" alt="View" className="mr-2 h-5 w-5" />
                         製品を見る
@@ -416,8 +418,6 @@ const SimpleProductCard: React.FC<SimpleProductCardProps> = ({
                     </button>
                 )}
             </div>
-
-
         </div>
     );
 };

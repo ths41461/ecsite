@@ -1,6 +1,6 @@
 import React from 'react';
-import ProductCard from './ProductCard';
 import ImprovedCarousel from './ImprovedCarousel';
+import ProductCard from './ProductCard';
 
 type Variant = {
     id?: number; // Prefer sending this from backend (needed for 4.3)
@@ -10,7 +10,8 @@ type Variant = {
     stock?: number | null;
     safety_stock?: number | null;
     managed?: boolean;
-    options?: { // Add options for gender and size
+    options?: {
+        // Add options for gender and size
         gender?: string;
         size_ml?: number;
     };
@@ -50,7 +51,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
             <div className="container mx-auto px-4">
                 {/* Section Title */}
                 <div className="mb-6 text-center">
-                    <h2 className="font-['Hiragino_Mincho_ProN'] mb-6 text-2xl leading-tight font-semibold text-gray-800">おすすめ商品</h2>
+                    <h2 className="mb-6 font-['Hiragino_Mincho_ProN'] text-2xl leading-tight font-semibold text-gray-800">おすすめ商品</h2>
                 </div>
 
                 {/* Product Cards - Carousel for Mobile, Grid for Desktop */}
@@ -77,7 +78,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                                 ))}
                             </ImprovedCarousel>
                         </div>
-                        <div className="hidden sm:grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6 justify-items-center">
+                        <div className="hidden grid-cols-2 justify-items-center gap-4 sm:grid sm:gap-6 md:grid-cols-3 lg:grid-cols-4">
                             {finalProducts.map((product) => (
                                 <ProductCard
                                     key={product.id}
@@ -87,7 +88,7 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                                     price={product.price}
                                     slug={product.slug}
                                     id={product.id}
-                                    variants={product.variants}  // Add variants prop
+                                    variants={product.variants} // Add variants prop
                                     genders={product.genders}
                                     sizes={product.sizes}
                                     showRatingIcon={product.showRatingIcon}
@@ -99,14 +100,15 @@ const RecommendedSection: React.FC<RecommendedSectionProps> = ({ products, class
                         </div>
                     </div>
                 ) : (
-                    <div className="text-center py-8 text-gray-500">
-                        現在おすすめ商品はございません。
-                    </div>
+                    <div className="py-8 text-center text-gray-600">現在おすすめ商品はございません。</div>
                 )}
 
                 {/* See More Products Button */}
                 <div className="mt-6 text-center">
-                    <a href="/products" className="inline-block bg-gray-800 px-6 py-3 text-base font-medium text-white shadow-md transition-colors hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 min-h-[44px]">
+                    <a
+                        href="/products"
+                        className="inline-block min-h-[44px] bg-gray-800 px-6 py-3 text-base font-medium text-white shadow-md transition-colors hover:bg-gray-900 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
+                    >
                         商品もっと見る
                     </a>
                 </div>
