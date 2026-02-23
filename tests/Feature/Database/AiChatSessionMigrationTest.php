@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @group feature
+ * @group database
+ */
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -23,16 +28,17 @@ test('ai_chat_sessions table has correct columns', function () {
 });
 
 test('ai_chat_session model can create record', function () {
+    $uniqueToken = 'test-token-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-token-123',
+        'session_token' => $uniqueToken,
         'context_json' => ['key' => 'value'],
     ]);
 
     $this->assertDatabaseHas('ai_chat_sessions', [
-        'session_token' => 'test-token-123',
+        'session_token' => $uniqueToken,
     ]);
 
-    expect($session->session_token)->toBe('test-token-123');
+    expect($session->session_token)->toBe($uniqueToken);
     expect($session->context_json)->toBe(['key' => 'value']);
 });
 
@@ -47,8 +53,9 @@ test('ai_chat_session model has correct fillable attributes', function () {
 });
 
 test('ai_chat_session model casts context_json as array', function () {
+    $uniqueToken = 'test-token-casting-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-token-456',
+        'session_token' => $uniqueToken,
         'context_json' => ['budget' => 5000, 'personality' => 'romantic'],
     ]);
 

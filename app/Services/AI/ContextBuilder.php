@@ -2,112 +2,174 @@
 
 namespace App\Services\AI;
 
-use App\Models\AiChatSession;
-use App\Models\Brand;
-use App\Models\Category;
 use App\Models\Product;
-use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 class ContextBuilder
 {
+    private int $maxProducts;
+
+    private int $maxTrending;
+
+    private int $maxTopRated;
+
+    public function __construct()
+    {
+        $this->maxProducts = (int) config('ai.context.max_products', 20);
+        $this->maxTrending = (int) config('ai.context.max_trending', 5);
+        $this->maxTopRated = (int) config('ai.context.max_top_rated', 5);
+    }
+
+    /**
+     * Build context array from quiz data for AI consumption.
+     *
+     * @param  array  $quizData  Quiz submission data
+     * @return array Context for AI provider
+     */
     public function build(array $quizData): array
     {
-        return [
-            'user_profile' => $this->buildUserProfile($quizData),
-            'available_products' => $this->getAvailableProducts($quizData),
-            'categories' => $this->getCategories(),
-            'brands' => $this->getBrands(),
+        Log::info('ContextBuilder@build - Starting context build', [
+            'quiz_data' => $quizData,
+        ]);
+
+        $userProfile = $this->buildUserProfile($quizData);
+        $availableProducts = $this->getAvailableProducts($quizData);
+        $trendingProducts = $this->getTrendingProducts();
+        $topRatedProducts = $this->getTopRatedProducts();
+
+        $context = [
+            'user_profile' => $userProfile,
+            'budget' => $quizData['budget'] ?? 10000,
+            'available_products' => $availableProducts,
+            'trending_products' => $trendingProducts,
+            'top_rated_products' => $topRatedProducts,
         ];
+
+        Log::info('ContextBuilder@build - Context built successfully', [
+            'products_count' => count($availableProducts),
+            'trending_count' => count($trendingProducts),
+            'top_rated_count' => count($topRatedProducts),
+        ]);
+
+        return $context;
     }
 
-    public function buildForChat(AiChatSession $session, Collection $history): array
-    {
-        $quizResult = $session->quizResult;
-
-        if (! $quizResult) {
-            return [
-                'quiz_context' => [],
-                'profile_type' => null,
-                'previous_recommendations' => [],
-                'chat_history' => $history->map(fn ($msg) => [
-                    'role' => $msg->role,
-                    'content' => $msg->content,
-                ]),
-                'budget' => 5000,
-            ];
-        }
-
-        return [
-            'quiz_context' => $quizResult->answers_json ?? [],
-            'profile_type' => $quizResult->profile_type,
-            'previous_recommendations' => $quizResult->recommended_product_ids ?? [],
-            'chat_history' => $history->map(fn ($msg) => [
-                'role' => $msg->role,
-                'content' => $msg->content,
-            ]),
-            'budget' => $quizResult->answers_json['budget'] ?? 5000,
-        ];
-    }
-
-    protected function buildUserProfile(array $quizData): array
+    /**
+     * Build user profile from quiz data.
+     */
+    private function buildUserProfile(array $quizData): array
     {
         return [
             'personality' => $quizData['personality'] ?? null,
             'vibe' => $quizData['vibe'] ?? null,
-            'occasion' => $quizData['occasion'] ?? null,
+            'occasion' => $quizData['occasion'] ?? [],
             'style' => $quizData['style'] ?? null,
-            'budget' => $quizData['budget'] ?? 5000,
             'experience' => $quizData['experience'] ?? null,
             'season' => $quizData['season'] ?? null,
+            'gender' => $quizData['gender'] ?? 'unisex',
+            'budget' => $quizData['budget'] ?? 10000,
         ];
     }
 
-    protected function getAvailableProducts(array $quizData): array
+    /**
+     * Get available products within budget, optionally filtered by gender.
+     */
+    private function getAvailableProducts(array $quizData): array
     {
-        $maxPrice = $quizData['budget'] ?? 5000;
+        $budget = $quizData['budget'] ?? 10000;
+        $gender = $quizData['gender'] ?? null;
 
-        return Product::with(['variants', 'brand', 'category'])
+        $query = Product::query()
             ->where('is_active', true)
-            ->whereHas('variants', function ($q) use ($maxPrice) {
-                $q->where('price_yen', '<=', $maxPrice)
-                    ->where('is_active', true);
+            ->whereHas('variants', function ($q) use ($budget) {
+                $q->where('is_active', true)
+                    ->where('price_yen', '<=', $budget);
             })
-            ->limit(50)
-            ->get()
-            ->map(fn ($p) => [
-                'id' => $p->id,
-                'name' => $p->name,
-                'brand' => $p->brand?->name,
-                'category' => $p->category?->name,
-                'notes' => $p->attributes_json['notes'] ?? [],
-                'gender' => $p->attributes_json['gender'] ?? 'unisex',
-                'min_price' => $p->variants->where('is_active', true)->min('price_yen'),
-                'max_price' => $p->variants->where('is_active', true)->max('price_yen'),
-            ])
-            ->filter(fn ($p) => $p['min_price'] <= $maxPrice)
-            ->values()
-            ->toArray();
+            ->with(['variants' => function ($q) use ($budget) {
+                $q->where('is_active', true)
+                    ->where('price_yen', '<=', $budget)
+                    ->orderBy('price_yen', 'asc');
+            }, 'brand', 'category']);
+
+        $products = $query->limit($this->maxProducts)->get();
+
+        return $products->map(function ($product) {
+            $minPriceVariant = $product->variants->first();
+            $attributes = $product->attributes_json ?? [];
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'brand' => $product->brand?->name,
+                'category' => $product->category?->name,
+                'min_price' => $minPriceVariant?->price_yen,
+                'notes' => $attributes['notes'] ?? [],
+                'gender' => $attributes['gender'] ?? 'unisex',
+            ];
+        })->toArray();
     }
 
-    protected function getCategories(): array
+    /**
+     * Get trending products (featured products).
+     */
+    private function getTrendingProducts(): array
     {
-        return Category::select('id', 'name')
-            ->get()
-            ->map(fn ($c) => [
-                'id' => $c->id,
-                'name' => $c->name,
-            ])
-            ->toArray();
+        $products = Product::query()
+            ->where('is_active', true)
+            ->where('featured', true)
+            ->with(['variants' => function ($q) {
+                $q->where('is_active', true)->orderBy('price_yen', 'asc');
+            }, 'brand'])
+            ->limit($this->maxTrending)
+            ->get();
+
+        return $products->map(function ($product) {
+            $minPriceVariant = $product->variants->first();
+            $attributes = $product->attributes_json ?? [];
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'brand' => $product->brand?->name,
+                'min_price' => $minPriceVariant?->price_yen,
+                'notes' => $attributes['notes'] ?? [],
+            ];
+        })->toArray();
     }
 
-    protected function getBrands(): array
+    /**
+     * Get top rated products based on reviews.
+     */
+    private function getTopRatedProducts(): array
     {
-        return Brand::select('id', 'name')
-            ->get()
-            ->map(fn ($b) => [
-                'id' => $b->id,
-                'name' => $b->name,
-            ])
-            ->toArray();
+        $products = Product::query()
+            ->where('is_active', true)
+            ->whereHas('reviews', function ($q) {
+                $q->where('approved', true);
+            })
+            ->withAvg('reviews as avg_rating', 'rating')
+            ->with(['variants' => function ($q) {
+                $q->where('is_active', true)->orderBy('price_yen', 'asc');
+            }, 'brand'])
+            ->orderByDesc('avg_rating')
+            ->limit($this->maxTopRated)
+            ->get();
+
+        return $products->map(function ($product) {
+            $minPriceVariant = $product->variants->first();
+            $attributes = $product->attributes_json ?? [];
+
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'slug' => $product->slug,
+                'brand' => $product->brand?->name,
+                'min_price' => $minPriceVariant?->price_yen,
+                'notes' => $attributes['notes'] ?? [],
+                'avg_rating' => round($product->avg_rating ?? 0, 1),
+            ];
+        })->toArray();
     }
 }

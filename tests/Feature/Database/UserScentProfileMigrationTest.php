@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @group feature
+ * @group database
+ */
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 

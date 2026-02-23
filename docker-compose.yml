@@ -75,6 +75,19 @@ services:
     networks:
       - sail
 
+  selenium:
+    image: selenium/standalone-chrome:latest
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - sail
+    ports:
+      - '4444:4444'
+      - '7900:7900'
+    environment:
+      SE_NODE_MAX_SESSIONS: 1
+      SE_SESSION_REQUEST_TIMEOUT: 300
+
 networks:
   sail:
     driver: bridge

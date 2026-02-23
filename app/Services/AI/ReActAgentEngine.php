@@ -2,158 +2,173 @@
 
 namespace App\Services\AI;
 
-use App\Services\AI\Providers\AIProviderInterface;
+use App\Services\AI\Providers\OllamaProvider;
+use Illuminate\Support\Facades\Log;
 
 class ReActAgentEngine
 {
-    protected ToolRegistry $toolRegistry;
+    private OllamaProvider $provider;
 
-    protected int $maxIterations;
+    private ToolRegistry $toolRegistry;
 
-    public function __construct(ToolRegistry $toolRegistry, int $maxIterations = 5)
-    {
+    private ContextBuilder $contextBuilder;
+
+    private int $maxIterations = 5;
+
+    private ResponseParser $responseParser;
+
+    public function __construct(
+        OllamaProvider $provider,
+        ToolRegistry $toolRegistry,
+        ContextBuilder $contextBuilder
+    ) {
+        $this->provider = $provider;
         $this->toolRegistry = $toolRegistry;
-        $this->maxIterations = $maxIterations;
+        $this->contextBuilder = $contextBuilder;
+        $this->responseParser = new ResponseParser;
     }
 
+    /**
+     * Set maximum iterations for the ReAct loop.
+     */
+    public function setMaxIterations(int $iterations): void
+    {
+        $this->maxIterations = $iterations;
+    }
+
+    /**
+     * Get maximum iterations.
+     */
     public function getMaxIterations(): int
     {
         return $this->maxIterations;
     }
 
-    public function execute(array $context, AIProviderInterface $provider): array
+    /**
+     * Run the ReAct agent with a user query.
+     *
+     * @param  string  $query  User's query
+     * @param  array  $context  Additional context (budget, preferences, etc.)
+     * @return array Response with message, products, and metadata
+     */
+    public function run(string $query, array $context = []): array
     {
-        $iteration = 0;
-        $conversation = [];
+        Log::info('ReActAgentEngine@run - Starting', [
+            'query' => $query,
+            'context' => $context,
+            'max_iterations' => $this->maxIterations,
+        ]);
 
-        $systemPrompt = $this->buildSystemPrompt($context);
+        $fullContext = $this->contextBuilder->build($context);
+        $tools = $this->toolRegistry->getTools();
+        $conversation = [];
+        $allProducts = [];
+        $iteration = 0;
+
+        $systemPrompt = $this->buildSystemPrompt($fullContext);
+
         $conversation[] = ['role' => 'system', 'content' => $systemPrompt];
+        $conversation[] = ['role' => 'user', 'content' => $query];
 
         while ($iteration < $this->maxIterations) {
             $iteration++;
 
-            $tools = $this->toolRegistry->getDefinitions();
-            $response = $provider->generateWithTools($conversation, $tools);
+            Log::info("ReActAgentEngine@run - Iteration {$iteration}");
 
-            if ($response['type'] === 'text') {
-                return $this->parseFinalResponse($response['content']);
+            $response = $this->provider->chatWithTools(
+                $this->formatConversation($conversation),
+                [],
+                $tools
+            );
+
+            $assistantMessage = $response['message'] ?? '';
+            $toolCalls = $response['tool_calls'] ?? [];
+
+            if (! empty($assistantMessage)) {
+                $conversation[] = ['role' => 'assistant', 'content' => $assistantMessage];
             }
 
-            if ($response['type'] === 'function_call') {
-                $toolCall = [
-                    'function' => [
-                        'name' => $response['function_name'],
-                        'arguments' => json_encode($response['function_args']),
-                    ],
-                ];
+            if (empty($toolCalls)) {
+                Log::info('ReActAgentEngine@run - No tool calls, returning final response');
 
-                $conversation[] = [
-                    'role' => 'assistant',
-                    'tool_calls' => [$toolCall],
-                ];
+                return $this->buildFinalResponse($assistantMessage, $allProducts, $fullContext);
+            }
 
-                try {
-                    $toolResult = $this->executeTool($toolCall);
-                } catch (\Exception $e) {
-                    $toolResult = ['error' => $e->getMessage()];
+            foreach ($toolCalls as $toolCall) {
+                $toolName = $toolCall['function'] ?? '';
+                $arguments = $toolCall['arguments'] ?? [];
+
+                Log::info("ReActAgentEngine@run - Executing tool: {$toolName}", $arguments);
+
+                $toolResult = $this->toolRegistry->execute($toolName, $arguments);
+
+                if (isset($toolResult['products'])) {
+                    foreach ($toolResult['products'] as $product) {
+                        $allProducts[$product['id']] = $product;
+                    }
                 }
 
+                $toolResultJson = json_encode($toolResult, JSON_UNESCAPED_UNICODE);
                 $conversation[] = [
-                    'role' => 'tool',
-                    'tool_name' => $response['function_name'],
-                    'content' => json_encode($toolResult),
+                    'role' => 'user',
+                    'content' => "Tool result for {$toolName}: {$toolResultJson}",
                 ];
-
-                continue;
             }
-
-            throw new \RuntimeException('Unexpected AI response type: '.$response['type']);
         }
 
-        throw new \RuntimeException('Max iterations reached without final answer');
+        Log::warning('ReActAgentEngine@run - Max iterations reached');
+
+        return $this->buildFinalResponse(
+            '申し訳ございません。処理がタイムアウトしました。もう一度お試しください。',
+            $allProducts,
+            $fullContext
+        );
     }
 
-    public function buildSystemPrompt(array $context): string
+    /**
+     * Build system prompt with context.
+     */
+    private function buildSystemPrompt(array $context): string
     {
-        $profile = $context['user_profile'] ?? [];
-        $personality = $profile['personality'] ?? 'unknown';
-        $vibe = $profile['vibe'] ?? 'unknown';
-        $budget = $profile['budget'] ?? 5000;
-        $style = $profile['style'] ?? 'unknown';
-        $experience = $profile['experience'] ?? 'beginner';
+        $prompt = 'あなたは香水専門店のAIアシスタントです。
+ユーザーの好みに合わせて最適な香水を提案してください。
+日本語で丁寧に回答してください。
+利用可能なツールを使って商品を検索してください。
 
-        $toolDescriptions = collect($this->toolRegistry->getDefinitions())
-            ->map(fn ($t) => "- {$t['function']['name']}: {$t['function']['description']}")
-            ->join("\n");
+ユーザー情報:
+- 予算: '.($context['budget'] ?? 10000).'円
+- 性別: '.($context['user_profile']['gender'] ?? 'unisex').'
 
-        return <<<PROMPT
-You are an expert fragrance consultant helping users find their perfect perfume.
+回答の際は、おすすめする香水の名前、ブランド、価格、香りの特徴（トップノート、ミドルノート、ベースノート）を含めてください。';
 
-USER CONTEXT:
-- Personality: {$personality}
-- Preferred Vibe: {$vibe}
-- Style: {$style}
-- Budget: Under ¥{$budget}
-- Experience Level: {$experience}
-
-Follow the ReAct pattern:
-1. THINK: Analyze what information you need
-2. ACT: Call appropriate tools to gather data
-3. OBSERVE: Review tool results
-4. REPEAT: Until you have enough information
-5. FINAL: Provide recommendations in JSON format
-
-You have access to these tools:
-{$toolDescriptions}
-
-Return your final answer as JSON with this structure:
-{
-  "profile": {
-    "type": "string",
-    "name": "string in Japanese",
-    "description": "string in Japanese"
-  },
-  "recommendations": [
-    {
-      "product_id": number,
-      "match_score": number,
-      "explanation": "string in Japanese"
-    }
-  ]
-}
-
-IMPORTANT: Only call tools when you need more information. If you already have enough context from the user profile, provide recommendations directly.
-PROMPT;
+        return $prompt;
     }
 
-    public function executeTool(array $toolCall): array
+    /**
+     * Format conversation for the provider.
+     */
+    private function formatConversation(array $conversation): string
     {
-        $toolName = $toolCall['function']['name'] ?? '';
-        $argumentsJson = $toolCall['function']['arguments'] ?? '{}';
-
-        $arguments = json_decode($argumentsJson, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON in tool arguments: '.json_last_error_msg());
+        $formatted = '';
+        foreach ($conversation as $message) {
+            $role = $message['role'] ?? 'user';
+            $content = $message['content'] ?? '';
+            $formatted .= "[{$role}]: {$content}\n\n";
         }
 
-        return $this->toolRegistry->execute($toolName, $arguments);
+        return trim($formatted);
     }
 
-    public function parseFinalResponse(string $content): array
+    /**
+     * Build final response.
+     */
+    private function buildFinalResponse(string $message, array $products, array $context): array
     {
-        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
-        } elseif (preg_match('/```\s*(.*?)\s*```/s', $content, $matches)) {
-            $content = $matches[1];
-        }
-
-        $content = trim($content);
-
-        $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Invalid JSON in AI response: '.json_last_error_msg());
-        }
-
-        return $data;
+        return [
+            'message' => $message,
+            'products' => array_values($products),
+            'profile' => $context['user_profile'] ?? [],
+            'timestamp' => now()->toIso8601String(),
+        ];
     }
 }

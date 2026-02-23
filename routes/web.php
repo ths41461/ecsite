@@ -1,16 +1,14 @@
 <?php
 
-use Inertia\Inertia;
-use App\Http\Controllers\EventController;
-use App\Http\Controllers\ProductController;
-use App\Http\Controllers\WishlistController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
-use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\EventController;
 use App\Http\Controllers\OrdersController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\WishlistController;
 use Illuminate\Support\Facades\Route;
-
-
+use Inertia\Inertia;
 
 Route::get('/', function () {
     // Get recommended products from the ranking snapshots (top 8)
@@ -39,7 +37,7 @@ Route::get('/', function () {
             'ranking_snapshots.*',
             'products.*',
             'review_avg.avg_rating as average_rating',
-            'review_count.review_count as review_count'
+            'review_count.review_count as review_count',
         ])
         ->with([
             'product.brand:id,name,slug',
@@ -53,7 +51,7 @@ Route::get('/', function () {
             /** @var \App\Models\RankingSnapshot $snapshot */
             $product = $snapshot->product;
             $imagePath = $product->heroImage?->path;
-            $imageUrl  = $imagePath
+            $imageUrl = $imagePath
                 ? (str_starts_with($imagePath, 'http') || str_starts_with($imagePath, '/') ? $imagePath : \Illuminate\Support\Facades\Storage::url($imagePath))
                 : null;
 
@@ -66,7 +64,7 @@ Route::get('/', function () {
             // Extract gender and size information from variants
             $genders = collect();
             $sizes = collect();
-            
+
             foreach ($product->variants as $variant) {
                 if ($variant->option_json) {
                     if (isset($variant->option_json['gender'])) {
@@ -77,7 +75,7 @@ Route::get('/', function () {
                     }
                 }
             }
-            
+
             $uniqueGenders = $genders->unique()->values();
             $uniqueSizes = $sizes->unique()->values();
 
@@ -86,7 +84,7 @@ Route::get('/', function () {
                 'productImageSrc' => $imageUrl,
                 'category' => $product->brand?->name ?? 'ブランド名',
                 'productName' => $product->name,
-                'price' => '¥' . number_format($finalPrice),
+                'price' => '¥'.number_format($finalPrice),
                 'slug' => $product->slug,
                 'rank' => $snapshot->rank,
                 'score' => $snapshot->score,
@@ -126,6 +124,11 @@ Route::get('/fragrance-diagnosis', function () {
     return Inertia::render('FragranceDiagnosis');
 })->name('fragrance.diagnosis');
 
+use App\Http\Controllers\FragranceDiagnosisController;
+
+Route::get('/fragrance-diagnosis/results', [FragranceDiagnosisController::class, 'results'])
+    ->name('fragrance.diagnosis.results');
+
 Route::get('/brand-introduction', function () {
     return Inertia::render('BrandIntroduction');
 })->name('brand.introduction');
@@ -162,13 +165,11 @@ Route::middleware('throttle:cart-mutations')->group(function () {
     Route::delete('/cart/{line}', [CartController::class, 'destroy'])->name('cart.destroy');
 });
 
-
-
 use App\Http\Controllers\DashboardController;
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Checkout routes that require authentication
     Route::get('checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('checkout', [CheckoutController::class, 'store'])->name('checkout.store');
@@ -183,8 +184,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('checkout/pay/{orderNumber}', [CheckoutController::class, 'pay'])->name('checkout.pay');
 });
 
-require __DIR__ . '/settings.php';
-require __DIR__ . '/auth.php';
+require __DIR__.'/settings.php';
+require __DIR__.'/auth.php';
 
 // Orders API (for Success page polling)
 Route::get('/orders/{orderNumber}', [OrdersController::class, 'show'])->name('orders.show');

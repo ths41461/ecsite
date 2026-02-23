@@ -3,116 +3,209 @@
 namespace App\Services\AI;
 
 use App\Models\AiChatSession;
-use App\Services\AI\Providers\AIProviderInterface;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
+use App\Models\AiMessage;
+use App\Models\AIRecommendationCache;
+use App\Services\AI\Providers\OllamaProvider;
 use Illuminate\Support\Facades\Log;
 
 class AIRecommendationService
 {
-    protected AIProviderInterface $provider;
+    private OllamaProvider $provider;
 
-    protected ReActAgentEngine $agentEngine;
+    private ReActAgentEngine $agent;
 
-    protected ContextBuilder $contextBuilder;
+    private ContextBuilder $contextBuilder;
 
-    public function __construct(
-        AIProviderInterface $provider,
-        ReActAgentEngine $agentEngine,
-        ContextBuilder $contextBuilder
-    ) {
-        $this->provider = $provider;
-        $this->agentEngine = $agentEngine;
-        $this->contextBuilder = $contextBuilder;
+    private ToolRegistry $toolRegistry;
+
+    public function __construct()
+    {
+        $this->provider = new OllamaProvider;
+        $this->contextBuilder = new ContextBuilder;
+        $this->toolRegistry = new ToolRegistry;
+        $this->agent = new ReActAgentEngine(
+            $this->provider,
+            $this->toolRegistry,
+            $this->contextBuilder
+        );
     }
 
-    public function generateRecommendations(array $context): array
+    /**
+     * Get recommendations based on quiz data.
+     *
+     * @param  array  $quizData  Quiz submission data
+     * @return array Recommendations with message, products, and profile
+     */
+    public function recommend(array $quizData): array
     {
-        $cacheKey = $this->getCacheKey($context);
+        Log::info('AIRecommendationService@recommend - Starting', $quizData);
 
-        return Cache::remember($cacheKey, 3600, function () use ($context) {
-            try {
-                return $this->agentEngine->execute($context, $this->provider);
-            } catch (\Exception $e) {
-                Log::warning('AI recommendation generation failed', [
-                    'error' => $e->getMessage(),
-                ]);
+        $cacheKey = $this->generateCacheKey($quizData);
+        $cached = $this->getCachedRecommendation($cacheKey);
 
-                return $this->getFallbackResponse($context);
-            }
-        });
-    }
+        if ($cached) {
+            Log::info('AIRecommendationService@recommend - Using cached result');
 
-    public function chat(string $message, Collection $history, AiChatSession $session): array
-    {
-        $context = $this->contextBuilder->buildForChat($session, $history);
-
-        try {
-            $response = $this->provider->chat($message, $context);
-        } catch (\Exception $e) {
-            Log::warning('Chat failed, using fallback model', [
-                'error' => $e->getMessage(),
-            ]);
-            $response = $this->provider->chat($message, $context, true);
+            return $cached;
         }
+
+        $query = $this->buildQueryFromQuiz($quizData);
+        $response = $this->agent->run($query, $quizData);
+
+        if (! isset($response['error'])) {
+            $this->cacheRecommendation($cacheKey, $quizData, $response);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Chat with AI about products.
+     *
+     * @param  string  $message  User's message
+     * @param  string  $sessionId  Chat session ID
+     * @return array Response with message and optional products
+     */
+    public function chat(string $message, string $sessionId): array
+    {
+        Log::info('AIRecommendationService@chat - Starting', [
+            'session_id' => $sessionId,
+            'message' => $message,
+        ]);
+
+        $session = $this->getOrCreateSession($sessionId);
+        $this->saveMessage($session->id, 'user', $message);
+
+        $chatHistory = $this->getChatHistory($session->id);
+        $context = $session->context_json ?? [];
+
+        $response = $this->provider->chat($message, $context);
+
+        $this->saveMessage($session->id, 'assistant', $response['message'] ?? '');
 
         return [
             'message' => $response['message'] ?? '',
-            'products' => $response['products'] ?? [],
+            'session_id' => $sessionId,
+            'timestamp' => now()->toIso8601String(),
         ];
     }
 
-    public function filterRecommendations(array $recommendations, array $filters): array
+    /**
+     * Build a natural language query from quiz data.
+     */
+    private function buildQueryFromQuiz(array $quizData): string
     {
-        if (empty($filters)) {
-            return $recommendations;
+        $parts = [];
+
+        if (isset($quizData['personality'])) {
+            $parts[] = "性格は{$quizData['personality']}です";
         }
 
-        return collect($recommendations)->filter(function ($rec) use ($filters) {
-            if (isset($filters['max_price']) && isset($rec['price'])) {
-                if ($rec['price'] > $filters['max_price']) {
-                    return false;
-                }
-            }
+        if (isset($quizData['vibe'])) {
+            $parts[] = "好みの香りは{$quizData['vibe']}系です";
+        }
 
-            if (isset($filters['min_price']) && isset($rec['price'])) {
-                if ($rec['price'] < $filters['min_price']) {
-                    return false;
-                }
-            }
+        if (isset($quizData['occasion'])) {
+            $occasions = is_array($quizData['occasion'])
+                ? implode('、', $quizData['occasion'])
+                : $quizData['occasion'];
+            $parts[] = "使用シーンは{$occasions}です";
+        }
 
-            if (isset($filters['in_stock']) && $filters['in_stock']) {
-                if (isset($rec['in_stock']) && ! $rec['in_stock']) {
-                    return false;
-                }
-            }
+        if (isset($quizData['budget'])) {
+            $parts[] = "予算は{$quizData['budget']}円くらいです";
+        }
 
-            return true;
-        })->values()->toArray();
+        if (empty($parts)) {
+            return 'おすすめの香水を教えてください';
+        }
+
+        return '私に合う香水を提案してください。'.implode('。', $parts).'。';
     }
 
-    public function getCacheKey(array $context): string
+    /**
+     * Generate cache key from quiz data.
+     */
+    private function generateCacheKey(array $quizData): string
     {
-        $relevantData = [
-            'personality' => $context['user_profile']['personality'] ?? null,
-            'vibe' => $context['user_profile']['vibe'] ?? null,
-            'style' => $context['user_profile']['style'] ?? null,
-            'budget' => $context['user_profile']['budget'] ?? null,
-            'experience' => $context['user_profile']['experience'] ?? null,
-        ];
+        ksort($quizData);
 
-        return 'ai_recommendations_'.md5(json_encode($relevantData));
+        return md5(json_encode($quizData));
     }
 
-    protected function getFallbackResponse(array $context): array
+    /**
+     * Get cached recommendation if available and not expired.
+     */
+    private function getCachedRecommendation(string $cacheKey): ?array
     {
+        $cached = AIRecommendationCache::where('cache_key', $cacheKey)
+            ->where('expires_at', '>', now())
+            ->first();
+
+        if (! $cached) {
+            return null;
+        }
+
         return [
-            'profile' => [
-                'type' => 'balanced',
-                'name' => 'バランス型',
-                'description' => 'あなたの好みに合わせて、幅広い香りから選ぶことができます。',
-            ],
-            'recommendations' => [],
+            'message' => $cached->explanation ?? '',
+            'products' => $cached->product_ids_json ?? [],
+            'cached' => true,
         ];
+    }
+
+    /**
+     * Cache the recommendation result.
+     */
+    private function cacheRecommendation(string $cacheKey, array $quizData, array $response): void
+    {
+        $ttl = config('ai.cache_ttl_seconds', 3600);
+
+        AIRecommendationCache::updateOrCreate(
+            ['cache_key' => $cacheKey],
+            [
+                'context_hash' => md5(json_encode($quizData)),
+                'product_ids_json' => $response['products'] ?? [],
+                'explanation' => $response['message'] ?? '',
+                'expires_at' => now()->addSeconds($ttl),
+            ]
+        );
+    }
+
+    /**
+     * Get or create chat session.
+     */
+    private function getOrCreateSession(string $sessionId): AiChatSession
+    {
+        return AiChatSession::firstOrCreate(
+            ['session_token' => $sessionId],
+            [
+                'user_id' => auth()->id(),
+                'context_json' => [],
+            ]
+        );
+    }
+
+    /**
+     * Save a message to the chat history.
+     */
+    private function saveMessage(int $sessionId, string $role, string $content): void
+    {
+        AiMessage::create([
+            'session_id' => $sessionId,
+            'role' => $role,
+            'content' => $content,
+            'metadata_json' => [],
+        ]);
+    }
+
+    /**
+     * Get chat history for a session.
+     */
+    private function getChatHistory(int $sessionId): array
+    {
+        return AiMessage::where('session_id', $sessionId)
+            ->orderBy('created_at', 'asc')
+            ->get(['role', 'content'])
+            ->toArray();
     }
 }

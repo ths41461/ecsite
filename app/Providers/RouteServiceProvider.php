@@ -43,10 +43,15 @@ class RouteServiceProvider extends ServiceProvider
     protected function configureRateLimiting(): void
     {
         RateLimiter::for('cart-mutations', function (Request $request) {
-            // 20 writes/min per IP + method + route name
-            // Keep POST, PATCH, DELETE buckets separate to match tests.
             $routeName = optional($request->route())->getName();
             $key = sprintf('%s|%s|%s', $request->ip(), $request->method(), $routeName);
+
+            return Limit::perMinute(20)->by($key);
+        });
+
+        RateLimiter::for('ai', function (Request $request) {
+            $key = $request->user()?->id ?? $request->ip();
+
             return Limit::perMinute(20)->by($key);
         });
     }

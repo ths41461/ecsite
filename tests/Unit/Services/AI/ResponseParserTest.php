@@ -1,168 +1,245 @@
 <?php
 
+/**
+ * @group unit
+ * @group ai
+ */
+
 use App\Services\AI\ResponseParser;
 
-beforeEach(function () {
-    $this->parser = new ResponseParser;
-});
-
 describe('ResponseParser', function () {
-    describe('parseGeminiResponse', function () {
-        test('extracts text from simple response', function () {
-            $response = [
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'Hello, this is a test response.'],
-                            ],
-                            'role' => 'model',
-                        ],
-                        'finishReason' => 'STOP',
-                    ],
-                ],
-            ];
 
-            $result = $this->parser->parseGeminiResponse($response);
+    test('can instantiate response parser', function () {
+        $parser = new ResponseParser;
 
-            expect($result)->toHaveKey('type', 'text');
-            expect($result)->toHaveKey('content', 'Hello, this is a test response.');
-        });
-
-        test('detects function call response', function () {
-            $response = [
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                [
-                                    'functionCall' => [
-                                        'name' => 'search_products',
-                                        'args' => ['category' => 'floral', 'max_price' => 5000],
-                                    ],
-                                ],
-                            ],
-                            'role' => 'model',
-                        ],
-                        'finishReason' => 'STOP',
-                    ],
-                ],
-            ];
-
-            $result = $this->parser->parseGeminiResponse($response);
-
-            expect($result)->toHaveKey('type', 'function_call');
-            expect($result)->toHaveKey('function_name', 'search_products');
-            expect($result)->toHaveKey('function_args');
-            expect($result['function_args'])->toBe(['category' => 'floral', 'max_price' => 5000]);
-        });
-
-        test('extracts json from markdown code blocks', function () {
-            $text = 'Here are the recommendations:
-```json
-{
-  "recommendations": [
-    {"product_id": 1, "match_score": 95}
-  ]
-}
-```';
-
-            $result = $this->parser->extractJsonFromMarkdown($text);
-
-            expect($result)->toBeArray();
-            expect($result)->toHaveKey('recommendations');
-        });
-
-        test('returns raw text if no json code block found', function () {
-            $text = 'This is just plain text without JSON.';
-
-            $result = $this->parser->extractJsonFromMarkdown($text);
-
-            expect($result)->toBeNull();
-        });
-
-        test('parses valid recommendation json', function () {
-            $json = json_encode([
-                'profile' => [
-                    'type' => 'fresh_girly',
-                    'name' => 'Fresh & Girly',
-                    'description' => 'A light and fresh scent profile',
-                ],
-                'recommendations' => [
-                    ['product_id' => 1, 'match_score' => 95, 'explanation' => 'Great match!'],
-                ],
-            ]);
-
-            $result = $this->parser->parseRecommendationJson($json);
-
-            expect($result)->toHaveKey('profile');
-            expect($result)->toHaveKey('recommendations');
-            expect($result['profile']['type'])->toBe('fresh_girly');
-            expect($result['recommendations'])->toHaveCount(1);
-        });
-
-        test('throws on invalid json', function () {
-            $invalidJson = 'this is not valid json {{{';
-
-            expect(fn () => $this->parser->parseRecommendationJson($invalidJson))
-                ->toThrow(\RuntimeException::class, 'Invalid JSON in AI response');
-        });
-
-        test('handles empty response gracefully', function () {
-            $response = [
-                'candidates' => [],
-            ];
-
-            $result = $this->parser->parseGeminiResponse($response);
-
-            expect($result)->toHaveKey('type', 'empty');
-        });
-
-        test('handles blocked response', function () {
-            $response = [
-                'promptFeedback' => [
-                    'blockReason' => 'SAFETY',
-                ],
-            ];
-
-            $result = $this->parser->parseGeminiResponse($response);
-
-            expect($result)->toHaveKey('type', 'blocked');
-            expect($result)->toHaveKey('reason', 'SAFETY');
-        });
+        expect($parser)->toBeInstanceOf(ResponseParser::class);
     });
 
-    describe('parseError', function () {
-        test('extracts error details from gemini error response', function () {
-            $errorResponse = [
-                'error' => [
-                    'code' => 429,
-                    'message' => 'Resource has been exhausted (e.g. check quota).',
-                    'status' => 'RESOURCE_EXHAUSTED',
+    test('parseOllamaChatResponse extracts message content', function () {
+        $parser = new ResponseParser;
+
+        $ollamaResponse = [
+            'model' => 'qwen3',
+            'message' => [
+                'role' => 'assistant',
+                'content' => 'こんにちは！おすすめの香水をご紹介します。',
+            ],
+            'done' => true,
+        ];
+
+        $result = $parser->parseOllamaChatResponse($ollamaResponse);
+
+        expect($result)->toBeArray()
+            ->and($result['message'])->toBe('こんにちは！おすすめの香水をご紹介します。')
+            ->and($result['model'])->toBe('qwen3')
+            ->and($result['done'])->toBeTrue();
+    });
+
+    test('parseOllamaChatResponse extracts tool calls', function () {
+        $parser = new ResponseParser;
+
+        $ollamaResponse = [
+            'model' => 'qwen3',
+            'message' => [
+                'role' => 'assistant',
+                'content' => '',
+                'tool_calls' => [
+                    [
+                        'function' => [
+                            'name' => 'search_products',
+                            'arguments' => [
+                                'query' => 'floral',
+                                'max_results' => 5,
+                            ],
+                        ],
+                    ],
                 ],
-            ];
+            ],
+            'done' => false,
+        ];
 
-            $result = $this->parser->parseError($errorResponse);
+        $result = $parser->parseOllamaChatResponse($ollamaResponse);
 
-            expect($result)->toHaveKey('code', 429);
-            expect($result)->toHaveKey('message');
-            expect($result)->toHaveKey('status', 'RESOURCE_EXHAUSTED');
-            expect($result)->toHaveKey('is_rate_limit', true);
-        });
+        expect($result)->toHaveKey('tool_calls')
+            ->and($result['tool_calls'])->toBeArray()
+            ->and(count($result['tool_calls']))->toBe(1)
+            ->and($result['tool_calls'][0]['function'])->toBe('search_products')
+            ->and($result['tool_calls'][0]['arguments'])->toBe([
+                'query' => 'floral',
+                'max_results' => 5,
+            ]);
+    });
 
-        test('identifies invalid api key error', function () {
-            $errorResponse = [
-                'error' => [
-                    'code' => 400,
-                    'message' => 'API key not valid.',
-                    'status' => 'INVALID_ARGUMENT',
+    test('parseOllamaChatResponse handles empty content', function () {
+        $parser = new ResponseParser;
+
+        $ollamaResponse = [
+            'model' => 'qwen3',
+            'message' => [
+                'role' => 'assistant',
+                'content' => '',
+            ],
+            'done' => true,
+        ];
+
+        $result = $parser->parseOllamaChatResponse($ollamaResponse);
+
+        expect($result['message'])->toBe('');
+    });
+
+    test('parseOllamaChatResponse handles missing message key', function () {
+        $parser = new ResponseParser;
+
+        $ollamaResponse = [
+            'model' => 'qwen3',
+            'done' => true,
+        ];
+
+        $result = $parser->parseOllamaChatResponse($ollamaResponse);
+
+        expect($result)->toBeArray()
+            ->and($result['message'])->toBe('');
+    });
+
+    test('parseToolCallArguments decodes JSON string arguments', function () {
+        $parser = new ResponseParser;
+
+        $toolCall = [
+            'function' => [
+                'name' => 'search_products',
+                'arguments' => '{"query":"floral","max_results":5}',
+            ],
+        ];
+
+        $result = $parser->parseToolCallArguments($toolCall);
+
+        expect($result)->toBeArray()
+            ->and($result)->toBe([
+                'query' => 'floral',
+                'max_results' => 5,
+            ]);
+    });
+
+    test('parseToolCallArguments handles array arguments', function () {
+        $parser = new ResponseParser;
+
+        $toolCall = [
+            'function' => [
+                'name' => 'search_products',
+                'arguments' => [
+                    'query' => 'woody',
+                    'max_results' => 10,
                 ],
-            ];
+            ],
+        ];
 
-            $result = $this->parser->parseError($errorResponse);
+        $result = $parser->parseToolCallArguments($toolCall);
 
-            expect($result)->toHaveKey('code', 400);
-            expect($result)->toHaveKey('is_auth_error', true);
-        });
+        expect($result)->toBeArray()
+            ->and($result)->toBe([
+                'query' => 'woody',
+                'max_results' => 10,
+            ]);
+    });
+
+    test('parseToolCallArguments handles invalid JSON gracefully', function () {
+        $parser = new ResponseParser;
+
+        $toolCall = [
+            'function' => [
+                'name' => 'search_products',
+                'arguments' => 'invalid json{',
+            ],
+        ];
+
+        $result = $parser->parseToolCallArguments($toolCall);
+
+        expect($result)->toBeArray()
+            ->and($result)->toBeEmpty();
+    });
+
+    test('extractProductIdsFromText extracts product IDs from text', function () {
+        $parser = new ResponseParser;
+
+        $text = 'おすすめの香水は以下の通りです：商品ID 1, 2, 3 がおすすめです。';
+        $maxProductId = 1000;
+
+        $result = $parser->extractProductIdsFromText($text, $maxProductId);
+
+        expect($result)->toBeArray()
+            ->and($result)->toContain(1, 2, 3);
+    });
+
+    test('extractProductIdsFromText ignores IDs outside valid range', function () {
+        $parser = new ResponseParser;
+
+        $text = '商品ID 1, 9999, 2';
+        $maxProductId = 100;
+
+        $result = $parser->extractProductIdsFromText($text, $maxProductId);
+
+        expect($result)->toBeArray()
+            ->and($result)->toContain(1, 2)
+            ->and($result)->not->toContain(9999);
+    });
+
+    test('extractProductIdsFromText returns empty array for no IDs', function () {
+        $parser = new ResponseParser;
+
+        $text = 'おすすめの香水はありません。';
+        $maxProductId = 1000;
+
+        $result = $parser->extractProductIdsFromText($text, $maxProductId);
+
+        expect($result)->toBeArray()
+            ->and($result)->toBeEmpty();
+    });
+
+    test('buildFinalResponse formats complete recommendation response', function () {
+        $parser = new ResponseParser;
+
+        $aiMessage = 'おすすめの香水をご紹介します。';
+        $products = [
+            ['id' => 1, 'name' => 'Test Perfume', 'brand' => 'Test Brand'],
+        ];
+        $profile = ['gender' => 'women', 'budget' => 5000];
+
+        $result = $parser->buildFinalResponse($aiMessage, $products, $profile);
+
+        expect($result)->toBeArray()
+            ->and($result)->toHaveKey('message')
+            ->and($result)->toHaveKey('products')
+            ->and($result)->toHaveKey('profile')
+            ->and($result['message'])->toBe($aiMessage)
+            ->and($result['products'])->toBe($products)
+            ->and($result['profile'])->toBe($profile);
+    });
+
+    test('buildFinalResponse handles empty products', function () {
+        $parser = new ResponseParser;
+
+        $result = $parser->buildFinalResponse('No products found', [], []);
+
+        expect($result['products'])->toBeArray()
+            ->and($result['products'])->toBeEmpty();
+    });
+
+    test('parseOllamaStreamingResponse parses incremental response', function () {
+        $parser = new ResponseParser;
+
+        $streamChunk = [
+            'model' => 'qwen3',
+            'message' => [
+                'role' => 'assistant',
+                'content' => 'こんにちは',
+            ],
+            'done' => false,
+        ];
+
+        $result = $parser->parseOllamaStreamingResponse($streamChunk);
+
+        expect($result['content'])->toBe('こんにちは')
+            ->and($result['done'])->toBeFalse()
+            ->and($result)->toHaveKey('tool_calls');
     });
 });

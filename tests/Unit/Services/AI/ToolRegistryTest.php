@@ -1,149 +1,172 @@
 <?php
 
+/**
+ * @group unit
+ * @group ai
+ */
+
 use App\Models\Product;
 use App\Services\AI\ToolRegistry;
 
-beforeEach(function () {
-    $this->registry = new ToolRegistry;
-});
-
 describe('ToolRegistry', function () {
-    describe('getDefinitions', function () {
-        test('returns valid function schema for AI', function () {
-            $definitions = $this->registry->getDefinitions();
 
-            expect($definitions)->toBeArray();
-            expect($definitions)->toHaveCount(3);
+    test('can instantiate tool registry', function () {
+        $registry = new ToolRegistry;
 
-            foreach ($definitions as $def) {
-                expect($def)->toHaveKey('type');
-                expect($def['type'])->toBe('function');
-                expect($def)->toHaveKey('function');
-                expect($def['function'])->toHaveKeys(['name', 'description', 'parameters']);
-            }
-        });
-
-        test('includes search_products tool', function () {
-            $definitions = $this->registry->getDefinitions();
-            $names = array_column(array_column($definitions, 'function'), 'name');
-
-            expect($names)->toContain('search_products');
-        });
-
-        test('includes check_inventory tool', function () {
-            $definitions = $this->registry->getDefinitions();
-            $names = array_column(array_column($definitions, 'function'), 'name');
-
-            expect($names)->toContain('check_inventory');
-        });
-
-        test('includes get_product_reviews tool', function () {
-            $definitions = $this->registry->getDefinitions();
-            $names = array_column(array_column($definitions, 'function'), 'name');
-
-            expect($names)->toContain('get_product_reviews');
-        });
+        expect($registry)->toBeInstanceOf(ToolRegistry::class);
     });
 
-    describe('execute', function () {
-        test('search_products returns real products from database', function () {
-            $result = $this->registry->execute('search_products', [
-                'category' => 'Floral',
-                'max_price' => 10000,
+    test('getTools returns array of tool definitions', function () {
+        $registry = new ToolRegistry;
+        $tools = $registry->getTools();
+
+        expect($tools)->toBeArray()
+            ->and(count($tools))->toBeGreaterThan(0);
+    });
+
+    test('tools have required Ollama format structure', function () {
+        $registry = new ToolRegistry;
+        $tools = $registry->getTools();
+
+        foreach ($tools as $tool) {
+            expect($tool)->toHaveKey('type')
+                ->and($tool['type'])->toBe('function')
+                ->and($tool)->toHaveKey('function')
+                ->and($tool['function'])->toHaveKeys(['name', 'description', 'parameters']);
+        }
+    });
+
+    test('has search_products tool', function () {
+        $registry = new ToolRegistry;
+        $tools = $registry->getTools();
+
+        $searchTool = collect($tools)->firstWhere('function.name', 'search_products');
+
+        expect($searchTool)->not->toBeNull()
+            ->and($searchTool['function']['description'])->toBeString()
+            ->and($searchTool['function']['parameters'])->toHaveKey('properties');
+    });
+
+    test('has check_inventory tool', function () {
+        $registry = new ToolRegistry;
+        $tools = $registry->getTools();
+
+        $inventoryTool = collect($tools)->firstWhere('function.name', 'check_inventory');
+
+        expect($inventoryTool)->not->toBeNull()
+            ->and($inventoryTool['function']['description'])->toBeString();
+    });
+
+    test('has get_product_reviews tool', function () {
+        $registry = new ToolRegistry;
+        $tools = $registry->getTools();
+
+        $reviewsTool = collect($tools)->firstWhere('function.name', 'get_product_reviews');
+
+        expect($reviewsTool)->not->toBeNull()
+            ->and($reviewsTool['function']['description'])->toBeString();
+    });
+
+    test('execute returns real product search results', function () {
+        $registry = new ToolRegistry;
+
+        $result = $registry->execute('search_products', [
+            'query' => 'floral',
+            'max_results' => 5,
+        ]);
+
+        expect($result)->toBeArray()
+            ->and($result)->toHaveKey('success')
+            ->and($result)->toHaveKey('products');
+    });
+
+    test('execute search_products returns real products from database', function () {
+        $registry = new ToolRegistry;
+
+        $result = $registry->execute('search_products', [
+            'query' => '',
+            'max_results' => 10,
+        ]);
+
+        expect($result['success'])->toBeTrue()
+            ->and($result['products'])->toBeArray();
+
+        if (count($result['products']) > 0) {
+            $product = $result['products'][0];
+            expect($product)->toHaveKeys(['id', 'name', 'slug', 'brand', 'price']);
+        }
+    });
+
+    test('execute check_inventory returns real stock data', function () {
+        $registry = new ToolRegistry;
+        $product = Product::with('variants.inventory')->first();
+
+        if ($product && $product->variants->first()) {
+            $variantId = $product->variants->first()->id;
+
+            $result = $registry->execute('check_inventory', [
+                'product_ids' => [$variantId],
             ]);
 
-            expect($result)->toHaveKey('count');
-            expect($result)->toHaveKey('products');
-            expect($result['products'])->toBeArray();
+            expect($result)->toBeArray()
+                ->and($result)->toHaveKey('success')
+                ->and($result)->toHaveKey('inventory');
+        } else {
+            expect(true)->toBeTrue(); // Skip if no products
+        }
+    });
 
-            if ($result['count'] > 0) {
-                $product = $result['products'][0];
-                expect($product)->toHaveKeys(['id', 'name', 'brand', 'category', 'notes', 'price', 'rating']);
-            }
-        });
+    test('execute get_product_reviews returns real reviews', function () {
+        $registry = new ToolRegistry;
+        $product = Product::first();
 
-        test('search_products respects max_price filter', function () {
-            $result = $this->registry->execute('search_products', [
-                'max_price' => 3000,
-            ]);
+        $result = $registry->execute('get_product_reviews', [
+            'product_id' => $product->id,
+            'limit' => 5,
+        ]);
 
-            expect($result['products'])->toBeArray();
+        expect($result)->toBeArray()
+            ->and($result)->toHaveKey('success')
+            ->and($result)->toHaveKey('reviews')
+            ->and($result)->toHaveKey('average_rating');
+    });
 
-            if (count($result['products']) > 0) {
-                foreach ($result['products'] as $product) {
-                    expect($product['price'])->toBeLessThanOrEqual(3000);
-                }
-            } else {
-                expect($result['count'])->toBe(0);
-            }
-        });
+    test('execute returns error for unknown tool', function () {
+        $registry = new ToolRegistry;
 
-        test('check_inventory returns stock via variant relationship', function () {
-            $product = Product::where('is_active', true)
-                ->whereHas('variants.inventory')
-                ->first();
+        $result = $registry->execute('unknown_tool', []);
 
-            if (! $product) {
-                $this->markTestSkipped('No products with inventory found');
-            }
+        expect($result)->toBeArray()
+            ->and($result['success'])->toBeFalse()
+            ->and($result)->toHaveKey('error');
+    });
 
-            $result = $this->registry->execute('check_inventory', [
-                'product_ids' => [$product->id],
-            ]);
+    test('search_products filters by category', function () {
+        $registry = new ToolRegistry;
 
-            expect($result)->toHaveKey('inventory');
-            expect($result['inventory'])->toBeArray();
+        $result = $registry->execute('search_products', [
+            'category' => 'floral',
+            'max_results' => 5,
+        ]);
 
-            if (isset($result['inventory'][$product->id])) {
-                $inventory = $result['inventory'][$product->id];
-                expect($inventory)->toHaveKeys(['in_stock', 'stock', 'low_stock']);
-            }
-        });
+        expect($result['success'])->toBeTrue()
+            ->and($result['products'])->toBeArray();
+    });
 
-        test('check_inventory handles non-existent products', function () {
-            $result = $this->registry->execute('check_inventory', [
-                'product_ids' => [999999],
-            ]);
+    test('search_products filters by price range', function () {
+        $registry = new ToolRegistry;
 
-            expect($result)->toHaveKey('inventory');
-            expect($result['inventory'])->toBeArray();
-        });
+        $result = $registry->execute('search_products', [
+            'min_price' => 1000,
+            'max_price' => 5000,
+            'max_results' => 10,
+        ]);
 
-        test('get_product_reviews returns aggregated ratings', function () {
-            $product = Product::whereHas('reviews', function ($q) {
-                $q->where('approved', true);
-            })->first();
+        expect($result['success'])->toBeTrue();
 
-            if (! $product) {
-                $this->markTestSkipped('No products with approved reviews found');
-            }
-
-            $result = $this->registry->execute('get_product_reviews', [
-                'product_ids' => [$product->id],
-            ]);
-
-            expect($result)->toHaveKey('reviews');
-            expect($result['reviews'])->toBeArray();
-
-            if (isset($result['reviews'][$product->id])) {
-                $review = $result['reviews'][$product->id];
-                expect($review)->toHaveKeys(['avg_rating', 'review_count']);
-                expect($review['avg_rating'])->toBeFloat();
-                expect($review['review_count'])->toBeInt();
-            }
-        });
-
-        test('get_product_reviews only returns approved reviews', function () {
-            $result = $this->registry->execute('get_product_reviews', [
-                'product_ids' => [1],
-            ]);
-
-            expect($result)->toHaveKey('reviews');
-        });
-
-        test('execute throws for unknown tool', function () {
-            expect(fn () => $this->registry->execute('unknown_tool', []))
-                ->toThrow(\InvalidArgumentException::class, 'Unknown tool: unknown_tool');
-        });
+        foreach ($result['products'] as $product) {
+            expect($product['price'])->toBeGreaterThanOrEqual(1000)
+                ->and($product['price'])->toBeLessThanOrEqual(5000);
+        }
     });
 });

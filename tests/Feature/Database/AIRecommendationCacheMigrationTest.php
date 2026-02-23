@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @group feature
+ * @group database
+ */
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -29,8 +34,9 @@ test('ai_recommendation_cache table has correct columns', function () {
 });
 
 test('ai_recommendation_cache model can create record', function () {
+    $uniqueKey = 'ai_rec_'.uniqid().'_'.md5(json_encode(['budget' => 5000, 'personality' => 'romantic']));
     $cache = \App\Models\AIRecommendationCache::create([
-        'cache_key' => 'ai_rec_'.md5(json_encode(['budget' => 5000, 'personality' => 'romantic'])),
+        'cache_key' => $uniqueKey,
         'context_hash' => md5(json_encode(['budget' => 5000, 'personality' => 'romantic'])),
         'product_ids_json' => [1, 2, 3, 4, 5],
         'explanation' => 'Based on your romantic personality, we recommend floral fragrances.',

@@ -1,126 +1,125 @@
 <?php
 
+/**
+ * @group unit
+ * @group ai
+ */
+
 use App\Services\AI\ContextBuilder;
 
-beforeEach(function () {
-    $this->builder = new ContextBuilder;
-});
-
 describe('ContextBuilder', function () {
-    describe('build', function () {
-        test('returns user profile structure', function () {
-            $quizData = [
-                'personality' => 'romantic',
-                'vibe' => 'floral',
-                'occasion' => ['daily'],
-                'style' => 'feminine',
-                'budget' => 5000,
-                'experience' => 'beginner',
-                'season' => 'spring',
-            ];
 
-            $context = $this->builder->build($quizData);
+    test('can instantiate context builder', function () {
+        $builder = new ContextBuilder;
 
-            expect($context)->toHaveKey('user_profile');
-            expect($context['user_profile'])->toHaveKeys([
-                'personality',
-                'vibe',
-                'occasion',
-                'style',
-                'budget',
-                'experience',
-                'season',
-            ]);
-            expect($context['user_profile']['personality'])->toBe('romantic');
-            expect($context['user_profile']['budget'])->toBe(5000);
-        });
-
-        test('returns available products under budget', function () {
-            $quizData = [
-                'budget' => 3000,
-                'personality' => 'romantic',
-            ];
-
-            $context = $this->builder->build($quizData);
-
-            expect($context)->toHaveKey('available_products');
-            expect($context['available_products'])->toBeArray();
-
-            if (count($context['available_products']) > 0) {
-                $product = $context['available_products'][0];
-                expect($product)->toHaveKeys(['id', 'name', 'brand', 'category', 'notes', 'min_price', 'max_price']);
-                expect($product['min_price'])->toBeLessThanOrEqual(3000);
-            }
-        });
-
-        test('returns categories list', function () {
-            $context = $this->builder->build(['budget' => 5000]);
-
-            expect($context)->toHaveKey('categories');
-            expect($context['categories'])->toBeArray();
-
-            if (count($context['categories']) > 0) {
-                expect($context['categories'][0])->toHaveKeys(['id', 'name']);
-            }
-        });
-
-        test('returns brands list', function () {
-            $context = $this->builder->build(['budget' => 5000]);
-
-            expect($context)->toHaveKey('brands');
-            expect($context['brands'])->toBeArray();
-
-            if (count($context['brands']) > 0) {
-                expect($context['brands'][0])->toHaveKeys(['id', 'name']);
-            }
-        });
-
-        test('handles missing optional fields', function () {
-            $quizData = [
-                'budget' => 5000,
-                'personality' => 'romantic',
-            ];
-
-            $context = $this->builder->build($quizData);
-
-            expect($context)->toBeArray();
-            expect($context['user_profile']['season'])->toBeNull();
-        });
+        expect($builder)->toBeInstanceOf(ContextBuilder::class);
     });
 
-    describe('buildForChat', function () {
-        test('returns chat context with quiz data', function () {
-            $quizResult = \App\Models\QuizResult::create([
-                'session_token' => 'test-token-'.uniqid(),
-                'answers_json' => [
-                    'personality' => 'romantic',
-                    'budget' => 5000,
-                ],
-                'profile_type' => 'fresh_girly',
-                'profile_data_json' => ['name' => 'Fresh & Girly'],
-                'recommended_product_ids' => [1, 2, 3],
-            ]);
+    test('build returns array with required structure', function () {
+        $builder = new ContextBuilder;
+        $quizData = [
+            'budget' => 5000,
+            'personality' => 'romantic',
+            'vibe' => 'floral',
+        ];
 
-            $session = \App\Models\AiChatSession::create([
-                'session_token' => 'session-'.uniqid(),
-                'quiz_result_id' => $quizResult->id,
-            ]);
+        $context = $builder->build($quizData);
 
-            $history = collect([
-                new \App\Models\AiMessage([
-                    'role' => 'user',
-                    'content' => 'Hello',
-                ]),
-            ]);
+        expect($context)->toBeArray()
+            ->and($context)->toHaveKey('user_profile')
+            ->and($context)->toHaveKey('available_products')
+            ->and($context)->toHaveKey('budget');
+    });
 
-            $context = $this->builder->buildForChat($session, $history);
+    test('build returns real products from database within budget', function () {
+        $builder = new ContextBuilder;
+        $budget = 3000;
+        $quizData = [
+            'budget' => $budget,
+            'personality' => 'romantic',
+        ];
 
-            expect($context)->toHaveKey('quiz_context');
-            expect($context)->toHaveKey('profile_type');
-            expect($context)->toHaveKey('previous_recommendations');
-            expect($context)->toHaveKey('budget');
-            expect($context['profile_type'])->toBe('fresh_girly');
-            expect($context['budget'])->toBe(5000);
-        });
+        $context = $builder->build($quizData);
+
+        expect($context['budget'])->toBe($budget)
+            ->and($context['available_products'])->toBeArray();
+
+        if (count($context['available_products']) > 0) {
+            foreach ($context['available_products'] as $product) {
+                expect($product)->toHaveKeys(['id', 'name', 'slug', 'min_price']);
+                if (isset($product['min_price'])) {
+                    expect($product['min_price'])->toBeLessThanOrEqual($budget);
+                }
+            }
+        }
+    });
+
+    test('build includes product notes and gender from attributes_json', function () {
+        $builder = new ContextBuilder;
+        $quizData = [
+            'budget' => 10000,
+            'gender' => 'women',
+        ];
+
+        $context = $builder->build($quizData);
+
+        if (count($context['available_products']) > 0) {
+            $product = $context['available_products'][0];
+            expect($product)->toHaveKey('notes');
+        }
+    });
+
+    test('build respects gender preference', function () {
+        $builder = new ContextBuilder;
+        $quizData = [
+            'budget' => 10000,
+            'gender' => 'women',
+        ];
+
+        $context = $builder->build($quizData);
+
+        expect($context['user_profile'])->toHaveKey('gender')
+            ->and($context['user_profile']['gender'])->toBe('women');
+    });
+
+    test('build handles empty quiz data gracefully', function () {
+        $builder = new ContextBuilder;
+
+        $context = $builder->build([]);
+
+        expect($context)->toBeArray()
+            ->and($context)->toHaveKey('available_products')
+            ->and($context['available_products'])->toBeArray();
+    });
+
+    test('build includes trending products', function () {
+        $builder = new ContextBuilder;
+        $quizData = ['budget' => 10000];
+
+        $context = $builder->build($quizData);
+
+        expect($context)->toHaveKey('trending_products')
+            ->and($context['trending_products'])->toBeArray();
+    });
+
+    test('build includes top rated products', function () {
+        $builder = new ContextBuilder;
+        $quizData = ['budget' => 10000];
+
+        $context = $builder->build($quizData);
+
+        expect($context)->toHaveKey('top_rated_products')
+            ->and($context['top_rated_products'])->toBeArray();
+    });
+
+    test('build limits products to prevent context overflow', function () {
+        $builder = new ContextBuilder;
+        $quizData = ['budget' => 100000];
+
+        $context = $builder->build($quizData);
+
+        expect(count($context['available_products']))->toBeLessThanOrEqual(20)
+            ->and(count($context['trending_products']))->toBeLessThanOrEqual(5)
+            ->and(count($context['top_rated_products']))->toBeLessThanOrEqual(5);
     });
 });

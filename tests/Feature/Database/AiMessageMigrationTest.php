@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @group feature
+ * @group database
+ */
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -27,8 +32,9 @@ test('ai_messages table has correct columns', function () {
 });
 
 test('ai_message model can create record', function () {
+    $uniqueToken = 'test-session-msg-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-session-for-messages',
+        'session_token' => $uniqueToken,
         'context_json' => ['test' => 'data'],
     ]);
 
@@ -60,8 +66,9 @@ test('ai_message model has correct fillable attributes', function () {
 });
 
 test('ai_message model casts metadata_json as array', function () {
+    $uniqueToken = 'test-session-cast-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-session-for-casting',
+        'session_token' => $uniqueToken,
         'context_json' => [],
     ]);
 
@@ -79,8 +86,9 @@ test('ai_message model casts metadata_json as array', function () {
 });
 
 test('ai_message belongs to ai_chat_session', function () {
+    $uniqueToken = 'test-session-rel-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-session-for-relation',
+        'session_token' => $uniqueToken,
         'context_json' => [],
     ]);
 
@@ -95,8 +103,9 @@ test('ai_message belongs to ai_chat_session', function () {
 });
 
 test('ai_message role must be valid enum value', function () {
+    $uniqueToken = 'test-session-enum-'.uniqid();
     $session = \App\Models\AiChatSession::create([
-        'session_token' => 'test-session-for-enum',
+        'session_token' => $uniqueToken,
         'context_json' => [],
     ]);
 
