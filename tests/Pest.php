@@ -1,5 +1,9 @@
 <?php
 
+pest()->extend(Tests\DuskTestCase::class)
+    ->use(Illuminate\Foundation\Testing\DatabaseMigrations::class)
+    ->in('Browser');
+
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -12,8 +16,9 @@
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
-    ->in('Feature');
+    // Using production database - no RefreshDatabase
+    // Tests use real DB directly for Phase 6
+    ->in('Feature', 'Unit', 'Integration');
 
 /*
 |--------------------------------------------------------------------------

@@ -17,6 +17,8 @@ services:
       XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
       XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
       IGNITION_LOCAL_SITES_PATH: '${PWD}'
+      SCOUT_DRIVER: '${SCOUT_DRIVER:-meilisearch}'
+      MEILISEARCH_HOST: '${MEILISEARCH_HOST:-http://meilisearch:7700}'
     volumes:
       - .:/var/www/html
     networks:
@@ -26,6 +28,7 @@ services:
       - redis
       - meilisearch
       - mailpit
+      - ollama
 
   mysql:
     image: mysql/mysql-server:8.0
@@ -75,6 +78,28 @@ services:
     networks:
       - sail
 
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - '${FORWARD_OLLAMA_PORT:-11434}:11434'
+    volumes:
+      - sail-ollama:/root/.ollama
+    networks:
+      - sail
+
+  selenium:
+    image: selenium/standalone-chrome:latest
+    volumes:
+      - /dev/shm:/dev/shm
+    networks:
+      - sail
+    ports:
+      - '4444:4444'
+      - '7900:7900'
+    environment:
+      SE_NODE_MAX_SESSIONS: 1
+      SE_SESSION_REQUEST_TIMEOUT: 300
+
 networks:
   sail:
     driver: bridge
@@ -85,4 +110,6 @@ volumes:
   sail-redis:
     driver: local
   sail-meilisearch:
+    driver: local
+  sail-ollama:
     driver: local

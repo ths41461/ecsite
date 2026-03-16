@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\CartService;
+use App\Services\WishlistService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -15,11 +17,20 @@ use Inertia\Response;
 
 class RegisteredUserController extends Controller
 {
+    public function __construct(private CartService $cartService, private WishlistService $wishlistService)
+    {
+    }
+
     /**
      * Show the registration page.
      */
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // If there's a redirect query parameter, set it as the intended URL
+        if ($request->has('redirect')) {
+            $request->session()->put('url.intended', $request->get('redirect'));
+        }
+        
         return Inertia::render('auth/register');
     }
 
@@ -36,6 +47,9 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        // Capture the guest session ID before user creation/login
+        $guestSessionId = $request->session()->getId();
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -45,6 +59,15 @@ class RegisteredUserController extends Controller
         event(new Registered($user));
 
         Auth::login($user);
+
+        // After login, merge the guest cart to the authenticated user's session
+        $currentSessionId = $request->session()->getId();
+        if ($guestSessionId && $guestSessionId !== $currentSessionId) {
+            $this->cartService->mergeSessions($guestSessionId, $currentSessionId);
+        }
+
+        // Merge guest wishlist to the new user's wishlist
+        $this->wishlistService->merge($guestSessionId, $user->id);
 
         return redirect()->intended(route('dashboard', absolute: false));
     }

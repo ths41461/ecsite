@@ -3,31 +3,41 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import { appearance } from '@/routes';
+import { index as couponsIndex } from '@/routes/coupons';
 import { edit as editPassword } from '@/routes/password';
 import { edit } from '@/routes/profile';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 import { type PropsWithChildren } from 'react';
 
+interface SettingsLayoutProps extends PropsWithChildren {
+    fullWidth?: boolean;
+}
+
 const sidebarNavItems: NavItem[] = [
     {
-        title: 'Profile',
+        title: 'プロフィール',
         href: edit(),
         icon: null,
     },
     {
-        title: 'Password',
+        title: 'パスワード',
         href: editPassword(),
         icon: null,
     },
     {
-        title: 'Appearance',
+        title: '外観',
         href: appearance(),
+        icon: null,
+    },
+    {
+        title: 'クーポン',
+        href: couponsIndex(),
         icon: null,
     },
 ];
 
-export default function SettingsLayout({ children }: PropsWithChildren) {
+export default function SettingsLayout({ children, fullWidth = false }: SettingsLayoutProps) {
     // When server-side rendering, we only render the layout on the client...
     if (typeof window === 'undefined') {
         return null;
@@ -37,7 +47,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
 
     return (
         <div className="px-4 py-6">
-            <Heading title="Settings" description="Manage your profile and account settings" />
+            <Heading title="設定" description="プロフィールとアカウント設定を管理" />
 
             <div className="flex flex-col lg:flex-row lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
@@ -64,7 +74,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                 <Separator className="my-6 lg:hidden" />
 
                 <div className="flex-1 md:max-w-2xl">
-                    <section className="max-w-xl space-y-12">{children}</section>
+                    <section className={cn(fullWidth ? 'space-y-12' : 'max-w-xl space-y-12')}>{children}</section>
                 </div>
             </div>
         </div>
