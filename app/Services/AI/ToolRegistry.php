@@ -53,7 +53,7 @@ class ToolRegistry
             'type' => 'function',
             'function' => [
                 'name' => 'search_products',
-                'description' => '香水カタログから商品を検索します。カテゴリー、価格帯、ノート（香調）でフィルタリング可能です。',
+                'description' => '香水カタログから商品を検索します。カテゴリー、価格帯、ノート（香調）、性別でフィルタリング可能です。',
                 'parameters' => [
                     'type' => 'object',
                     'properties' => [
@@ -64,6 +64,14 @@ class ToolRegistry
                         'category' => [
                             'type' => 'string',
                             'description' => 'カテゴリーでフィルタ（例: floral, woody, citrus）',
+                        ],
+                        'gender' => [
+                            'type' => 'string',
+                            'description' => '性別でフィルタ（women, men, unisex）',
+                        ],
+                        'vibe' => [
+                            'type' => 'string',
+                            'description' => '香りのタイプでフィルタ（floral, citrus, vanilla, woody, ocean）',
                         ],
                         'min_price' => [
                             'type' => 'integer',
@@ -76,6 +84,11 @@ class ToolRegistry
                         'max_results' => [
                             'type' => 'integer',
                             'description' => '最大結果数',
+                        ],
+                        'product_ids' => [
+                            'type' => 'array',
+                            'items' => ['type' => 'integer'],
+                            'description' => '特定の商品IDリスト（指定した場合、これらの商品を直接取得）',
                         ],
                     ],
                     'required' => [],
@@ -144,15 +157,67 @@ class ToolRegistry
     {
         $query = $arguments['query'] ?? '';
         $category = $arguments['category'] ?? null;
+        $gender = $arguments['gender'] ?? null;
+        $vibe = $arguments['vibe'] ?? null;
         $minPrice = $arguments['min_price'] ?? null;
         $maxPrice = $arguments['max_price'] ?? null;
         $maxResults = $arguments['max_results'] ?? 10;
+        $productIds = $arguments['product_ids'] ?? [];
+
+        // If specific product IDs are provided, fetch those directly
+        if (! empty($productIds)) {
+            $products = Product::query()
+                ->where('is_active', true)
+                ->whereIn('id', $productIds)
+                ->with(['variants' => function ($q) {
+                    $q->where('is_active', true)->orderBy('price_yen', 'asc');
+                }, 'brand', 'category', 'heroImage', 'images'])
+                ->get();
+
+            $results = $products->map(function ($product) {
+                $minPriceVariant = $product->variants->first();
+                $attributes = $product->attributes_json ?? [];
+
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'brand' => $product->brand?->name,
+                    'category' => $product->category?->name,
+                    'min_price' => $minPriceVariant?->price_yen,
+                    'short_desc' => $product->short_desc,
+                    'long_desc' => $product->long_desc,
+                    'notes' => $attributes['notes'] ?? [],
+                    'gender' => $attributes['gender'] ?? 'unisex',
+                    'image_url' => $product->heroImage?->path,
+                    'variants' => $product->variants->map(function ($variant) {
+                        $options = $variant->option_json ?? [];
+
+                        return [
+                            'id' => $variant->id,
+                            'sku' => $variant->sku,
+                            'price_yen' => $variant->price_yen,
+                            'sale_price_yen' => $variant->sale_price_yen,
+                            'size_ml' => $options['size_ml'] ?? null,
+                            'gender' => $options['gender'] ?? null,
+                        ];
+                    })->toArray(),
+                    'attributes' => $attributes,
+                ];
+            })->toArray();
+
+            return [
+                'success' => true,
+                'products' => $results,
+                'count' => count($results),
+            ];
+        }
 
         $productsQuery = Product::query()
             ->where('is_active', true)
             ->with(['variants' => function ($q) {
                 $q->where('is_active', true)->orderBy('price_yen', 'asc');
-            }, 'brand', 'category']);
+            }, 'brand', 'category', 'heroImage', 'images']);
 
         if (! empty($query)) {
             $productsQuery->where(function ($q) use ($query) {
@@ -162,7 +227,35 @@ class ToolRegistry
         }
 
         if ($category) {
-            $productsQuery->whereHas('category', fn ($q) => $q->where('slug', $category));
+            $productsQuery->whereHas('category', fn ($q) => $q->where('slug', 'like', "%{$category}%"));
+        }
+
+        if ($gender) {
+            $productsQuery->where(function ($q) use ($gender) {
+                $q->whereJsonContains('attributes_json->gender', $gender)
+                    ->orWhereJsonContains('attributes_json->gender', 'unisex');
+            });
+        }
+
+        if ($vibe) {
+            $vibeNoteMap = [
+                'floral' => ['rose', 'jasmine', 'lily', 'peony', 'floral', '花', 'バラ', 'ジャスミン'],
+                'citrus' => ['citrus', 'lemon', 'orange', 'bergamot', 'lime', 'シトラス', 'レモン'],
+                'vanilla' => ['vanilla', 'sweet', 'amber', 'バニラ', '甘い'],
+                'woody' => ['wood', 'sandalwood', 'cedar', 'patchouli', 'ウッディ', 'シダー'],
+                'ocean' => ['ocean', 'marine', 'water', 'fresh', 'オーシャン', '海'],
+            ];
+
+            if (isset($vibeNoteMap[$vibe])) {
+                $notes = $vibeNoteMap[$vibe];
+                $productsQuery->where(function ($q) use ($notes) {
+                    foreach ($notes as $note) {
+                        $q->orWhereJsonContains('attributes_json->notes->top', $note)
+                            ->orWhereJsonContains('attributes_json->notes->middle', $note)
+                            ->orWhereJsonContains('attributes_json->notes->base', $note);
+                    }
+                });
+            }
         }
 
         if ($minPrice !== null || $maxPrice !== null) {
@@ -188,11 +281,69 @@ class ToolRegistry
                 'slug' => $product->slug,
                 'brand' => $product->brand?->name,
                 'category' => $product->category?->name,
-                'price' => $minPriceVariant?->price_yen,
+                'min_price' => $minPriceVariant?->price_yen,
+                'short_desc' => $product->short_desc,
+                'long_desc' => $product->long_desc,
                 'notes' => $attributes['notes'] ?? [],
                 'gender' => $attributes['gender'] ?? 'unisex',
+                'image_url' => $product->heroImage?->path,
+                'variants' => $product->variants->map(function ($variant) {
+                    $options = $variant->option_json ?? [];
+
+                    return [
+                        'id' => $variant->id,
+                        'sku' => $variant->sku,
+                        'price_yen' => $variant->price_yen,
+                        'sale_price_yen' => $variant->sale_price_yen,
+                        'size_ml' => $options['size_ml'] ?? null,
+                        'gender' => $options['gender'] ?? null,
+                    ];
+                })->toArray(),
+                'attributes' => $attributes,
             ];
         })->toArray();
+
+        // #region agent log (sail-safe)
+        try {
+            $debugPath = base_path('.cursor/debug.log');
+            @mkdir(dirname($debugPath), 0777, true);
+            $sample = $results[0] ?? null;
+            file_put_contents($debugPath, json_encode([
+                'id' => uniqid('log_', true),
+                'timestamp' => (int) round(microtime(true) * 1000),
+                'runId' => 'pre',
+                'hypothesisId' => 'H1',
+                'location' => 'ToolRegistry.php:executeSearchProducts:results_sail',
+                'message' => 'search_products returning products (sail-safe log)',
+                'data' => [
+                    'count' => count($results),
+                    'sample_keys' => is_array($sample) ? array_keys($sample) : null,
+                ],
+            ], JSON_UNESCAPED_UNICODE)."\n", FILE_APPEND);
+        } catch (\Throwable $e) {
+        }
+        // #endregion
+
+        // #region agent log
+        try {
+            $sample = $results[0] ?? null;
+            file_put_contents('/code/ecsite/.cursor/debug.log', json_encode([
+                'id' => uniqid('log_', true),
+                'timestamp' => (int) round(microtime(true) * 1000),
+                'runId' => 'pre',
+                'hypothesisId' => 'H1',
+                'location' => 'ToolRegistry.php:executeSearchProducts:results',
+                'message' => 'search_products returning products',
+                'data' => [
+                    'count' => count($results),
+                    'sample_keys' => is_array($sample) ? array_keys($sample) : null,
+                    'sample_has_notes' => is_array($sample) ? array_key_exists('notes', $sample) : null,
+                    'sample_notes_type' => is_array($sample) ? gettype($sample['notes'] ?? null) : null,
+                ],
+            ], JSON_UNESCAPED_UNICODE)."\n", FILE_APPEND);
+        } catch (\Throwable $e) {
+        }
+        // #endregion
 
         return [
             'success' => true,
@@ -207,6 +358,14 @@ class ToolRegistry
     private function executeCheckInventory(array $arguments): array
     {
         $productIds = $arguments['product_ids'] ?? [];
+
+        // Handle string input (some models pass JSON string)
+        if (is_string($productIds)) {
+            $decoded = json_decode($productIds, true);
+            if (is_array($decoded)) {
+                $productIds = $decoded;
+            }
+        }
 
         if (empty($productIds)) {
             return [

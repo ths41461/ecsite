@@ -22,15 +22,15 @@ class OllamaProvider
     public function __construct(?string $host = null, ?string $model = null)
     {
         $this->host = $host ?? config('ai.ollama.host', 'http://ollama:11434');
-        $this->model = $model ?? config('ai.ollama.model', 'qwen3');
-        $this->timeout = config('ai.ollama.timeout', 120);
+        $this->model = $model ?? config('ai.ollama.model', 'qwen3:8b');
+        $this->timeout = config('ai.ollama.timeout', 300);
         $this->keepAlive = config('ai.ollama.keep_alive', -1);
         $this->options = config('ai.ollama.options', [
-            'temperature' => 0.7,
-            'num_ctx' => 4096,
-            'num_parallel' => 4,
+            'temperature' => 0.1,
+            'num_predict' => 512,
+            'top_p' => 0.9,
         ]);
-        $this->fallbackModels = config('ai.ollama.fallback_models', ['llama2']);
+        $this->fallbackModels = config('ai.ollama.fallback_models', ['gemma3:latest']);
     }
 
     /**
@@ -62,6 +62,7 @@ class OllamaProvider
 
     /**
      * Send a chat message with tool definitions.
+     * Falls back to non-tool chat if model doesn't support tools.
      */
     public function chatWithTools(string $message, array $context = [], array $tools = []): array
     {
@@ -73,6 +74,27 @@ class OllamaProvider
 
         $systemPrompt = $this->buildSystemPrompt($context);
 
+        // #region agent log
+        try {
+            file_put_contents('/code/ecsite/.cursor/debug.log', json_encode([
+                'id' => uniqid('log_', true),
+                'timestamp' => (int) round(microtime(true) * 1000),
+                'runId' => 'pre',
+                'hypothesisId' => 'H2',
+                'location' => 'OllamaProvider.php:chatWithTools:payload',
+                'message' => 'building ollama payload for tools chat',
+                'data' => [
+                    'context_keys' => array_keys($context),
+                    'context_available_products_count' => is_array($context['available_products'] ?? null) ? count($context['available_products']) : null,
+                    'system_prompt_len' => strlen($systemPrompt),
+                    'message_len' => strlen($message),
+                    'tools_count' => count($tools),
+                ],
+            ], JSON_UNESCAPED_UNICODE)."\n", FILE_APPEND);
+        } catch (\Throwable $e) {
+        }
+        // #endregion
+
         $payload = [
             'model' => $this->model,
             'messages' => [
@@ -82,20 +104,19 @@ class OllamaProvider
             'stream' => false,
             'tools' => $tools,
             'keep_alive' => $this->keepAlive,
-            'options' => $this->options,
+            'options' => array_merge($this->options, ['temperature' => 0.1]),
         ];
+
+        Log::debug('OllamaProvider chatWithTools payload', [
+            'has_tools' => ! empty($tools),
+            'tools_count' => count($tools),
+            'tools_first_keys' => ! empty($tools) ? array_keys($tools[0] ?? []) : [],
+        ]);
 
         $response = $this->sendRequest('/api/chat', $payload);
 
-        $toolCalls = [];
-        if (isset($response['raw']['message']['tool_calls'])) {
-            foreach ($response['raw']['message']['tool_calls'] as $toolCall) {
-                $toolCalls[] = [
-                    'function' => $toolCall['function']['name'] ?? '',
-                    'arguments' => $toolCall['function']['arguments'] ?? [],
-                ];
-            }
-        }
+        // Tool calls are now returned in the root of the response by sendRequest
+        $toolCalls = $response['tool_calls'] ?? [];
 
         return [
             'message' => $response['message'] ?? '',
@@ -255,6 +276,12 @@ class OllamaProvider
     private function sendRequest(string $endpoint, array $payload): array
     {
         try {
+            Log::debug('OllamaProvider sendRequest called', [
+                'endpoint' => $endpoint,
+                'has_tools' => isset($payload['tools']),
+                'tools_count' => isset($payload['tools']) ? count($payload['tools']) : 0,
+            ]);
+
             $response = Http::timeout($this->timeout)
                 ->post($this->host.$endpoint, $payload);
 
@@ -273,12 +300,50 @@ class OllamaProvider
 
             $data = $response->json();
 
-            return [
+            // Debug: log raw response structure
+            Log::debug('OllamaProvider sendRequest response keys', array_keys($data));
+            if (isset($data['message'])) {
+                Log::debug('OllamaProvider message keys', array_keys($data['message']));
+                if (isset($data['message']['tool_calls'])) {
+                    Log::debug('OllamaProvider tool_calls count', [count($data['message']['tool_calls'])]);
+                }
+            }
+
+            // Extract tool calls if present
+            $toolCalls = [];
+            if (isset($data['message']['tool_calls'])) {
+                Log::info('OllamaProvider - Found tool calls in response', [
+                    'count' => count($data['message']['tool_calls']),
+                ]);
+                foreach ($data['message']['tool_calls'] as $toolCall) {
+                    $arguments = $toolCall['function']['arguments'] ?? [];
+                    // Handle if arguments is a string (JSON)
+                    if (is_string($arguments)) {
+                        $decoded = json_decode($arguments, true);
+                        if (json_last_error() === JSON_ERROR_NONE) {
+                            $arguments = $decoded;
+                        }
+                    }
+                    $toolCalls[] = [
+                        'function' => [
+                            'name' => $toolCall['function']['name'] ?? '',
+                            'arguments' => $arguments,
+                        ],
+                    ];
+                }
+            }
+
+            $result = [
                 'message' => $data['message']['content'] ?? '',
                 'model' => $data['model'] ?? $this->model,
                 'done' => $data['done'] ?? true,
                 'raw' => $data,
+                'tool_calls' => $toolCalls,
             ];
+
+            Log::debug('OllamaProvider returning tool_calls count', [count($toolCalls)]);
+
+            return $result;
         } catch (\Exception $e) {
             Log::error('OllamaProvider - Connection error', [
                 'error' => $e->getMessage(),
@@ -323,12 +388,41 @@ class OllamaProvider
             $prompt .= "\n\nユーザー趣向:\n";
             foreach ($context['user_profile'] as $key => $value) {
                 if (is_array($value)) {
-                    $value = implode(', ', $value);
+                    // Handle nested arrays (like personality_details, vibe_details)
+                    $value = $this->formatArrayValue($value);
                 }
-                $prompt .= "- {$key}: {$value}\n";
+                if ($value !== null && $value !== '') {
+                    $prompt .= "- {$key}: {$value}\n";
+                }
             }
         }
 
         return $prompt;
+    }
+
+    /**
+     * Format array value for prompt.
+     */
+    private function formatArrayValue(array $value): string
+    {
+        $parts = [];
+        foreach ($value as $k => $v) {
+            if (is_array($v)) {
+                // Recursively handle nested arrays
+                $nested = [];
+                foreach ($v as $nk => $nv) {
+                    if (is_array($nv)) {
+                        $nested[] = $nk.':'.json_encode($nv);
+                    } else {
+                        $nested[] = $nk.':'.$nv;
+                    }
+                }
+                $parts[] = $k.':['.implode(', ', $nested).']';
+            } else {
+                $parts[] = $k.':'.$v;
+            }
+        }
+
+        return implode(', ', $parts);
     }
 }

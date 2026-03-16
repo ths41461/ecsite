@@ -11,6 +11,8 @@ type QuizAnswers = {
     budget: number;
     experience: string;
     season: string;
+    gender: string;
+    concentration: string;
 };
 
 type Question = {
@@ -106,9 +108,33 @@ const questions: Question[] = [
         subtitle: 'あとで変えることもできます',
         type: 'single',
         options: [
-            { value: 'spring', label: '春夏向け', icon: '🌷', description: '軽やかで爽やかな香り' },
+            { value: 'spring', label: '春夏向け', icon: '🌷', description: '軽やかで不爽快な香り' },
             { value: 'fall', label: '秋冬向け', icon: '🍂', description: '深みのある温かい香り' },
             { value: 'all', label: 'オールシーズン', icon: '🌸', description: '一年中使える香り' },
+        ],
+    },
+    {
+        id: 'gender',
+        title: '性別は？',
+        subtitle: '好みに合わせて選べます',
+        type: 'single',
+        options: [
+            { value: 'women', label: '女性', icon: '👗', description: '女性らしい華やかな香り' },
+            { value: 'men', label: '男性', icon: '👔', description: '男性らしい安定した香り' },
+            { value: 'unisex', label: 'ユニセックス', icon: '🌈', description: 'どちらでも使える香り' },
+        ],
+    },
+    {
+        id: 'concentration',
+        title: '香りの強さは？',
+        subtitle: '持続性と濃さを選べます',
+        type: 'single',
+        options: [
+            { value: 'parfum', label: 'パルファム', icon: '👑', description: '最も持続性が高い（5-8時間）' },
+            { value: 'edp', label: 'オードパルファム', icon: '✨', description: '比較的持続性が高い（4-6時間）' },
+            { value: 'edt', label: 'オードトワレ', icon: '💧', description: '爽やかで軽い（3-5時間）' },
+            { value: 'edc', label: 'オードコロン', icon: '🍃', description: '最も軽い（2-3時間）' },
+            { value: 'mist', label: 'ボディミスト', icon: '🌸', description: 'とても軽く気軽に使える' },
         ],
     },
 ];
@@ -123,6 +149,8 @@ export default function FragranceDiagnosis() {
         budget: 5000,
         experience: '',
         season: '',
+        gender: '',
+        concentration: '',
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -184,6 +212,8 @@ export default function FragranceDiagnosis() {
         params.append('budget', answers.budget.toString());
         params.append('experience', answers.experience);
         params.append('season', answers.season);
+        params.append('gender', answers.gender);
+        params.append('concentration', answers.concentration);
 
         router.visit(`/fragrance-diagnosis/results?${params.toString()}`);
     };

@@ -4,6 +4,9 @@ import ProductCard from '@/Components/ProductCard';
 import RatingStars from '@/components/RatingStars';
 import ReviewForm from '@/components/ReviewForm';
 import ReviewList from '@/components/ReviewList';
+import FragranceRadarChart from '@/components/FragranceRadarChart';
+import Footer from '@/Components/Footer';
+import { CanvasJSChart } from 'canvasjs-react-charts';
 import { Head } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 import CartDrawer, { type Cart as DrawerCart, type Line as DrawerLine } from '../../components/CartDrawer';
@@ -36,6 +39,14 @@ type Props = {
         average_rating?: number;
         review_count?: number;
         fragrance_type?: string;
+        radar_data?: {
+            sweetness: number;
+            freshness: number;
+            floral: number;
+            woody: number;
+            spicy: number;
+            musky: number;
+        };
         attributes_json?: {
             notes?: {
                 top?: string;
@@ -686,15 +697,140 @@ export default function Show({ product, gallery, related }: Props) {
 
                         {/* Fragrance Notes Tab */}
                         {activeTab === 'notes' && (
-                            <div className="mb-4 border border-gray-300 p-3 text-sm">
-                                <div className="text-gray-700">香りノートのコンテンツがここに表示されます。</div>
+                            <div className="mb-4 border border-gray-300 p-6 text-sm">
+                                <div className="canvasjs-chart-wrapper" style={{ position: 'relative', height: '500px', width: '100%' }}>
+                                    <CanvasJSChart
+                                        options={{
+                                            animationEnabled: true,
+                                            exportEnabled: false,
+                                            theme: 'light1',
+                                            backgroundColor: '#FCFCF7',
+                                            title: {
+                                                text: '香りノート',
+                                                fontSize: 24,
+                                                fontColor: '#363842',
+                                                fontFamily: 'Hiragino Mincho ProN',
+                                                fontWeight: '600',
+                                                margin: 5,
+                                                padding: 5,
+                                            },
+                                            subtitles: [{
+                                                text: 'Fragrance Notes',
+                                                fontSize: 14,
+                                                fontColor: '#888888',
+                                                fontFamily: 'Noto Sans JP',
+                                                margin: 5,
+                                                padding: 0,
+                                            }],
+                                            axisY: {
+                                                enabled: false,
+                                            },
+                                            axisX: {
+                                                enabled: false,
+                                            },
+                                            data: [{
+                                                type: 'pyramid',
+                                                indexLabel: '{label}',
+                                                indexLabelFontColor: '#363842',
+                                                indexLabelFontSize: 15,
+                                                indexLabelFontFamily: 'Noto Sans JP',
+                                                indexLabelFontWeight: '600',
+                                                indexLabelPlacement: 'outside',
+                                                indexLabelLineColor: '#363842',
+                                                indexLabelLineThickness: 2,
+                                                indexLabelLineDashArray: [],
+                                                lineColor: '#EEDDD4',
+                                                lineThickness: 2,
+                                                borderColor: '#EEDDD4',
+                                                borderThickness: 1,
+                                                labelFontColor: '#363842',
+                                                labelFontSize: 16,
+                                                labelFontFamily: 'Hiragino Mincho ProN',
+                                                labelFontWeight: '600',
+                                                dataPoints: [
+                                                    { 
+                                                        y: 100, 
+                                                        label: `トップノート - ${product.attributes_json?.notes?.top || '不明'}`,
+                                                        color: '#F5E6D3'
+                                                    },
+                                                    { 
+                                                        y: 65, 
+                                                        label: `ミドルノート - ${product.attributes_json?.notes?.middle || '不明'}`,
+                                                        color: '#E8D5C4'
+                                                    },
+                                                    { 
+                                                        y: 45, 
+                                                        label: `ベースノート - ${product.attributes_json?.notes?.base || '不明'}`,
+                                                        color: '#D4C4B0'
+                                                    }
+                                                ]
+                                            }]
+                                        }}
+                                        containerProps={{ style: { height: '500px', width: '100%' } }}
+                                    />
+                                </div>
+
+                                {/* Description Section */}
+                                <div className="mt-6 border-t border-[#EEDDD4] pt-4">
+                                    <dl className="space-y-3">
+                                        <div className="flex items-start gap-3">
+                                            <dt
+                                                className="w-16 flex-shrink-0 text-sm font-medium"
+                                                style={{ color: '#888888', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                トップ
+                                            </dt>
+                                            <dd
+                                                className="text-sm"
+                                                style={{ color: '#444444', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                香水をつけたときに最初に感じる香り。揮発性が高く、5〜15 分程度で消えます。
+                                            </dd>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <dt
+                                                className="w-16 flex-shrink-0 text-sm font-medium"
+                                                style={{ color: '#888888', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                ミドル
+                                            </dt>
+                                            <dd
+                                                className="text-sm"
+                                                style={{ color: '#444444', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                トップノートの後に広がる香り。香水の中心となる香りで、30 分〜2 時間続きます。
+                                            </dd>
+                                        </div>
+                                        <div className="flex items-start gap-3">
+                                            <dt
+                                                className="w-16 flex-shrink-0 text-sm font-medium"
+                                                style={{ color: '#888888', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                ベース
+                                            </dt>
+                                            <dd
+                                                className="text-sm"
+                                                style={{ color: '#444444', fontFamily: 'Noto Sans JP' }}
+                                            >
+                                                最後に残る香り。香りの基盤となり、数時間〜一日中続きます。
+                                            </dd>
+                                        </div>
+                                    </dl>
+                                </div>
                             </div>
                         )}
 
                         {/* Radar Chart Tab */}
                         {activeTab === 'chart' && (
-                            <div className="mb-4 border border-gray-300 p-3 text-sm">
-                                <div className="text-gray-700">レーダーチャートのコンテンツがここに表示されます。</div>
+                            <div className="mb-4 border border-gray-300 p-6 text-sm">
+                                <FragranceRadarChart radarData={product.radar_data ?? {
+                                    sweetness: 0,
+                                    freshness: 0,
+                                    floral: 0,
+                                    woody: 0,
+                                    spicy: 0,
+                                    musky: 0,
+                                }} />
                             </div>
                         )}
 
@@ -887,6 +1023,7 @@ export default function Show({ product, gallery, related }: Props) {
                     busyLineId={busyLineId}
                 />
             </div>
+            <Footer />
         </div>
     );
 }

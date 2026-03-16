@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 // app/Models/Brand.php
-class Brand extends Model {
-    use HasFactory, SoftDeletes, Auditable;
+class Brand extends Model
+{
+    use Auditable, HasFactory, SoftDeletes;
 
-    protected $fillable = ['name', 'slug', 'description', 'logo'];
+    protected $fillable = ['name', 'slug', 'logo', 'founded', 'founder', 'origin', 'category', 'description'];
 
-    public function products(){
+    public function products()
+    {
         return $this->hasMany(Product::class);
     }
 
@@ -25,4 +27,3 @@ class Brand extends Model {
         return $this->name;
     }
 }
-

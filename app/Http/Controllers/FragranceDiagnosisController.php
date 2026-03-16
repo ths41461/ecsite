@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AiChatSession;
+use App\Models\QuizResult;
 use App\Services\AI\AIRecommendationService;
 use App\Services\AI\ContextBuilder;
 use Illuminate\Http\Request;
@@ -26,6 +28,8 @@ class FragranceDiagnosisController extends Controller
             'budget' => 'required|integer|min:0|max:100000',
             'experience' => 'required|string|in:beginner,some,experienced',
             'season' => 'nullable|string|in:spring,fall,all',
+            'gender' => 'nullable|string|in:women,men,unisex',
+            'concentration' => 'nullable|string|in:parfum,edp,edt,edc,mist',
         ]);
 
         $quizData = [
@@ -36,21 +40,51 @@ class FragranceDiagnosisController extends Controller
             'budget' => (int) $validated['budget'],
             'experience' => $validated['experience'],
             'season' => $validated['season'] ?? 'all',
+            'gender' => $validated['gender'] ?? 'unisex',
+            'concentration' => $validated['concentration'] ?? 'edp',
         ];
 
         $profile = $this->generateScentProfile($quizData);
 
         $context = $this->contextBuilder->build($quizData);
         $aiResult = $this->recommendationService->recommend($quizData);
-        $recommendations = $this->formatRecommendations($aiResult['products'] ?? $context['available_products'], $profile);
 
-        $sessionId = (string) Str::uuid();
+        $aiProducts = $aiResult['products'] ?? [];
+
+        if (! empty($aiProducts)) {
+            $products = $aiProducts;
+        } elseif (! empty($context['available_products'])) {
+            $products = $context['available_products'];
+        } elseif (! empty($context['trending_products'])) {
+            $products = $context['trending_products'];
+        } elseif (! empty($context['top_rated_products'])) {
+            $products = $context['top_rated_products'];
+        } else {
+            $products = [];
+        }
+
+        $recommendations = $this->formatRecommendations($products, $profile);
+
+        $quizResult = QuizResult::create([
+            'user_id' => null,
+            'session_token' => (string) Str::uuid(),
+            'profile_type' => $quizData['personality'].'_'.$quizData['vibe'],
+            'profile_data_json' => $profile,
+            'answers_json' => $quizData,
+            'recommended_product_ids' => collect($recommendations)->pluck('id')->toArray(),
+        ]);
+
+        $session = AiChatSession::create([
+            'session_token' => (string) Str::uuid(),
+            'quiz_result_id' => $quizResult->id,
+            'context_json' => $quizData,
+        ]);
 
         return Inertia::render('FragranceDiagnosisResults', [
             'quizData' => $quizData,
             'profile' => $profile,
             'recommendations' => $recommendations,
-            'sessionId' => $sessionId,
+            'sessionId' => $session->session_token,
         ]);
     }
 
@@ -60,6 +94,7 @@ class FragranceDiagnosisController extends Controller
             ->map(function ($product, $index) use ($profile) {
                 return [
                     'id' => $product['id'],
+                    'slug' => $product['slug'] ?? null,
                     'name' => $product['name'],
                     'brand' => $product['brand'],
                     'category' => $product['category'],
@@ -78,32 +113,152 @@ class FragranceDiagnosisController extends Controller
 
     private function calculateMatchScore(array $product, array $profile): int
     {
-        $score = 70;
+        $score = 30;
 
-        if (! empty($product['notes'])) {
-            $score += rand(5, 20);
+        $userGender = $profile['gender'] ?? 'unisex';
+        $userVibe = $profile['vibe'] ?? null;
+        $userStyle = $profile['style'] ?? null;
+
+        $productGender = $product['gender'] ?? 'unisex';
+        $productNotes = $product['notes'] ?? [];
+
+        if ($userGender === 'unisex' || $productGender === 'unisex') {
+            $score += 15;
+        } elseif ($userGender === $productGender) {
+            $score += 25;
+        } else {
+            $score -= 10;
         }
 
-        if (isset($product['gender']) && in_array($product['gender'], ['women', 'unisex'])) {
+        $vibeNoteMap = [
+            'floral' => ['rose', 'jasmine', 'lily', 'peony', 'floral', '花', 'バラ', 'ジャスミン', 'ユリ', 'ピオニー', 'フリージア', '蘭', '玫瑰', '茉莉'],
+            'citrus' => ['citrus', 'lemon', 'orange', 'bergamot', 'lime', 'シトラス', 'レモン', 'オレンジ', 'ベルガamot', 'グレープフルーツ', 'マンダリン', 'ライム', '葡萄柚'],
+            'vanilla' => ['vanilla', 'sweet', 'amber', 'バニラ', '甘い', 'アンバー', 'キャラメル', 'チョコレイト', 'キャラメル', '甘甜'],
+            'woody' => ['wood', 'sandalwood', 'cedar', 'patchouli', 'ウッディ', 'シダー', 'サンダル', 'ベチバー', 'パチュリ', '木', '檀'],
+            'ocean' => ['ocean', 'marine', 'water', 'fresh', 'オーシャン', '海', 'ウォータ', 'シトラス', 'ミント', '海辺'],
+        ];
+
+        $vibeMatchCount = 0;
+        if ($userVibe && isset($vibeNoteMap[$userVibe])) {
+            $matchingNotes = $vibeNoteMap[$userVibe];
+
+            // Parse notes - handle both strings (comma or Japanese comma separated) and arrays
+            $topNotes = $productNotes['top'] ?? '';
+            $middleNotes = $productNotes['middle'] ?? '';
+            $baseNotes = $productNotes['base'] ?? '';
+
+            // Use Unicode escape sequence \x{3001} for Japanese comma (、) with /u flag
+            $topArray = is_array($topNotes) ? $topNotes : (is_string($topNotes) ? preg_split('/[\x{3001},]/u', $topNotes) : []);
+            $middleArray = is_array($middleNotes) ? $middleNotes : (is_string($middleNotes) ? preg_split('/[\x{3001},]/u', $middleNotes) : []);
+            $baseArray = is_array($baseNotes) ? $baseNotes : (is_string($baseNotes) ? preg_split('/[\x{3001},]/u', $baseNotes) : []);
+
+            $allNotes = array_merge($topArray, $middleArray, $baseArray);
+            $allNotes = array_filter(array_map('trim', $allNotes));
+
+            foreach ($allNotes as $note) {
+                foreach ($matchingNotes as $matchNote) {
+                    if (stripos($note, $matchNote) !== false || stripos($matchNote, $note) !== false) {
+                        $vibeMatchCount++;
+                        break;
+                    }
+                }
+            }
+            $score += min(35, $vibeMatchCount * 12);
+        }
+
+        // Count total notes
+        $topNotes = $productNotes['top'] ?? '';
+        $middleNotes = $productNotes['middle'] ?? '';
+        $baseNotes = $productNotes['base'] ?? '';
+
+        $topNoteCount = is_array($topNotes) ? count($topNotes) : (is_string($topNotes) && ! empty(trim($topNotes)) ? 1 : 0);
+        $middleNoteCount = is_array($middleNotes) ? count($middleNotes) : (is_string($middleNotes) && ! empty(trim($middleNotes)) ? 1 : 0);
+        $baseNoteCount = is_array($baseNotes) ? count($baseNotes) : (is_string($baseNotes) && ! empty(trim($baseNotes)) ? 1 : 0);
+        $totalNotes = $topNoteCount + $middleNoteCount + $baseNoteCount;
+
+        if ($totalNotes >= 6) {
+            $score += 10;
+        } elseif ($totalNotes >= 3) {
             $score += 5;
         }
 
-        return min(100, $score);
+        $styleGenderMap = [
+            'feminine' => ['women'],
+            'casual' => ['women', 'men', 'unisex'],
+            'chic' => ['women', 'unisex'],
+            'natural' => ['women', 'men', 'unisex'],
+        ];
+
+        if ($userStyle && isset($styleGenderMap[$userStyle])) {
+            if (in_array($productGender, $styleGenderMap[$userStyle])) {
+                $score += 8;
+            }
+        }
+
+        $price = $product['min_price'] ?? 0;
+        $budget = $profile['budget'] ?? 10000;
+        if ($price <= $budget * 0.7 && $price >= $budget * 0.3) {
+            $score += 10;
+        } elseif ($price <= $budget) {
+            $score += 5;
+        } else {
+            $score -= 15;
+        }
+
+        return min(100, max(15, $score));
     }
 
     private function generateReason(array $product, array $profile): string
     {
-        $vibeNotes = [
-            'floral' => 'フローラル',
-            'citrus' => 'シトラス',
-            'vanilla' => 'スイート',
-            'woody' => 'ウッディ',
-            'ocean' => 'フレッシュ',
-        ];
+        $productNotes = $product['notes'] ?? [];
 
-        $vibeNote = $vibeNotes[$profile['type'] ?? 'floral'] ?? 'フローラル';
+        // Parse notes - handle both strings and arrays
+        $topNotes = $productNotes['top'] ?? '';
+        $middleNotes = $productNotes['middle'] ?? '';
+        $baseNotes = $productNotes['base'] ?? '';
 
-        return "{$product['brand']}の{$product['name']}は、{$vibeNote}なノートが特徴的。{$profile['name']}のあなたにおすすめの一本です。";
+        // Use Unicode escape sequence \x{3001} for Japanese comma (、) with /u flag
+        $topArray = is_array($topNotes) ? $topNotes : (is_string($topNotes) ? preg_split('/[\x{3001},]/u', $topNotes) : []);
+        $middleArray = is_array($middleNotes) ? $middleNotes : (is_string($middleNotes) ? preg_split('/[\x{3001},]/u', $middleNotes) : []);
+        $baseArray = is_array($baseNotes) ? $baseNotes : (is_string($baseNotes) ? preg_split('/[\x{3001},]/u', $baseNotes) : []);
+
+        $topArray = array_filter(array_map('trim', $topArray));
+        $middleArray = array_filter(array_map('trim', $middleArray));
+        $baseArray = array_filter(array_map('trim', $baseArray));
+
+        $productName = $product['name'] ?? '';
+        $brandName = $product['brand'] ?? '';
+        $price = $product['min_price'] ?? 0;
+
+        $vibe = $profile['vibe'] ?? '';
+
+        // Sanitize notes - handle malformed UTF-8
+        $sanitize = function ($notes) {
+            return array_map(function ($n) {
+                return mb_convert_encoding($n, 'UTF-8', 'UTF-8');
+            }, $notes);
+        };
+
+        $topArray = $sanitize($topArray);
+        $middleArray = $sanitize($middleArray);
+        $baseArray = $sanitize($baseArray);
+
+        // Dynamic description based on actual notes - use simple ASCII to avoid encoding issues
+        $description = '';
+
+        if (! empty($topArray)) {
+            $description .= 'Top: '.implode(', ', array_slice($topArray, 0, 2)).'. ';
+        }
+
+        if (! empty($middleArray)) {
+            $description .= 'Middle: '.implode(', ', array_slice($middleArray, 0, 2)).'. ';
+        }
+
+        if (! empty($baseArray)) {
+            $description .= 'Base: '.implode(', ', array_slice($baseArray, 0, 2)).'.';
+        }
+
+        return $brandName.' '.$productName.' (Y'.number_format($price).'): '.$description;
     }
 
     private function generateScentProfile(array $quizData): array

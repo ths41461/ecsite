@@ -167,4 +167,28 @@ class Product extends Model
     {
         return $this->name;
     }
+
+    /**
+     * Get the fragrance radar data for this product.
+     * Calculates 6 dimensions: sweetness, freshness, floral, woody, spicy, musky.
+     *
+     * @return array<string, int>
+     */
+    public function getRadarDataAttribute(): array
+    {
+        $notes = $this->attributes_json['notes'] ?? [];
+        
+        if (empty($notes)) {
+            return [
+                'sweetness' => 0,
+                'freshness' => 0,
+                'floral' => 0,
+                'woody' => 0,
+                'spicy' => 0,
+                'musky' => 0,
+            ];
+        }
+
+        return app(\App\Services\FragranceRadarService::class)->calculateRadarData($notes);
+    }
 }

@@ -35,8 +35,25 @@ class AIRecommendationController extends Controller
 
         $profile = $this->generateScentProfile($quizData);
 
-        $context = $this->contextBuilder->build($quizData);
-        $recommendations = $this->formatRecommendations($context['available_products'] ?? [], $profile);
+        // Use REAL AI to get recommendations (not just ContextBuilder)
+        $aiResult = $this->recommendationService->recommend($quizData);
+
+        // Get products from AI response
+        $products = $aiResult['products'] ?? [];
+
+        // If AI fails, fall back to ContextBuilder (shouldn't happen normally)
+        if (empty($products)) {
+            $context = $this->contextBuilder->build($quizData);
+            if (! empty($context['available_products'])) {
+                $products = $context['available_products'];
+            } elseif (! empty($context['trending_products'])) {
+                $products = $context['trending_products'];
+            } elseif (! empty($context['top_rated_products'])) {
+                $products = $context['top_rated_products'];
+            }
+        }
+
+        $recommendations = $this->formatRecommendations($products, $profile);
 
         $quizResult = QuizResult::create([
             'user_id' => $request->user()?->id,
@@ -160,17 +177,103 @@ class AIRecommendationController extends Controller
 
     private function calculateMatchScore(array $product, array $profile): int
     {
-        $score = 70;
+        $score = 30;
 
-        if (! empty($product['notes'])) {
-            $score += rand(5, 20);
+        $userGender = $profile['gender'] ?? 'unisex';
+        $userVibe = $profile['vibe'] ?? null;
+        $userStyle = $profile['style'] ?? null;
+
+        $productGender = $product['gender'] ?? 'unisex';
+        $productNotes = $product['notes'] ?? [];
+
+        // Gender matching
+        if ($userGender === 'unisex' || $productGender === 'unisex') {
+            $score += 15;
+        } elseif ($userGender === $productGender) {
+            $score += 25;
+        } else {
+            $score -= 10;
         }
 
-        if (isset($product['gender']) && in_array($product['gender'], ['women', 'unisex'])) {
+        // Vibe/notes matching
+        $vibeNoteMap = [
+            'floral' => ['rose', 'jasmine', 'lily', 'peony', 'floral', '花', 'バラ', 'ジャスミン', 'ユリ', 'ピオニー', 'フリージア', '蘭', '玫瑰', '茉莉'],
+            'citrus' => ['citrus', 'lemon', 'orange', 'bergamot', 'lime', 'シトラス', 'レモン', 'オレンジ', 'ベルガモット', 'グレープフルーツ', 'マンダリン', 'ライム', '葡萄柚'],
+            'vanilla' => ['vanilla', 'sweet', 'amber', 'バニラ', '甘い', 'アンバー', 'キャラメル', 'チョコレイト', 'キャラメル', '甘甜'],
+            'woody' => ['wood', 'sandalwood', 'cedar', 'patchouli', 'ウッディ', 'シダー', 'サンダル', 'ベチバー', 'パチュリ', '木', '檀'],
+            'ocean' => ['ocean', 'marine', 'water', 'fresh', 'オーシャン', '海', 'ウォータ', 'シトラス', 'ミント', '海辺'],
+        ];
+
+        $vibeMatchCount = 0;
+        if ($userVibe && isset($vibeNoteMap[$userVibe])) {
+            $matchingNotes = $vibeNoteMap[$userVibe];
+
+            // Parse notes - handle both strings and arrays
+            $topNotes = $productNotes['top'] ?? '';
+            $middleNotes = $productNotes['middle'] ?? '';
+            $baseNotes = $productNotes['base'] ?? '';
+
+            // Use Unicode escape sequence \x{3001} for Japanese comma (、) with /u flag
+            $topArray = is_array($topNotes) ? $topNotes : (is_string($topNotes) ? preg_split('/[\x{3001},]/u', $topNotes) : []);
+            $middleArray = is_array($middleNotes) ? $middleNotes : (is_string($middleNotes) ? preg_split('/[\x{3001},]/u', $middleNotes) : []);
+            $baseArray = is_array($baseNotes) ? $baseNotes : (is_string($baseNotes) ? preg_split('/[\x{3001},]/u', $baseNotes) : []);
+
+            $allNotes = array_merge($topArray, $middleArray, $baseArray);
+            $allNotes = array_filter(array_map('trim', $allNotes));
+
+            foreach ($allNotes as $note) {
+                foreach ($matchingNotes as $matchNote) {
+                    if (stripos($note, $matchNote) !== false || stripos($matchNote, $note) !== false) {
+                        $vibeMatchCount++;
+                        break;
+                    }
+                }
+            }
+            $score += min(35, $vibeMatchCount * 12);
+        }
+
+        // Count total notes for complexity score
+        $topNotes = $productNotes['top'] ?? '';
+        $middleNotes = $productNotes['middle'] ?? '';
+        $baseNotes = $productNotes['base'] ?? '';
+
+        $topNoteCount = is_array($topNotes) ? count($topNotes) : (is_string($topNotes) && ! empty(trim($topNotes)) ? 1 : 0);
+        $middleNoteCount = is_array($middleNotes) ? count($middleNotes) : (is_string($middleNotes) && ! empty(trim($middleNotes)) ? 1 : 0);
+        $baseNoteCount = is_array($baseNotes) ? count($baseNotes) : (is_string($baseNotes) && ! empty(trim($baseNotes)) ? 1 : 0);
+        $totalNotes = $topNoteCount + $middleNoteCount + $baseNoteCount;
+
+        if ($totalNotes >= 6) {
+            $score += 10;
+        } elseif ($totalNotes >= 3) {
             $score += 5;
         }
 
-        return min(100, $score);
+        // Style matching
+        $styleGenderMap = [
+            'feminine' => ['women'],
+            'casual' => ['women', 'men', 'unisex'],
+            'chic' => ['women', 'unisex'],
+            'natural' => ['women', 'men', 'unisex'],
+        ];
+
+        if ($userStyle && isset($styleGenderMap[$userStyle])) {
+            if (in_array($productGender, $styleGenderMap[$userStyle])) {
+                $score += 8;
+            }
+        }
+
+        // Budget matching
+        $price = $product['price'] ?? $product['min_price'] ?? 0;
+        $budget = $profile['budget'] ?? 10000;
+        if ($price <= $budget * 0.7 && $price >= $budget * 0.3) {
+            $score += 10;
+        } elseif ($price <= $budget) {
+            $score += 5;
+        } else {
+            $score -= 15;
+        }
+
+        return min(100, max(15, $score));
     }
 
     private function generateReason(array $product, array $profile): string

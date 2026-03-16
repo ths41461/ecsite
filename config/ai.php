@@ -8,18 +8,19 @@ return [
     ],
 
     'ollama' => [
-        'host' => env('OLLAMA_HOST', 'http://host.docker.internal:11434'),
+        'host' => env('OLLAMA_HOST', 'http://ollama:11434'),
         'model' => env('OLLAMA_MODEL', 'qwen3:8b'),
-        'fallback_models' => explode(',', env('OLLAMA_FALLBACK_MODELS', 'qwen3-vl:8b')),
-        'timeout' => env('OLLAMA_TIMEOUT', 60),
+        'fallback_models' => explode(',', env('OLLAMA_FALLBACK_MODELS', 'llama3.1:8b')),
+        'timeout' => env('OLLAMA_TIMEOUT', 300),
         'keep_alive' => env('OLLAMA_KEEP_ALIVE', -1),
         'options' => [
-            'temperature' => env('OLLAMA_TEMPERATURE', 0.3),
-            'num_ctx' => env('OLLAMA_NUM_CTX', 2048),
-            'num_batch' => env('OLLAMA_NUM_BATCH', 2048),
-            'num_predict' => env('OLLAMA_NUM_PREDICT', 150),
-            'num_parallel' => env('OLLAMA_NUM_PARALLEL', 4),
-            'top_p' => env('OLLAMA_TOP_P', 0.9),
+            'temperature' => (float) env('OLLAMA_TEMPERATURE', 0.1),
+            'num_ctx' => (int) env('OLLAMA_NUM_CTX', 2048),
+            'num_predict' => (int) env('OLLAMA_NUM_PREDICT', 256),
+            'top_p' => (float) env('OLLAMA_TOP_P', 0.9),
+            'num_thread' => (int) env('OLLAMA_NUM_THREAD', 4),
         ],
     ],
+
+    'cache_ttl_seconds' => env('AI_CACHE_TTL_SECONDS', 3600 * 24),
 ];

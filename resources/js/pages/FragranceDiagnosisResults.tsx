@@ -20,6 +20,7 @@ type Profile = {
 
 type Recommendation = {
     id: number;
+    slug?: string;
     name: string;
     brand: string;
     category: string;
@@ -197,7 +198,10 @@ export default function FragranceDiagnosisResults({ quizData, profile, recommend
                                 className="flex flex-col rounded-sm border border-gray-200 bg-white shadow-sm"
                                 data-testid="product-card"
                             >
-                                <Link href={`/products/${product.id}`} className="flex h-48 items-center justify-center bg-[#FAF7EF] p-4">
+                                <Link
+                                    href={`/products/${product.slug || product.id}`}
+                                    className="flex h-48 items-center justify-center bg-[#FAF7EF] p-4"
+                                >
                                     {product.imageUrl ? (
                                         <img src={product.imageUrl} alt={product.name} className="h-full w-full object-cover" />
                                     ) : (
@@ -209,7 +213,7 @@ export default function FragranceDiagnosisResults({ quizData, profile, recommend
 
                                 <div className="flex flex-1 flex-col p-4">
                                     <p className="mb-1 text-xs text-red-600">{product.brand}</p>
-                                    <Link href={`/products/${product.id}`}>
+                                    <Link href={`/products/${product.slug || product.id}`}>
                                         <h3 className="mb-2 font-semibold text-[#0D0D0D] hover:text-gray-600">{product.name}</h3>
                                     </Link>
 
@@ -223,7 +227,7 @@ export default function FragranceDiagnosisResults({ quizData, profile, recommend
                                     <div className="flex items-center justify-between">
                                         <span className="font-bold text-[#0D0D0D]">{yen(product.price)}</span>
                                         <Link
-                                            href={`/products/${product.id}`}
+                                            href={`/products/${product.slug || product.id}`}
                                             className="rounded bg-[#EAB308] px-4 py-2 text-sm text-white hover:bg-yellow-600"
                                         >
                                             詳細を見る

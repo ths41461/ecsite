@@ -56,6 +56,7 @@ class ChatController extends Controller
             'success' => true,
             'data' => [
                 'message' => $aiResponse['message'] ?? '',
+                'products' => $aiResponse['products'] ?? [],
                 'session_id' => $sessionId,
                 'timestamp' => now()->toIso8601String(),
             ],

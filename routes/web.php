@@ -130,7 +130,72 @@ Route::get('/fragrance-diagnosis/results', [FragranceDiagnosisController::class,
     ->name('fragrance.diagnosis.results');
 
 Route::get('/brand-introduction', function () {
-    return Inertia::render('BrandIntroduction');
+    $firstPerfumeMap = [
+        'Chanel' => 'Chanel No.5 (1921)',
+        'Dior' => 'Miss Dior (1947)',
+        'Gucci' => 'Gucci No.1 (1975)',
+        'Versace' => 'Versace (1981)',
+        'Chloe' => 'Chloe (1975)',
+        'SHIRO' => '-',
+        'COSME DECORTE' => 'KIMONO (2007)',
+        'Issey Miyake' => 'L\'eau d\'Issey (1992)',
+        '資生堂' => 'ZEN (2002)',
+        'ハナエモリ' => 'Butterfly (1996)',
+        'ケンゾー' => 'Flower by Kenzo (2000)',
+        'アナスイ' => 'Secret Wish (2006)',
+        'ポール＆ジョー' => 'Blue (2002)',
+        'ジルスチュアート' => 'White Floral (2005)',
+        'トム・フォード' => 'Black Orchid (2006)',
+        'イヴ・サン罗拉ン' => 'Black Opium (2014)',
+        'プラダ' => 'Prada (2004)',
+        'ジョルジオ・アルマーニ' => 'Acqua di Gio (1996)',
+        'ジョーマローン' => 'Lime Basil & Mandarin (1999)',
+    ];
+
+    $brands = \App\Models\Brand::with(['products' => function ($query) {
+        $query->with(['variants', 'heroImage']);
+    }])->get()->map(function ($brand) use ($firstPerfumeMap) {
+        return [
+            'id' => $brand->id,
+            'name' => $brand->name,
+            'logo' => $brand->logo,
+            'founded' => $brand->founded ?? 'N/A',
+            'founder' => $brand->founder ?? 'N/A',
+            'origin' => $brand->origin ?? 'N/A',
+            'firstPerfume' => $firstPerfumeMap[$brand->name] ?? '-',
+            'description' => $brand->description ?? '',
+            'category' => $brand->category ?? 'ラグジュアリー',
+            'products' => $brand->products->map(function ($product) {
+                $variants = $product->variants->where('is_active', true);
+                $minPrice = $variants->min('price_yen') ?? 0;
+                $sizes = $variants->pluck('option_json.size_ml')->filter()->unique()->values()->toArray();
+                $gender = $variants->first()?->option_json['gender'] ?? 'women';
+
+                $imageUrl = null;
+                if ($product->heroImage) {
+                    $path = $product->heroImage->path;
+                    $imageUrl = str_starts_with($path, 'http') || str_starts_with($path, '/')
+                        ? $path
+                        : \Illuminate\Support\Facades\Storage::url($path);
+                }
+
+                return [
+                    'id' => $product->id,
+                    'slug' => $product->slug,
+                    'name' => $product->name,
+                    'short_desc' => $product->short_desc ?? '',
+                    'gender' => $gender,
+                    'price' => $minPrice,
+                    'imageUrl' => $imageUrl,
+                    'sizes' => $sizes,
+                ];
+            })->toArray(),
+        ];
+    });
+
+    return Inertia::render('BrandIntroduction', [
+        'brands' => $brands,
+    ]);
 })->name('brand.introduction');
 
 Route::get('/contact', function () {
